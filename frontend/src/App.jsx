@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button"
+import WelcomePage from "./pages/WelcomePage/WelcomePage"
 
 export default function App() {
   return (
     <div>
-      <Button>Click me</Button>
+      <WelcomePage/>
     </div>
   )
 }
