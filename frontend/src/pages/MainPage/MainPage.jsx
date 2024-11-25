@@ -2,7 +2,7 @@ import React from "react";
 import { Link, Route, Routes } from "react-router-dom";
 import TicketFare from "./TicketFare";
 import BusRoute from "./BusRoute";
-import Info from "./Info";
+import ProfilePage from "../ProfilePage/ProfilePage.jsx";
 import { FaBus } from "react-icons/fa";
 import { CgProfile } from "react-icons/cg";
 import { CiMap } from "react-icons/ci";
@@ -36,7 +36,7 @@ const MainPage = () => {
           <Routes>
             <Route index element={<TicketFare />} />
             <Route path='busroute' element={<BusRoute />} />
-            <Route path='info' element={<Info />} />
+            <Route path='info' element={<ProfilePage />} />
           </Routes>
         </div>
       </div>

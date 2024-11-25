@@ -1,6 +1,6 @@
 import React from "react";
 import profileIcon from "../../assets/default-profile-icon.png";
-const Info = () => {
+const ProfilePage = () => {
   return (
     <div className='flex flex-grow w-6/7'>
       <div
@@ -73,4 +73,4 @@ const Info = () => {
   );
 };
 
-export default Info;
+export default ProfilePage;
