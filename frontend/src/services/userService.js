@@ -33,3 +33,14 @@ export const resetPassword = async (email) => {
         throw error;
     }
 };
+
+export const signUpUser = async (data) => {
+    try {
+        console.log(data);
+        const response = await axios.post('http://localhost:3001/api/customer/sign-up', data);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to sign up:', error);
+        throw error;
+    }
+};

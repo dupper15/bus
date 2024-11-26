@@ -3,8 +3,8 @@ const JwtService = require('../services/JwtService')
 
 const createCustomer = async (req, res) => {
     try {
-        const { name, image, id_card, password, confirmPassword, phone } = req.body
-        if (!name || !image || !id_card || !password || !confirmPassword || !phone) {
+        const { name, id_card, password, confirmPassword, phone } = req.body
+        if (!name || !id_card || !password || !confirmPassword || !phone) {
             return res.status(400).json({
                 status: 'ERROR',
                 message: 'All fields are required.'
