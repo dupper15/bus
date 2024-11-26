@@ -130,6 +130,10 @@ const updateCustomer = (customerId, data) => {
     })
 }
 
+const updatePasswordCustomer = (customerId, password) => {
+    // This function is not implemented in the service layer.
+}
+
 const getAllCustomer = () => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -183,6 +187,7 @@ module.exports = {
     createCustomer,
     loginCustomer,
     updateCustomer,
+    updatePasswordCustomer,
     getAllCustomer,
     getDetailCustomer,
 }

@@ -72,6 +72,37 @@ const updateCustomer = async (req, res) => {
     }
 }
 
+const updatePasswordCustomer = async (req, res) => {
+    try {
+        const customerId = req.params.id
+        const { password, confirmPassword } = req.body
+        if (!customerId) {
+            return res.status(400).json({
+                status: 'ERROR',
+                message: 'Customer ID is required.'
+            })
+        } else if (!password || !confirmPassword) {
+            return res.status(400).json({
+                status: 'ERROR',
+                message: 'Password and confirm password are required.'
+            })
+        } else if (password !== confirmPassword) {
+            return res.status(400).json({
+                status: 'ERROR',
+                message: 'Password and confirm password do not match.'
+            })
+        }
+        const response = await CustomerService.updatePasswordCustomer(customerId, password)
+        return res.status(200).json(response)
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An error occurred while updating the customer password.'
+        })
+    }
+}
+
 const getAllCustomer = async (req, res) => {
     try {
         const response = await CustomerService.getAllCustomer()
