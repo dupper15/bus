@@ -38,15 +38,16 @@ const SignUpPage = () => {
                     className='w-full rounded-md border-2 border-slate-300 focus:border-[#4CAF50] outline-none p-2'
                 />
                 <input
-                    type='number'
+                    type={'text'}
                     placeholder='Number Phone'
                     value={phone}
                     onChange={handlePhoneChange}
                     className='w-full rounded-md border-2 border-slate-300 focus:border-[#4CAF50] outline-none p-2'
                 />
+                <p>Debug: nhập 12 ký tự</p>
                 <input
                     //Change type to email
-                    type={'number'}
+                    type={'text'}
                     // type='email'
                     placeholder='Email'
                     value={email}

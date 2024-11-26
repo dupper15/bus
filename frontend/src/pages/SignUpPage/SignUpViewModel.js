@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { signUpUser } from '@/services/userService.js';
+import {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {signUpUser} from '@/services/userService.js';
 
 const useSignUpViewModel = () => {
     const [name, setName] = useState('');
@@ -12,7 +12,12 @@ const useSignUpViewModel = () => {
     const navigate = useNavigate();
 
     const handleNameChange = (e) => setName(e.target.value);
-    const handlePhoneChange = (e) => setPhone(e.target.value);
+    const handlePhoneChange = (e) => {
+        const value = e.target.value;
+        if (/^\d*$/.test(value)) {
+            setPhone(value);
+        }
+    };
     const handleEmailChange = (e) => setEmail(e.target.value);
     const handlePasswordChange = (e) => setPassword(e.target.value);
     const handleConfirmPasswordChange = (e) => setConfirmPassword(e.target.value);
@@ -25,7 +30,7 @@ const useSignUpViewModel = () => {
         }
         try {
             // Change email to id_card, add email
-            const response = await signUpUser({ name, phone, id_card: email, password, confirmPassword });
+            const response = await signUpUser({name, phone, id_card: email, password, confirmPassword});
             if (response.status === 'OK') {
                 navigate('/login');
             } else {
