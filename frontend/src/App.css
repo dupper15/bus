@@ -5,6 +5,13 @@
   text-align: center;
 }
 
+main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Chiều cao tối thiểu bằng 100% chiều cao màn hình */
+  box-sizing: border-box;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
