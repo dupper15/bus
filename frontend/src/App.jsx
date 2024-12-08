@@ -12,16 +12,16 @@ import DashboardLayout from "./pages/Manager/DashboardPage/DashboardLayout";
 
 
 axios.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
+  (config) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 export default function App() {
@@ -34,13 +34,12 @@ export default function App() {
         <Route path="/home/*" element={<MainPage />} />
         <Route path="/payment/*" element={<MainBuyPage />} />
         <Route path="*" element={<Page404 />} />
-
+          
         <Route path="/manager" element={<DashboardLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="employee" element={<EmployeePage />} />
         </Route>
-
       </Routes>
     </Router> 
   );
