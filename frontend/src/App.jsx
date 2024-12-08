@@ -8,28 +8,28 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import axios from "axios";
 
 axios.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
+  (config) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path='/' element={<WelcomePage />} />
-        <Route path='/login' element={<SignInPage />} />
-        <Route path='/signup' element={<SignUpPage />} />
-        <Route path='/home/*' element={<MainPage />} />
-        <Route path='/payment/*' element={<MainBuyPage />} />
-        <Route path='*' element={<Page404 />} />
+        <Route path="/" element={<WelcomePage />} />
+        <Route path="/login" element={<SignInPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/home/*" element={<MainPage />} />
+        <Route path="/payment/*" element={<MainBuyPage />} />
+        <Route path="*" element={<Page404 />} />
       </Routes>
     </Router>
   );
