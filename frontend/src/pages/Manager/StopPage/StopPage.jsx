@@ -11,8 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import avatar from "../../../assets/default-profile-icon.png";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EllipsisVertical } from "lucide-react";
 import {
   DropdownMenu,
@@ -33,56 +31,28 @@ import {
 
 const items = [
   {
-    eId: "E001",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678911",
-    role: "Bus boy",
-    phone: "0912345678",
-    request: 1,
-    date: "20-10-2024",
-    username: "js1",
-    password: "password",
+    bsId: "BS001",
+    name: "Dormitory B",
+    address: "HCMC",
   },
   {
-    eId: "E002",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678912",
-    role: "Bus boy",
-    phone: "0912345678",
-    request: 2,
-    date: "20-10-2024",
-    username: "js2",
-    password: "password",
+    bsId: "BS002",
+    name: "Dormitory B",
+    address: "HCMC",
   },
   {
-    eId: "E003",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678913",
-    role: "Bus boy",
-    phone: "0912345678",
-    request: 3,
-    date: "20-10-2024",
-    username: "js3",
-    password: "password",
+    bsId: "BS003",
+    name: "Dormitory B",
+    address: "HCMC",
   },
   {
-    eId: "E004",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678914",
-    role: "Bus boy",
-    phone: "0912345678",
-    request: 4,
-    date: "20-10-2024",
-    username: "js4",
-    password: "password",
+    bsId: "BS004",
+    name: "Dormitory B",
+    address: "HCMC",
   },
 ];
 
-const EmployeePage = () => {
+const StopPage = () => {
   return (
     <div className="flex justify-center min-h-screen w-full p-4">
       <div className="space-y-6 w-full max-w-6xl">
@@ -97,28 +67,11 @@ const EmployeePage = () => {
             <TableHeader className="bg-[#4CAF50]">
               <TableRow>
                 <TableHead className="text-center text-white">
-                  Employee ID
+                  Bus Stop ID
                 </TableHead>
-                <TableHead className="text-center text-white">Avatar</TableHead>
                 <TableHead className="text-center text-white">Name</TableHead>
                 <TableHead className="text-center text-white">
-                  ID Number
-                </TableHead>
-                <TableHead className="text-center text-white">Role</TableHead>
-                <TableHead className="text-center text-white">
-                  Contact
-                </TableHead>
-                <TableHead className="text-center text-white">
-                  Request
-                </TableHead>
-                <TableHead className="text-center text-white">
-                  Hire date
-                </TableHead>
-                <TableHead className="text-center text-white">
-                  Username
-                </TableHead>
-                <TableHead className="text-center text-white">
-                  Password
+                  Address
                 </TableHead>
                 <TableHead className="text-center text-white">Action</TableHead>
               </TableRow>
@@ -126,25 +79,11 @@ const EmployeePage = () => {
             <TableBody>
               {items.map((item, index) => (
                 <TableRow key={index}>
-                  <TableCell className="text-center">{item.eId}</TableCell>
-                  <TableCell className="text-center flex justify-center items-center">
-                    <Avatar>
-                      <AvatarImage src={avatar} />
-                      <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
+                  <TableCell className="text-center">{item.bsId}</TableCell>
                   <TableCell className="font-medium text-center">
                     {item.name}
                   </TableCell>
-                  <TableCell className="text-center">{item.idNumber}</TableCell>
-                  <TableCell className="text-center">{item.role}</TableCell>
-                  <TableCell className="text-center">{item.phone}</TableCell>
-                  <TableCell className="font-medium text-center">
-                    <Button>{item.request}</Button>
-                  </TableCell>
-                  <TableCell className="text-center">{item.date}</TableCell>
-                  <TableCell className="text-center">{item.username}</TableCell>
-                  <TableCell className="text-center">{item.password}</TableCell>
+                  <TableCell className="text-center">{item.address}</TableCell>
                   <TableCell className="text-center flex justify-center items-center">
                     <Dialog>
                       <DropdownMenu>
@@ -191,4 +130,4 @@ const EmployeePage = () => {
   );
 };
 
-export default EmployeePage;
+export default StopPage;

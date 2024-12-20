@@ -11,8 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import avatar from "../../../assets/default-profile-icon.png";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EllipsisVertical } from "lucide-react";
 import {
   DropdownMenu,
@@ -30,64 +28,52 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { FaRegCalendarMinus } from "react-icons/fa";
 
 const items = [
   {
-    eId: "E001",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678911",
-    role: "Bus boy",
-    phone: "0912345678",
-    request: 1,
+    sId: "S001",
+    bId: "B001",
+    lId: "L001",
     date: "20-10-2024",
-    username: "js1",
-    password: "password",
+    time: "7:00:00",
+    status: "Pending",
   },
   {
-    eId: "E002",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678912",
-    role: "Bus boy",
-    phone: "0912345678",
-    request: 2,
+    sId: "S002",
+    bId: "B001",
+    lId: "L001",
     date: "20-10-2024",
-    username: "js2",
-    password: "password",
+    time: "8:00:00",
+    status: "Pending",
   },
   {
-    eId: "E003",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678913",
-    role: "Bus boy",
-    phone: "0912345678",
-    request: 3,
+    sId: "S003",
+    bId: "B001",
+    lId: "L001",
     date: "20-10-2024",
-    username: "js3",
-    password: "password",
+    time: "9:00:00",
+    status: "Pending",
   },
   {
-    eId: "E004",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678914",
-    role: "Bus boy",
-    phone: "0912345678",
-    request: 4,
+    sId: "S004",
+    bId: "B001",
+    lId: "L001",
     date: "20-10-2024",
-    username: "js4",
-    password: "password",
+    time: "10:00:00",
+    status: "Pending",
   },
 ];
 
-const EmployeePage = () => {
+const SchedulePage = () => {
   return (
     <div className="flex justify-center min-h-screen w-full p-4">
       <div className="space-y-6 w-full max-w-6xl">
         <div className="flex items-center gap-4">
           <Search className="flex-grow" />
+          <Button className="flex-shrink-0">
+            <FaRegCalendarMinus />
+          </Button>
           <Button className="flex-shrink-0">+</Button>
         </div>
 
@@ -97,54 +83,29 @@ const EmployeePage = () => {
             <TableHeader className="bg-[#4CAF50]">
               <TableRow>
                 <TableHead className="text-center text-white">
-                  Employee ID
+                  Schedule ID
                 </TableHead>
-                <TableHead className="text-center text-white">Avatar</TableHead>
-                <TableHead className="text-center text-white">Name</TableHead>
+                <TableHead className="text-center text-white">Bus ID</TableHead>
                 <TableHead className="text-center text-white">
-                  ID Number
-                </TableHead>
-                <TableHead className="text-center text-white">Role</TableHead>
-                <TableHead className="text-center text-white">
-                  Contact
+                  Line ID
                 </TableHead>
                 <TableHead className="text-center text-white">
-                  Request
+                  Start date
                 </TableHead>
-                <TableHead className="text-center text-white">
-                  Hire date
-                </TableHead>
-                <TableHead className="text-center text-white">
-                  Username
-                </TableHead>
-                <TableHead className="text-center text-white">
-                  Password
-                </TableHead>
+                <TableHead className="text-center text-white">Time</TableHead>
+                <TableHead className="text-center text-white">Status</TableHead>
                 <TableHead className="text-center text-white">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.map((item, index) => (
                 <TableRow key={index}>
-                  <TableCell className="text-center">{item.eId}</TableCell>
-                  <TableCell className="text-center flex justify-center items-center">
-                    <Avatar>
-                      <AvatarImage src={avatar} />
-                      <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className="font-medium text-center">
-                    {item.name}
-                  </TableCell>
-                  <TableCell className="text-center">{item.idNumber}</TableCell>
-                  <TableCell className="text-center">{item.role}</TableCell>
-                  <TableCell className="text-center">{item.phone}</TableCell>
-                  <TableCell className="font-medium text-center">
-                    <Button>{item.request}</Button>
-                  </TableCell>
+                  <TableCell className="text-center">{item.sId}</TableCell>
+                  <TableCell className="text-center">{item.bId}</TableCell>
+                  <TableCell className="text-center">{item.lId}</TableCell>
                   <TableCell className="text-center">{item.date}</TableCell>
-                  <TableCell className="text-center">{item.username}</TableCell>
-                  <TableCell className="text-center">{item.password}</TableCell>
+                  <TableCell className="text-center">{item.time}</TableCell>
+                  <TableCell className="text-center">{item.status}</TableCell>
                   <TableCell className="text-center flex justify-center items-center">
                     <Dialog>
                       <DropdownMenu>
@@ -191,4 +152,4 @@ const EmployeePage = () => {
   );
 };
 
-export default EmployeePage;
+export default SchedulePage;
