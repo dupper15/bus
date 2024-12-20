@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Search from "@/components/ui/search";
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -30,6 +30,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
+import { useSearchParams } from "react-router-dom";
+  
 
 const items = [
   {
@@ -41,8 +52,6 @@ const items = [
     phone: "0912345678",
     request: 1,
     date: "20-10-2024",
-    username: "js1",
-    password: "password",
   },
   {
     eId: "E002",
@@ -53,8 +62,6 @@ const items = [
     phone: "0912345678",
     request: 2,
     date: "20-10-2024",
-    username: "js2",
-    password: "password",
   },
   {
     eId: "E003",
@@ -65,8 +72,6 @@ const items = [
     phone: "0912345678",
     request: 3,
     date: "20-10-2024",
-    username: "js3",
-    password: "password",
   },
   {
     eId: "E004",
@@ -77,12 +82,108 @@ const items = [
     phone: "0912345678",
     request: 4,
     date: "20-10-2024",
-    username: "js4",
-    password: "password",
+  },
+  {
+    eId: "E001",
+    name: "John Smith",
+    avatar: avatar,
+    idNumber: "012345678911",
+    role: "Bus boy",
+    phone: "0912345678",
+    request: 1,
+    date: "20-10-2024",
+  },
+  {
+    eId: "E002",
+    name: "John Smith",
+    avatar: avatar,
+    idNumber: "012345678912",
+    role: "Bus boy",
+    phone: "0912345678",
+    request: 2,
+    date: "20-10-2024",
+  },
+  {
+    eId: "E003",
+    name: "John Smith",
+    avatar: avatar,
+    idNumber: "012345678913",
+    role: "Bus boy",
+    phone: "0912345678",
+    request: 3,
+    date: "20-10-2024",
+  },
+  {
+    eId: "E004",
+    name: "John Smith",
+    avatar: avatar,
+    idNumber: "012345678914",
+    role: "Bus boy",
+    phone: "0912345678",
+    request: 4,
+    date: "20-10-2024",
+  },
+  {
+    eId: "E001",
+    name: "John Smith",
+    avatar: avatar,
+    idNumber: "012345678911",
+    role: "Bus boy",
+    phone: "0912345678",
+    request: 1,
+    date: "20-10-2024",
+  },
+  {
+    eId: "E002",
+    name: "John Smith",
+    avatar: avatar,
+    idNumber: "012345678912",
+    role: "Bus boy",
+    phone: "0912345678",
+    request: 2,
+    date: "20-10-2024",
+  },
+  {
+    eId: "E003",
+    name: "John Smith",
+    avatar: avatar,
+    idNumber: "012345678913",
+    role: "Bus boy",
+    phone: "0912345678",
+    request: 3,
+    date: "20-10-2024",
+  },
+  {
+    eId: "E004",
+    name: "John Smith",
+    avatar: avatar,
+    idNumber: "012345678914",
+    role: "Bus boy",
+    phone: "0912345678",
+    request: 4,
+    date: "20-10-2024",
   },
 ];
 
+const ITEMS_PER_PAGE = 10;
+
 const EmployeePage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page")) || 1; // Lấy trang từ query string hoặc mặc định là 1
+  // Tính tổng số trang
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  // Lấy danh sách mục cho trang hiện tại
+  const currentItems = items.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+  // Xử lý chuyển trang và cập nhật query string
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setSearchParams({ page: page }); // Cập nhật query string
+    }
+  };
+
   return (
     <div className="flex justify-center min-h-screen w-full p-4">
       <div className="space-y-6 w-full max-w-6xl">
@@ -114,17 +215,11 @@ const EmployeePage = () => {
                 <TableHead className="text-center text-white">
                   Hire date
                 </TableHead>
-                <TableHead className="text-center text-white">
-                  Username
-                </TableHead>
-                <TableHead className="text-center text-white">
-                  Password
-                </TableHead>
                 <TableHead className="text-center text-white">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item, index) => (
+            {currentItems.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell className="text-center">{item.eId}</TableCell>
                   <TableCell className="text-center flex justify-center items-center">
@@ -143,8 +238,6 @@ const EmployeePage = () => {
                     <Button>{item.request}</Button>
                   </TableCell>
                   <TableCell className="text-center">{item.date}</TableCell>
-                  <TableCell className="text-center">{item.username}</TableCell>
-                  <TableCell className="text-center">{item.password}</TableCell>
                   <TableCell className="text-center flex justify-center items-center">
                     <Dialog>
                       <DropdownMenu>
@@ -153,7 +246,6 @@ const EmployeePage = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           <DropdownMenuItem>Edit</DropdownMenuItem>
-                          {/* Show dialog delete */}
                           <DialogTrigger asChild>
                             <DropdownMenuItem>
                               <span>Delete</span>
@@ -186,6 +278,34 @@ const EmployeePage = () => {
             </TableBody>
           </Table>
         </div>
+        {/* Pagination */}
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={() => handlePageChange(currentPage - 1)}
+              />
+            </PaginationItem>
+            {[...Array(totalPages)].map((_, index) => (
+              <PaginationItem key={index}>
+                <PaginationLink
+                  href="#"
+                  onClick={() => handlePageChange(index + 1)}
+                  className={index + 1 === currentPage ? "font-bold" : ""}
+                >
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={() => handlePageChange(currentPage + 1)}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );
