@@ -33,56 +33,44 @@ import {
 
 const items = [
   {
-    eId: "E001",
+    cId: "C001",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678911",
-    role: "Bus boy",
     phone: "0912345678",
-    request: 1,
-    date: "20-10-2024",
     username: "js1",
     password: "password",
   },
   {
-    eId: "E002",
+    cId: "C002",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678912",
-    role: "Bus boy",
     phone: "0912345678",
-    request: 2,
-    date: "20-10-2024",
     username: "js2",
     password: "password",
   },
   {
-    eId: "E003",
+    cId: "C003",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678913",
-    role: "Bus boy",
     phone: "0912345678",
-    request: 3,
-    date: "20-10-2024",
     username: "js3",
     password: "password",
   },
   {
-    eId: "E004",
+    cId: "C004",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678914",
-    role: "Bus boy",
     phone: "0912345678",
-    request: 4,
-    date: "20-10-2024",
     username: "js4",
     password: "password",
   },
 ];
 
-const EmployeePage = () => {
+const CustomerPage = () => {
   return (
     <div className="flex justify-center min-h-screen w-full p-4">
       <div className="space-y-6 w-full max-w-6xl">
@@ -97,22 +85,15 @@ const EmployeePage = () => {
             <TableHeader className="bg-[#4CAF50]">
               <TableRow>
                 <TableHead className="text-center text-white">
-                  Employee ID
+                  Customer ID
                 </TableHead>
                 <TableHead className="text-center text-white">Avatar</TableHead>
                 <TableHead className="text-center text-white">Name</TableHead>
                 <TableHead className="text-center text-white">
                   ID Number
                 </TableHead>
-                <TableHead className="text-center text-white">Role</TableHead>
                 <TableHead className="text-center text-white">
                   Contact
-                </TableHead>
-                <TableHead className="text-center text-white">
-                  Request
-                </TableHead>
-                <TableHead className="text-center text-white">
-                  Hire date
                 </TableHead>
                 <TableHead className="text-center text-white">
                   Username
@@ -126,7 +107,7 @@ const EmployeePage = () => {
             <TableBody>
               {items.map((item, index) => (
                 <TableRow key={index}>
-                  <TableCell className="text-center">{item.eId}</TableCell>
+                  <TableCell className="text-center">{item.cId}</TableCell>
                   <TableCell className="text-center flex justify-center items-center">
                     <Avatar>
                       <AvatarImage src={avatar} />
@@ -137,12 +118,7 @@ const EmployeePage = () => {
                     {item.name}
                   </TableCell>
                   <TableCell className="text-center">{item.idNumber}</TableCell>
-                  <TableCell className="text-center">{item.role}</TableCell>
                   <TableCell className="text-center">{item.phone}</TableCell>
-                  <TableCell className="font-medium text-center">
-                    <Button>{item.request}</Button>
-                  </TableCell>
-                  <TableCell className="text-center">{item.date}</TableCell>
                   <TableCell className="text-center">{item.username}</TableCell>
                   <TableCell className="text-center">{item.password}</TableCell>
                   <TableCell className="text-center flex justify-center items-center">
@@ -191,4 +167,4 @@ const EmployeePage = () => {
   );
 };
 
-export default EmployeePage;
+export default CustomerPage;
