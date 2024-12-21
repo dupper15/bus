@@ -106,7 +106,7 @@ const AddEmployeePage = () => {
         <CardContent>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onCreate)} className="space-y-8">
-                <div className="flex gap-4">
+                <div className="flex gap-8">
                 {/* Full name */}
                 <FormField
                     control={form.control}
@@ -166,7 +166,7 @@ const AddEmployeePage = () => {
                     )}
                 />
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-8">
                 {/* Phone number */}
                 <FormField
                     control={form.control}
@@ -196,7 +196,7 @@ const AddEmployeePage = () => {
                     )}
                 />
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-8">
                 {/* Password */}
                 <FormField
                     control={form.control}
@@ -226,7 +226,7 @@ const AddEmployeePage = () => {
                     )}
                 />
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-8">
                 {/* Salary */}
                 <FormField
                     control={form.control}
