@@ -34,12 +34,14 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { ArrowLeft, CalendarIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 const formSchema = z.object({
   fullname: z.string().min(10, {
     message: "Full name must be at least 10 characters.",
@@ -310,6 +312,7 @@ const DetailEmployeePage = () => {
                   Submit
                 </Button>
               </div>
+
             </form>
           </Form>
         </CardContent>
