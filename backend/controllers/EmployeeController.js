@@ -3,30 +3,8 @@ const JwtService = require('../services/JwtService')
 
 const createEmployee = async (req, res) => {
     try {
-        const { name, image, id_card, password, confirmPassword, phone, salary, isDriver, license } = req.body
-        if (!name || !image || !id_card || !password || !confirmPassword || !phone || !salary) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'All fields are required.'
-            })
-        } else if (!/^\d{12}$/.test(id_card)) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'ID card must be exactly 12 digits.'
-            })
-        } else if (password !== confirmPassword) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Password and confirm password do not match.'
-            })
-        }
-        if (isDriver && !license) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'License is required for drivers.'
-            })
-        }
-        const response = await EmployeeService.createEmployee(req.body)
+        const data = req.body
+        const response = await EmployeeService.createEmployee(data)
         return res.status(201).json(response)
     } catch (e) {
         console.error(e)
@@ -61,15 +39,9 @@ const loginEmployee = async (req, res) => {
 
 const updateEmployee = async (req, res) => {
     try {
-        const EmployeeId = req.params.id
+        const employeeId = req.params.id
         const data = req.body
-        if (!EmployeeId) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Employee ID is required.'
-            })
-        }
-        const response = await EmployeeService.updateEmployee(EmployeeId, data)
+        const response = await EmployeeService.updateEmployee(data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -97,14 +69,9 @@ const getAllEmployee = async (req, res) => {
 
 const getDetailEmployee = async (req, res) => {
     try {
-        const employeeId = req.params.id
-        if (!employeeId) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Employee ID is required.'
-            })
-        }
-        const response = await EmployeeService.getDetailEmployee(employeeId)
+        const employeeId = req.params.id;
+        const data = req.body;
+        const response = await EmployeeService.getDetailEmployee(data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -140,13 +107,8 @@ const refreshTokenJwtEmployee = async (req, res) => {
 const deleteEmployee = async (req, res) => {
     try {
         const employeeId = req.params.id
-        if (!employeeId) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Employee ID is required.'
-            })
-        }
-        const response = await EmployeeService.deleteEmployee(employeeId)
+        const data = req.body;
+        const response = await EmployeeService.deleteEmployee(data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
