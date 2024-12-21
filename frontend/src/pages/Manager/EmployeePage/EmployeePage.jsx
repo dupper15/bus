@@ -39,7 +39,8 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination"
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+//import AddEmployeePage from "./AddEmployeePage";
   
 
 const items = [
@@ -84,7 +85,7 @@ const items = [
     date: "20-10-2024",
   },
   {
-    eId: "E001",
+    eId: "E005",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678911",
@@ -94,7 +95,7 @@ const items = [
     date: "20-10-2024",
   },
   {
-    eId: "E002",
+    eId: "E006",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678912",
@@ -104,7 +105,7 @@ const items = [
     date: "20-10-2024",
   },
   {
-    eId: "E003",
+    eId: "E007",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678913",
@@ -114,7 +115,7 @@ const items = [
     date: "20-10-2024",
   },
   {
-    eId: "E004",
+    eId: "E008",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678914",
@@ -124,7 +125,7 @@ const items = [
     date: "20-10-2024",
   },
   {
-    eId: "E001",
+    eId: "E009",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678911",
@@ -134,7 +135,7 @@ const items = [
     date: "20-10-2024",
   },
   {
-    eId: "E002",
+    eId: "E010",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678912",
@@ -144,7 +145,7 @@ const items = [
     date: "20-10-2024",
   },
   {
-    eId: "E003",
+    eId: "E011",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678913",
@@ -154,7 +155,7 @@ const items = [
     date: "20-10-2024",
   },
   {
-    eId: "E004",
+    eId: "E012",
     name: "John Smith",
     avatar: avatar,
     idNumber: "012345678914",
@@ -167,9 +168,12 @@ const items = [
 
 const ITEMS_PER_PAGE = 10;
 
+
+
 const EmployeePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1; // Lấy trang từ query string hoặc mặc định là 1
+  const navigate = useNavigate()
   // Tính tổng số trang
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   // Lấy danh sách mục cho trang hiện tại
@@ -183,14 +187,34 @@ const EmployeePage = () => {
       setSearchParams({ page: page }); // Cập nhật query string
     }
   };
+  
+  const [add, setAdd] = useState(false);
+
+  const handleAdd = () => {
+    setAdd(!add);
+    navigate("add-employee");
+  };
+
+  const onNavigateDetail = (id) => {
+    console.log("id", id)
+    navigate(`/manage/employee/${id}/detail-employee`);
+  };
+  
 
   return (
     <div className="flex justify-center min-h-screen w-full p-4">
-      <div className="space-y-6 w-full max-w-6xl">
+      <div className="space-y-6 w-full">
         <div className="flex items-center gap-4">
           <Search className="flex-grow" />
-          <Button className="flex-shrink-0">+</Button>
+          <Button onClick={handleAdd} className="flex-shrink-0">+</Button>
         </div>
+        {/* Add Employee */}
+
+        {/* {(add) && (
+           
+              <AddEmployeePage className='flex justify-center absolute'/>
+       
+        )} */}
 
         {/* Table */}
         <div className="overflow-x-auto">
@@ -220,7 +244,7 @@ const EmployeePage = () => {
             </TableHeader>
             <TableBody>
             {currentItems.map((item, index) => (
-                <TableRow key={index}>
+                <TableRow key={index} className="cursor-pointer" onClick= {() => onNavigateDetail(item.eId)}>
                   <TableCell className="text-center">{item.eId}</TableCell>
                   <TableCell className="text-center flex justify-center items-center">
                     <Avatar>

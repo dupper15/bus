@@ -23,6 +23,8 @@ import LinePage from "./pages/Manager/LinePage/LinePage";
 import TicketPage from "./pages/Manager/TicketPage/TicketPage";
 import MaintenancePage from "./pages/Manager/MaintenancePage/MaintenancePage";
 import IncentivesPage from "./pages/Manager/IncentivesPage/IncentivesPage";
+import AddEmployeePage from "./pages/Manager/EmployeePage/AddEmployeePage";
+import DetailEmployeePage from "./pages/Manager/EmployeePage/DetailEmployeePage";
 
 axios.interceptors.request.use(
   (config) => {
@@ -52,6 +54,11 @@ export default function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="employee" element={<EmployeePage />} />
+          <Route path="employee/add-employee" element={<AddEmployeePage />} />
+          <Route path="employee/:id/detail-employee" element={<DetailEmployeePage />} />
+            {/* <Route path="edit/:id" element={<EditEmployee />} />
+            <Route path="details/:id" element={<EmployeeDetails />} /> */}
+
           <Route path="customer" element={<CustomerPage />} />
           <Route path="opinion" element={<OpinionPage />} />
           <Route path="schedule" element={<SchedulePage />} />
