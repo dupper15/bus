@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import avatar from "../../../assets/default-profile-icon.png";
  
 import { Button } from "@/components/ui/button"
 import {
@@ -39,9 +40,10 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { CalendarIcon } from 'lucide-react';
+import { ArrowLeft, CalendarIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-  
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 const formSchema = z.object({
   fullname: z.string().min(10, {
     message: "Full name must be at least 10 characters.",
@@ -72,6 +74,9 @@ const formSchema = z.object({
 
 const DetailEmployeePage = () => {
     const navigate = useNavigate()
+    const onBack = () => {
+        navigate(-1)
+    }
     // 1. Define your form.
     const form = useForm({
         resolver: zodResolver(formSchema),
@@ -89,205 +94,209 @@ const DetailEmployeePage = () => {
         },
       });
     return (
-      <div className="justify-center pt-4 px-10 ">
+      <div className="justify-center pt-4 px-40 ">
       <Card >
-        <CardHeader className="flex justify-center items-center bg-[#4CAF50] h-7 rounded-t-lg mb-8">
-            <CardTitle className='text-white font-semibold text-2xl'>Create employee</CardTitle>
+      <CardHeader className="relative flex items-center bg-[#4CAF50] rounded-t-lg mb-8">
+        {/* Icon Back */}
+        <ArrowLeft 
+            onClick={onBack} 
+            className="absolute left-4 mt-2 cursor-pointer text-white "
+            size={40}
+        />
+        {/* Title */}
+        <CardTitle className="text-white font-semibold text-4xl mx-auto">
+            Detail Employee
+        </CardTitle>
         </CardHeader>
         <CardContent>
         <Form {...form}>
-            <form className="space-y-8">
-                <div className="flex gap-4">
-                {/* Full name */}
-                <FormField
-                    control={form.control}
-                    name="fullname"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Full name</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Full name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {/* Gender */}
-                <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Gender</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <form className="space-y-16">
+                <div className='flex gap-8'>
+                    <div className='w-3/4 space-y-8'>
+                        <div className="flex gap-8">
+                    {/* Full name */}
+                    <FormField
+                        control={form.control}
+                        name="fullname"
+                        render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel>Full name</FormLabel>
                             <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a gender" />
-                            </SelectTrigger>
+                            <Input placeholder="Full name" {...field} readOnly />
                             </FormControl>
-                            <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {/* Position */}
-                <FormField
-                    control={form.control}
-                    name="position"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Position</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    {/* Gender */}
+                    <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel>Gender</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a gender" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                <SelectItem value="male">Male</SelectItem>
+                                <SelectItem value="female">Female</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    {/* Position */}
+                    <FormField
+                        control={form.control}
+                        name="position"
+                        render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel>Position</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a position" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                <SelectItem value="busboy">Bus boy</SelectItem>
+                                <SelectItem value="driver">Driver</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    </div>
+                    <div className="flex gap-8">
+                    {/* Phone number */}
+                    <FormField
+                        control={form.control}
+                        name="phonenumber"
+                        render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel>Phone number</FormLabel>
                             <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a position" />
-                            </SelectTrigger>
+                            <Input placeholder="Phone number"  {...field} readOnly/>
                             </FormControl>
-                            <SelectContent>
-                            <SelectItem value="busboy">Bus boy</SelectItem>
-                            <SelectItem value="driver">Driver</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                </div>
-                <div className="flex gap-4">
-                {/* Phone number */}
-                <FormField
-                    control={form.control}
-                    name="phonenumber"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Phone number</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Phone number"  {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {/* National ID */}
-                <FormField
-                    control={form.control}
-                    name="id"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>National ID</FormLabel>
-                        <FormControl>
-                        <Input placeholder="National ID" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                </div>
-                <div className="flex gap-4">
-                {/* Password */}
-                <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {/* Confirm password */}
-                <FormField
-                    control={form.control}
-                    name="confirm"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Confirm pasword</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Confirm password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                </div>
-                <div className="flex gap-4">
-                {/* Salary */}
-                <FormField
-                    control={form.control}
-                    name="salary"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Salary</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Salary" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {/* Hire date */}
-                <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                    <FormItem className="flex flex-col pt-2.5">
-                        <FormLabel>Hire date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    {/* National ID */}
+                    <FormField
+                        control={form.control}
+                        name="id"
+                        render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel>National ID</FormLabel>
                             <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-[240px] text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
+                            <Input placeholder="National ID" {...field} readOnly/>
                             </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date > new Date() || date < new Date("1900-01-01")
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                 {/* Lincense */}
-                 <FormField
-                    control={form.control}
-                    name="license"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Driving license</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Driving license" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    </div>
+                    <div className="flex gap-8">
+                    {/* Password */}
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Password" {...field} readOnly/>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    </div>
+                    <div className="flex gap-8">
+                    {/* Salary */}
+                    <FormField
+                        control={form.control}
+                        name="salary"
+                        render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel>Salary</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Salary" {...field} readOnly/>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    {/* Hire date */}
+                    <FormField
+                        control={form.control}
+                        name="date"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-col pt-2.5">
+                            <FormLabel>Hire date</FormLabel>
+                            <Popover>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                    "w-[240px] text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                    )}
+                                    disabled
+                                >
+                                    {field.value ? (
+                                    format(field.value, "PPP")
+                                    ) : (
+                                    <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                    date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                                />
+                            </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    {/* Lincense */}
+                    <FormField
+                        control={form.control}
+                        name="license"
+                        render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel>Driving license</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Driving license" {...field} readOnly/>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    </div>
+                    </div>
+                    <Avatar className="w-60 h-60 mx-auto my-auto">
+                        <AvatarImage src={avatar} className="w-full h-full" />
+                        <AvatarFallback className="text-xl">CN</AvatarFallback>
+                    </Avatar>
                 </div>
             </form>
         </Form>
