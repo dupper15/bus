@@ -72,90 +72,108 @@ const items = [
 
 const CustomerPage = () => {
   return (
-    <div className="flex justify-center min-h-screen w-full p-4">
-      <div className="space-y-6 w-full max-w-6xl">
-        <div className="flex items-center gap-4">
-          <Search className="flex-grow" />
-          <Button className="flex-shrink-0">+</Button>
+    <div className='flex justify-center min-h-screen w-full p-6 bg-gray-100'>
+      <div className='space-y-8 w-full max-w-7xl bg-white shadow-lg rounded-xl p-8 border border-gray-300'>
+        {/* Header Section */}
+        <div className='flex justify-between items-center mb-8'>
+          <Search
+            className='flex-grow border border-gray-300 rounded-lg px-4 py-3'
+            placeholder='Search customers...'
+          />
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <Table className="overflow-hidden rounded-lg border border-gray-300 ">
-            <TableHeader className="bg-[#4CAF50]">
+        {/* Table Section */}
+        <div className='overflow-x-auto rounded-lg bg-white shadow-md'>
+          <Table className='min-w-full'>
+            <TableHeader className='bg-green-500 pointer-events-none'>
               <TableRow>
-                <TableHead className="text-center text-white">
+                <TableHead className='text-center text-white font-semibold py-4'>
                   Customer ID
                 </TableHead>
-                <TableHead className="text-center text-white">Avatar</TableHead>
-                <TableHead className="text-center text-white">Name</TableHead>
-                <TableHead className="text-center text-white">
+                <TableHead className='text-center text-white font-semibold py-4'>
+                  Avatar
+                </TableHead>
+                <TableHead className='text-center text-white font-semibold py-4'>
+                  Name
+                </TableHead>
+                <TableHead className='text-center text-white font-semibold py-4'>
                   ID Number
                 </TableHead>
-                <TableHead className="text-center text-white">
+                <TableHead className='text-center text-white font-semibold py-4'>
                   Contact
                 </TableHead>
-                <TableHead className="text-center text-white">
+                <TableHead className='text-center text-white font-semibold py-4'>
                   Username
                 </TableHead>
-                <TableHead className="text-center text-white">
-                  Password
+                <TableHead className='text-center text-white font-semibold py-4'>
+                  Actions
                 </TableHead>
-                <TableHead className="text-center text-white">Action</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {items.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className="text-center">{item.cId}</TableCell>
-                  <TableCell className="text-center flex justify-center items-center">
-                    <Avatar>
-                      <AvatarImage src={avatar} />
+                <TableRow key={index} className='border-b hover:bg-gray-100'>
+                  <TableCell className='text-center py-4'>{item.cId}</TableCell>
+                  <TableCell className='text-center py-4'>
+                    <Avatar className='mx-auto'>
+                      <AvatarImage
+                        src={item.avatar}
+                        alt={`${item.name} avatar`}
+                      />
                       <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
                   </TableCell>
-                  <TableCell className="font-medium text-center">
+                  <TableCell className='text-center font-medium py-4'>
                     {item.name}
                   </TableCell>
-                  <TableCell className="text-center">{item.idNumber}</TableCell>
-                  <TableCell className="text-center">{item.phone}</TableCell>
-                  <TableCell className="text-center">{item.username}</TableCell>
-                  <TableCell className="text-center">{item.password}</TableCell>
-                  <TableCell className="text-center flex justify-center items-center">
-                    <Dialog>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <EllipsisVertical className="mb-2 " />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          {/* Show dialog delete */}
+                  <TableCell className='text-center py-4'>
+                    {item.idNumber}
+                  </TableCell>
+                  <TableCell className='text-center py-4'>
+                    {item.phone}
+                  </TableCell>
+                  <TableCell className='text-center py-4'>
+                    {item.username}
+                  </TableCell>
+
+                  {/* Action Section */}
+                  <TableCell className='text-center py-4'>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <EllipsisVertical className='cursor-pointer text-gray-600 hover:text-gray-800' />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className='w-40'>
+                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <Dialog>
                           <DialogTrigger asChild>
-                            <DropdownMenuItem>
-                              <span>Delete</span>
-                            </DropdownMenuItem>
+                            <DropdownMenuItem>Delete</DropdownMenuItem>
                           </DialogTrigger>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle className="text-center">
-                            Are you sure you want to delete?
-                          </DialogTitle>
-                          <DialogDescription>
-                            This action cannot be undone. This will permanently
-                            delete your account and remove your data from our
-                            servers.
-                          </DialogDescription>
-                          <div className="flex items-center justify-center gap-2 pt-4">
-                            <Button variant="outline" className="w-[120px]">
-                              Cancel
-                            </Button>
-                            <Button className="w-[120px]">Confirm</Button>
-                          </div>
-                        </DialogHeader>
-                      </DialogContent>
-                    </Dialog>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle className='text-center text-lg font-semibold'>
+                                Confirm Deletion
+                              </DialogTitle>
+                              <DialogDescription className='text-center text-sm text-gray-600'>
+                                Are you sure you want to delete this customer?
+                                This action cannot be undone.
+                              </DialogDescription>
+                              <div className='flex justify-center gap-4 pt-6'>
+                                <Button
+                                  variant='outline'
+                                  className='w-32 border-gray-300 text-gray-700'>
+                                  Cancel
+                                </Button>
+                                <Button className='w-32 bg-red-600 text-white hover:bg-red-700'>
+                                  Confirm
+                                </Button>
+                              </div>
+                            </DialogHeader>
+                          </DialogContent>
+                        </Dialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
