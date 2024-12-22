@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FaUserEdit } from "react-icons/fa";
 
 import avatar from "../../../assets/default-profile-icon.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -92,20 +93,37 @@ const EmployeePage = () => {
       console.log(data.data);
     },
   });
-  const handleDelete = (eId) => {
-    //mutation1.mutate({ data: eId });
+  const handleDelete = (id) => {
+    //mutation1.mutate({ data: id });
   };
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
   const navigate = useNavigate();
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [editedEmployee, setEditedEmployee] = useState("");
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedEmployee({ ...editedEmployee, [name]: value });
+  };
+
+  const handleCancel = () => {
+    setEditedEmployee(selectedEmployee);
+    setIsEditing(false);
+  };
+
+  const handleSave = () => {
+    handleEdit(editedEmployee);
+    setIsEditing(false);
+  };
   const currentItems = items
     .filter((item) =>
       item.name.toLowerCase().includes(searchWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -277,68 +295,181 @@ const EmployeePage = () => {
             </PaginationContent>
           </Pagination>
         </div>
+
         <div className='hidden md:basis-1/3 h-max md:flex justify-start items-start gap-6 flex-col'>
-          <div className='w-full h-max bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
-            <h2 className='text-xl font-semibold text-green-500 mb-4 text-center'>
+          <div className='w-full h-max bg-white shadow-lg rounded-xl p-6 border border-gray-200'>
+            <FaUserEdit
+              onClick={() => setIsEditing(true)}
+              className='text-green-500 hover:text-green-400 cursor-pointer'
+            />
+            <h2 className='text-2xl font-semibold text-green-500 mb-4 text-center'>
               Employee Detail
             </h2>
+
             {selectedEmployee ? (
               <div className='space-y-4'>
-                <Avatar className='mx-auto w-20 h-20 border-2 border-green-500'>
-                  <AvatarImage
-                    src={
-                      selectedEmployee.image ? selectedEmployee.image : avatar
-                    }
-                  />
-                  <AvatarFallback>CN</AvatarFallback>
-                </Avatar>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>ID:</span>
-                  <span className='text-gray-800'>{selectedEmployee.eId}</span>
+                <div className='flex justify-center'>
+                  <Avatar className='w-24 h-24 border-4 border-green-500 shadow-xl'>
+                    <AvatarImage
+                      src={
+                        selectedEmployee.image
+                          ? selectedEmployee.image
+                          : "default-avatar.jpg"
+                      }
+                    />
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
                 </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Name:</span>
-                  <span className='text-gray-800'>{selectedEmployee.name}</span>
+
+                <div className='space-y-3'>
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>ID:</span>
+
+                    <span className='text-gray-800'>
+                      {selectedEmployee.eId}
+                    </span>
+                  </div>
+
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>Name:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='name'
+                        value={editedEmployee.name}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.name}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>Gender:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='gender'
+                        value={editedEmployee.gender}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.gender}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>Salary:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='salary'
+                        value={editedEmployee.salary}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.salary}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>Role:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='position'
+                        value={editedEmployee.position}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.position}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>Phone:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='phone'
+                        value={editedEmployee.phone}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.phone}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>
+                      Hire date:
+                    </span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='hire_date'
+                        value={editedEmployee.hire_date}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.hire_date}
+                      </span>
+                    )}
+                  </div>
+
+                  {selectedEmployee.license && (
+                    <div className='flex justify-between items-center'>
+                      <span className='font-medium text-gray-600'>
+                        License:
+                      </span>
+                      {isEditing ? (
+                        <input
+                          type='text'
+                          name='license'
+                          value={editedEmployee.license}
+                          onChange={handleInputChange}
+                          className='text-gray-800 border p-2 rounded-md w-full'
+                        />
+                      ) : (
+                        <span className='text-gray-800'>
+                          {selectedEmployee.license}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Gender:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.gender}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Salary:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.salary}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Role:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.position}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Phone:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.phone}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Hire date:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.hire_date}
-                  </span>
-                </div>
-                <div
-                  className={`${
-                    selectedEmployee.license == "" ? "hidden" : "flex"
-                  } justify-between items-center`}>
-                  <span className='font-medium text-gray-600'>License:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.license}
-                  </span>
-                </div>
+
+                {isEditing && (
+                  <div className='flex justify-between mt-6'>
+                    <button
+                      className='bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition'
+                      onClick={handleCancel}>
+                      Cancel
+                    </button>
+                    <button
+                      className='bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition'
+                      onClick={handleSave}>
+                      Save
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <p className='text-gray-500 text-center'>Select an employee</p>
