@@ -1,6 +1,6 @@
-const Employee = require("../models/EmployeeModel")
-const bcrypt = require("bcrypt")
-const {generalAccessToken, generalRefreshToken} = require("./jwtService")
+const Employee = require("../models/EmployeeModel");
+const bcrypt = require("bcrypt");
+const { generalAccessToken, generalRefreshToken } = require("./jwtService");
 
 const createEmployee = async (data) => {
     try {
@@ -72,41 +72,49 @@ const createEmployee = async (data) => {
     }
 };
 
-
 const loginEmployee = (EmployeeLogin) => {
-    return new Promise(async (resolve, reject) => {
-        const {id_card, password} = EmployeeLogin
-        try {
-            const checkEmployee = await Employee.findOne({id_card})
-            if (checkEmployee === null) {
-                resolve({
-                    status: "ERROR", message: "No employee found with the provided ID card."
-                })
-                return;
-            }
+  return new Promise(async (resolve, reject) => {
+    const { id_card, password } = EmployeeLogin;
+    try {
+      const checkEmployee = await Employee.findOne({ id_card });
+      if (checkEmployee === null) {
+        resolve({
+          status: "ERROR",
+          message: "No employee found with the provided ID card.",
+        });
+        return;
+      }
 
-            const comparePassword = bcrypt.compareSync(password, checkEmployee.password)
-            if (!comparePassword) {
-                resolve({
-                    status: "ERROR", message: "Incorrect ID card or password."
-                })
-                return;
-            }
+      const comparePassword = bcrypt.compareSync(
+        password,
+        checkEmployee.password
+      );
+      if (!comparePassword) {
+        resolve({
+          status: "ERROR",
+          message: "Incorrect ID card or password.",
+        });
+        return;
+      }
 
-            const access_token = await generalAccessToken({id: checkEmployee.id})
-            const refresh_token = await generalRefreshToken({id: checkEmployee.id})
+      const access_token = await generalAccessToken({ id: checkEmployee.id });
+      const refresh_token = await generalRefreshToken({ id: checkEmployee.id });
 
-            resolve({
-                status: "OK", message: "Login successful.", access_token, refresh_token
-            })
-
-        } catch (e) {
-            reject({
-                status: "ERROR", message: "An error occurred while logging in the employee.", error: e
-            })
-        }
-    })
-}
+      resolve({
+        status: "OK",
+        message: "Login successful.",
+        access_token,
+        refresh_token,
+      });
+    } catch (e) {
+      reject({
+        status: "ERROR",
+        message: "An error occurred while logging in the employee.",
+        error: e,
+      });
+    }
+  });
+};
 
 const updateEmployee = (data) => {
     return new Promise(async (resolve, reject) => {
@@ -209,7 +217,6 @@ const deleteEmployee = async (data) => {
     }
 };
 
-
 module.exports = {
     createEmployee, 
     loginEmployee, 
@@ -218,3 +225,4 @@ module.exports = {
     getDetailEmployee, 
     deleteEmployee
 }
+

@@ -25,6 +25,8 @@ import MaintenancePage from "./pages/Manager/MaintenancePage/MaintenancePage";
 import IncentivesPage from "./pages/Manager/IncentivesPage/IncentivesPage";
 import AddEmployeePage from "./pages/Manager/EmployeePage/AddEmployeePage";
 import DetailEmployeePage from "./pages/Manager/EmployeePage/DetailEmployeePage";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+const queryClient = new QueryClient();
 
 axios.interceptors.request.use(
   (config) => {
@@ -41,35 +43,40 @@ axios.interceptors.request.use(
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<WelcomePage />} />
-        <Route path="/login" element={<SignInPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/home/*" element={<MainPage />} />
-        <Route path="/payment/*" element={<MainBuyPage />} />
-        <Route path="*" element={<Page404 />} />
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          <Route path='/' element={<WelcomePage />} />
+          <Route path='/login' element={<SignInPage />} />
+          <Route path='/signup' element={<SignUpPage />} />
+          <Route path='/home/*' element={<MainPage />} />
+          <Route path='/payment/*' element={<MainBuyPage />} />
+          <Route path='*' element={<Page404 />} />
 
-        <Route path="/manage" element={<DashboardLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="employee" element={<EmployeePage />} />
-          <Route path="employee/add-employee" element={<AddEmployeePage />} />
-          <Route path="employee/:id/detail-employee" element={<DetailEmployeePage />} />
+          <Route path='/manage' element={<DashboardLayout />}>
+            <Route index element={<Navigate to='dashboard' replace />} />
+            <Route path='dashboard' element={<DashboardPage />} />
+            <Route path='employee' element={<EmployeePage />} />
+            <Route path='employee/add-employee' element={<AddEmployeePage />} />
+            <Route
+              path='employee/:id/detail-employee'
+              element={<DetailEmployeePage />}
+            />
             {/* <Route path="edit/:id" element={<EditEmployee />} />
             <Route path="details/:id" element={<EmployeeDetails />} /> */}
 
-          <Route path="customer" element={<CustomerPage />} />
-          <Route path="opinion" element={<OpinionPage />} />
-          <Route path="schedule" element={<SchedulePage />} />
-          <Route path="bus" element={<BusPage />} />
-          <Route path="bus-stop" element={<StopPage />} />
-          <Route path="line" element={<LinePage />} />
-          <Route path="ticket" element={<TicketPage />} />
-          <Route path="maintenance" element={<MaintenancePage />} />
-          <Route path="incentives" element={<IncentivesPage />} />
-        </Route>
-      </Routes>
-    </Router>
+            <Route path='customer' element={<CustomerPage />} />
+            <Route path='opinion' element={<OpinionPage />} />
+            <Route path='schedule' element={<SchedulePage />} />
+            <Route path='bus' element={<BusPage />} />
+            <Route path='bus-stop' element={<StopPage />} />
+            <Route path='line' element={<LinePage />} />
+            <Route path='ticket' element={<TicketPage />} />
+            <Route path='maintenance' element={<MaintenancePage />} />
+            <Route path='incentives' element={<IncentivesPage />} />
+          </Route>
+        </Routes>
+      </Router>
+    </QueryClientProvider>
   );
 }
