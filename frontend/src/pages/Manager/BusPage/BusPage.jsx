@@ -30,6 +30,15 @@ import FormSchedule from "../../../components/SmallForm/FormSchedule";
 import avatar from "../../../assets/default-profile-icon.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+import { useSearchParams } from "react-router-dom";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 const items = [
   {
     id: "B001",
@@ -184,6 +193,27 @@ const items = [
 ];
 
 const BusPage = () => {
+  const ITEMS_PER_PAGE = 10;
+  const [searchWord, setSearchWord] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page")) || 1;
+
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const currentItems = items
+    .filter((item) =>
+      item.license_plate.toLowerCase().includes(searchWord.toLowerCase())
+    )
+    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setSearchParams({ page: page });
+    }
+  };
+  const handleSearchChanged = (e) => {
+    setSearchWord(e.target.value);
+    setSearchParams({ page: 1 });
+  };
   const [showForm, setShowForm] = useState(false); // Quản lý trạng thái hiển thị FormSchedule
   const [showDialog, setShowDialog] = useState(false); // Quản lý trạng thái hiển thị Dialog
   const [dialogType, setDialogType] = useState(""); // Quản lý loại Dialog (edit, delete)
@@ -211,7 +241,11 @@ const BusPage = () => {
     <div className='flex justify-center min-h-screen w-full p-4'>
       <div className='space-y-6 w-full max-w-6xl'>
         <div className='flex items-center gap-4'>
-          <Search text='Type line id...' className='flex-grow' />
+          <Search
+            className='flex-grow border border-gray-300 rounded-lg p-2'
+            onChange={handleSearchChanged}
+            text='Type customer name...'
+          />
           <Button className='flex-shrink-0'>
             <FaRegCalendarMinus />
           </Button>
@@ -242,7 +276,7 @@ const BusPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item, index) => (
+              {currentItems.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell className='text-center py-3 px-4'>
                     {item.id}
@@ -299,6 +333,40 @@ const BusPage = () => {
             </TableBody>
           </Table>
         </div>
+        <Pagination className='flex justify-center items-center gap-4'>
+          <PaginationContent className='flex gap-2'>
+            <PaginationItem>
+              <PaginationPrevious
+                href='#'
+                onClick={() => handlePageChange(currentPage - 1)}
+                className='text-green-500 hover:text-green-700'>
+                Previous
+              </PaginationPrevious>
+            </PaginationItem>
+            {[...Array(totalPages)].map((_, index) => (
+              <PaginationItem key={index}>
+                <PaginationLink
+                  href='#'
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`px-4 py-2 rounded-full transition ${
+                    index + 1 === currentPage
+                      ? "bg-green-500 text-white"
+                      : "hover:bg-gray-200"
+                  }`}>
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext
+                href='#'
+                onClick={() => handlePageChange(currentPage + 1)}
+                className='text-green-500 hover:text-green-700'>
+                Next
+              </PaginationNext>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
         {showForm && dialogType == "add" && (
           <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
             <FormSchedule handleClose={handleClose} isAdd='true' />
