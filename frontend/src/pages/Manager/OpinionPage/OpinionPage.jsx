@@ -12,13 +12,23 @@ import {
 } from "@/components/ui/table";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { useSearchParams } from "react-router-dom";
-
+import Feedback from "@/components/SmallForm/Feedback";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 const items = [
   {
     oId: "O001",
     title: "Impolite attitude",
     cId: "C001",
     name: "John Smith",
+    content: "The staff was impolite to me",
     date: "20-10-2024",
     status: "Resolved",
   },
@@ -27,6 +37,8 @@ const items = [
     title: "Impolite attitude",
     cId: "C001",
     name: "John Smith",
+    content: "The staff was impolite to me2",
+    feedback: "We are sorry for the inconvenience",
     date: "21-12-2024",
     status: "Pending",
   },
@@ -35,6 +47,7 @@ const items = [
     title: "test",
     cId: "C001",
     name: "John Smith",
+    content: "",
     date: "20-12-2024",
     status: "Pending",
   },
@@ -49,32 +62,44 @@ const items = [
 ];
 
 const OpinionPage = () => {
+  const ITEMS_PER_PAGE = 10;
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedTime, setSelectedTime] = useState("All");
-  const [filteredItems, setFilteredItems] = useState(items);
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page")) || 1;
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const [currentContent, setCurrentContent] = useState("");
+  const [currentFeedback, setCurrentFeedback] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const handleClose = () => {
+    setShowForm(false);
+  };
+
+  const [currentItems, setCurrentItems] = useState([]);
+
   useEffect(() => {
     filterItems();
-  }, [selectedStatus, selectedTime, searchWord]);
+  }, [selectedStatus, selectedTime, searchWord, currentPage]);
+
   const parseDate = (dateString) => {
     const [day, month, year] = dateString.split("-").map(Number);
     return new Date(year, month - 1, day);
   };
-  const handleSearchChanged = (e) => {
-    setSearchWord(e.target.value);
-    setSearchParams({ page: 1 });
-  };
+
   const filterItems = () => {
     const currentDate = new Date();
+
     const filtered = items.filter((item) => {
       if (selectedStatus && item.status !== selectedStatus) return false;
+
       if (
         searchWord &&
         !item.title.toLowerCase().includes(searchWord.toLowerCase())
       ) {
         return false;
       }
+
       if (selectedTime) {
         const itemDate = parseDate(item.date);
 
@@ -104,7 +129,23 @@ const OpinionPage = () => {
       return true;
     });
 
-    setFilteredItems(filtered);
+    const paginatedItems = filtered.slice(
+      (currentPage - 1) * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE
+    );
+
+    setCurrentItems(paginatedItems);
+  };
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setSearchParams({ page: page });
+    }
+  };
+
+  const handleSearchChanged = (e) => {
+    setSearchWord(e.target.value);
+    setSearchParams({ page: 1 });
   };
 
   return (
@@ -126,7 +167,7 @@ const OpinionPage = () => {
             <Search
               className=' border border-gray-300 rounded-lg p-2'
               onChange={handleSearchChanged}
-              text='Type employee name...'
+              text='Type title...'
             />
           </div>
           <div className='flex items-center gap-2 basis-1/5'>
@@ -171,8 +212,15 @@ const OpinionPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredItems.map((item, index) => (
-                <TableRow key={index} className='hover:bg-gray-50'>
+              {currentItems.map((item, index) => (
+                <TableRow
+                  key={index}
+                  className='hover:bg-gray-50'
+                  onClick={() => {
+                    setShowForm(true);
+                    setCurrentContent(item.content);
+                    setCurrentFeedback(item.feedback);
+                  }}>
                   <TableCell className='text-center' py-3 px-4>
                     {item.oId}
                   </TableCell>
@@ -206,6 +254,40 @@ const OpinionPage = () => {
             </TableBody>
           </Table>
         </div>
+        <Pagination className='flex justify-center items-center gap-4'>
+          <PaginationContent className='flex gap-2'>
+            <PaginationItem>
+              <PaginationPrevious
+                href='#'
+                onClick={() => handlePageChange(currentPage - 1)}
+                className='text-green-500 hover:text-green-700'>
+                Previous
+              </PaginationPrevious>
+            </PaginationItem>
+            {[...Array(totalPages)].map((_, index) => (
+              <PaginationItem key={index}>
+                <PaginationLink
+                  href='#'
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`px-4 py-2 rounded-full transition ${
+                    index + 1 === currentPage
+                      ? "bg-green-500 text-white"
+                      : "hover:bg-gray-200"
+                  }`}>
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext
+                href='#'
+                onClick={() => handlePageChange(currentPage + 1)}
+                className='text-green-500 hover:text-green-700'>
+                Next
+              </PaginationNext>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
       <div className='hidden w-1/3 md:flex flex-col gap-6'>
         <div className='bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
@@ -233,6 +315,15 @@ const OpinionPage = () => {
           </div>
         </div>
       </div>
+      {showForm && (
+        <div className='fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform'>
+          <Feedback
+            handleClose={handleClose}
+            content={currentContent}
+            feedback={currentFeedback}
+          />
+        </div>
+      )}
     </div>
   );
 };
