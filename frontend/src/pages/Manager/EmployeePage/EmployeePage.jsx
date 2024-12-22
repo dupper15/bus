@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import Search from "@/components/ui/search";
-import React, { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -40,94 +41,9 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useNavigate, useSearchParams } from "react-router-dom";
-//import AddEmployeePage from "./AddEmployeePage";
+import * as EmployeeService from "../../../services/employeeService";
+import { set } from "date-fns";
 
-const items = [
-  {
-    eId: "E001",
-    name: "John Smith",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E002",
-    name: "John Smith",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E003",
-    name: "John Smith",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E004",
-    name: "John Smith",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E005",
-    name: "John Smith",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E006",
-    name: "Lam",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E007",
-    name: "John Smith",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E008",
-    name: "John Smith",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E009",
-    name: "Nhat",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E010",
-    name: "John Smith",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E011",
-    name: "John Smith",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-  {
-    eId: "E012",
-    name: "John Smith",
-    avatar: avatar,
-    role: "Bus boy",
-    phone: "0912345678",
-  },
-];
 const requests = [
   {
     id: "001",
@@ -141,11 +57,44 @@ const requests = [
     request: "Salary Adjustment",
     dateSent: "2024-12-20",
   },
-  // Thêm các yêu cầu khác
 ];
 const ITEMS_PER_PAGE = 10;
 
 const EmployeePage = () => {
+  const [items, setItems] = useState([]);
+  const mutation = useMutation({
+    mutationFn: () => {
+      return EmployeeService.getAllEmployee();
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      setItems(data.data);
+      console.log(data.data);
+    },
+  });
+  useEffect(() => {
+    getAll();
+    console.log(items);
+  }, []);
+  const getAll = () => {
+    mutation.mutate();
+  };
+  const mutation1 = useMutation({
+    mutationFn: ({ data }) => {
+      return EmployeeService.deleteEmployee(data);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      console.log(data.data);
+    },
+  });
+  const handleDelete = (eId) => {
+    //mutation1.mutate({ data: eId });
+  };
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
@@ -172,21 +121,17 @@ const EmployeePage = () => {
   };
 
   const onNavigateDetail = (eId) => {
-    navigate(`/manage/employee/${eId}/detail-employee`);
+    // navigate(`/manage/employee/${eId}/detail-employee`);
   };
   const handleSearchChanged = (e) => {
-    setSearchWord(e.target.value); // Cập nhật giá trị tìm kiếm
-    setSearchParams({ page: 1 }); // Quay về trang đầu tiên
+    setSearchWord(e.target.value);
+    setSearchParams({ page: 1 });
   };
   const handleEdit = (eId) => {
-    console.log("Editing...");
-    onNavigateDetail(eId);
+    // console.log("Editing...");
+    //onNavigateDetail(eId);
   };
 
-  const handleDelete = (eId) => {
-    console.log("Deleting...");
-    // Thêm logic xử lý xóa tại đây
-  };
   return (
     <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
       <div className='flex w-full space-x-6'>
@@ -237,7 +182,7 @@ const EmployeePage = () => {
                     </TableCell>
                     <TableCell className='flex justify-center items-center py-3 px-4'>
                       <Avatar className='w-10 h-10 border-2 border-green-500'>
-                        <AvatarImage src={avatar} />
+                        <AvatarImage src={item.image ? item.image : avatar} />
                         <AvatarFallback>CN</AvatarFallback>
                       </Avatar>
                     </TableCell>
@@ -245,7 +190,7 @@ const EmployeePage = () => {
                       {item.name}
                     </TableCell>
                     <TableCell className='text-center py-3 px-4'>
-                      {item.role}
+                      {item.position}
                     </TableCell>
                     <TableCell className='text-center py-3 px-4'>
                       {item.phone}
@@ -339,6 +284,14 @@ const EmployeePage = () => {
             </h2>
             {selectedEmployee ? (
               <div className='space-y-4'>
+                <Avatar className='mx-auto w-20 h-20 border-2 border-green-500'>
+                  <AvatarImage
+                    src={
+                      selectedEmployee.image ? selectedEmployee.image : avatar
+                    }
+                  />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
                 <div className='flex justify-between items-center'>
                   <span className='font-medium text-gray-600'>ID:</span>
                   <span className='text-gray-800'>{selectedEmployee.eId}</span>
@@ -348,13 +301,42 @@ const EmployeePage = () => {
                   <span className='text-gray-800'>{selectedEmployee.name}</span>
                 </div>
                 <div className='flex justify-between items-center'>
+                  <span className='font-medium text-gray-600'>Gender:</span>
+                  <span className='text-gray-800'>
+                    {selectedEmployee.gender}
+                  </span>
+                </div>
+                <div className='flex justify-between items-center'>
+                  <span className='font-medium text-gray-600'>Salary:</span>
+                  <span className='text-gray-800'>
+                    {selectedEmployee.salary}
+                  </span>
+                </div>
+                <div className='flex justify-between items-center'>
                   <span className='font-medium text-gray-600'>Role:</span>
-                  <span className='text-gray-800'>{selectedEmployee.role}</span>
+                  <span className='text-gray-800'>
+                    {selectedEmployee.position}
+                  </span>
                 </div>
                 <div className='flex justify-between items-center'>
                   <span className='font-medium text-gray-600'>Phone:</span>
                   <span className='text-gray-800'>
                     {selectedEmployee.phone}
+                  </span>
+                </div>
+                <div className='flex justify-between items-center'>
+                  <span className='font-medium text-gray-600'>Hire date:</span>
+                  <span className='text-gray-800'>
+                    {selectedEmployee.hire_date}
+                  </span>
+                </div>
+                <div
+                  className={`${
+                    selectedEmployee.license == "" ? "hidden" : "flex"
+                  } justify-between items-center`}>
+                  <span className='font-medium text-gray-600'>License:</span>
+                  <span className='text-gray-800'>
+                    {selectedEmployee.license}
                   </span>
                 </div>
               </div>
