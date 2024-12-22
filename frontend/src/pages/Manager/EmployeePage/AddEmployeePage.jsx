@@ -1,5 +1,4 @@
 import React from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,6 +16,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import * as EmployeeService from "../../../services/employeeService";
+import { useMutation } from "@tanstack/react-query";
 
 import {
   Card,
@@ -43,33 +44,30 @@ import { CalendarIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
-  fullname: z.string().min(10, {
-    message: "Full name must be at least 10 characters.",
-  }),
-  phonenumber: z
+  name: z
     .string()
-    .length(10, {
-      message: "Phone number must be exactly 10 digits.",
-    })
-    .regex(/^\d{10}$/, {
-      message: "Phone number must contain only digits.",
-    }),
+    .min(10, { message: "Full name must be at least 10 characters." }),
+  password: z
+    .string()
+    .min(7, { message: "Password must be at least 7 characters." }),
+  confirmPassword: z
+    .string()
+    .min(7, { message: "Password must be at least 7 characters." }),
+  phone: z
+    .string()
+    .length(10, { message: "Phone number must be exactly 10 digits." })
+    .regex(/^\d{10}$/, { message: "Phone number must contain only digits." }),
   salary: z
     .string()
-    .length(7, {
-      message: "Salary must be at least 1 000 000 VND.",
-    })
-    .regex(/^\d{10}$/, {
-      message: "Salary must contain only digits.",
-    }),
-  id: z
+    .length(7, { message: "Salary must be at least 1 000 000 VND." }),
+  id_card: z
     .string()
-    .length(12, {
-      message: "National ID must be exactly 12 digits.",
-    })
-    .regex(/^\d{12}$/, {
-      message: "National ID must contain only digits.",
-    }),
+    .length(12, { message: "National ID must be exactly 12 digits." })
+    .regex(/^\d{12}$/, { message: "National ID must contain only digits." }),
+
+  license: z
+    .string()
+    .min(6, { message: "License must be at least 6 characters." }),
   gender: z.string().refine((value) => value === "male" || value === "female", {
     message: "Please select a gender.",
   }),
@@ -82,31 +80,44 @@ const formSchema = z.object({
 
 const AddEmployeePage = () => {
   const navigate = useNavigate();
-  // 1. Define your form.
+  const mutation = useMutation({
+    mutationFn: async ({ data }) => {
+      return await EmployeeService.addEmployee(data);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      console.log("Data:", data);
+    },
+  });
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullname: "",
+      name: "",
       gender: "",
       position: "",
-      phonenumber: "",
+      phone: "",
       id: "",
       password: "",
-      confirm: "",
+      confirmPassword: "",
       salary: "",
-      date: "",
+      hire_date: "",
       license: "",
     },
   });
-  // 2. Hàm xử lý submit
-  const onCreate = (values) => {
-    console.log(values);
+
+  const onCreate = (e) => {
+    e.preventDefault();
+    const values = form.getValues();
+    mutation.mutate({ data: values });
+    console.log("Form submitted successfully");
   };
 
-  // 3. Hàm xử lý submit
   const onCancel = () => {
     navigate(-1);
   };
+
   return (
     <div className='justify-center pt-4 px-10'>
       <Card>
@@ -117,12 +128,11 @@ const AddEmployeePage = () => {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onCreate)} className='space-y-6'>
-              {/* Full name, Gender, Position */}
+            <form onSubmit={(e) => onCreate(e)} className='space-y-6'>
               <div className='flex gap-6'>
                 <FormField
                   control={form.control}
-                  name='fullname'
+                  name='name'
                   render={({ field }) => (
                     <FormItem className='flex-1'>
                       <FormLabel>Full Name</FormLabel>
@@ -133,6 +143,7 @@ const AddEmployeePage = () => {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name='gender'
@@ -141,7 +152,7 @@ const AddEmployeePage = () => {
                       <FormLabel>Gender</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}>
+                        value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder='Select a gender' />
@@ -156,6 +167,7 @@ const AddEmployeePage = () => {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name='position'
@@ -164,7 +176,7 @@ const AddEmployeePage = () => {
                       <FormLabel>Position</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}>
+                        value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder='Select a position' />
@@ -180,11 +192,12 @@ const AddEmployeePage = () => {
                   )}
                 />
               </div>
+
               {/* Phone Number, National ID */}
               <div className='flex gap-6'>
                 <FormField
                   control={form.control}
-                  name='phonenumber'
+                  name='phone'
                   render={({ field }) => (
                     <FormItem className='flex-1'>
                       <FormLabel>Phone Number</FormLabel>
@@ -195,9 +208,10 @@ const AddEmployeePage = () => {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
-                  name='id'
+                  name='id_card'
                   render={({ field }) => (
                     <FormItem className='flex-1'>
                       <FormLabel>National ID</FormLabel>
@@ -209,7 +223,6 @@ const AddEmployeePage = () => {
                   )}
                 />
               </div>
-              {/* Password, Confirm Password */}
               <div className='flex gap-6'>
                 <FormField
                   control={form.control}
@@ -228,9 +241,10 @@ const AddEmployeePage = () => {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
-                  name='confirm'
+                  name='confirmPassword'
                   render={({ field }) => (
                     <FormItem className='flex-1'>
                       <FormLabel>Confirm Password</FormLabel>
@@ -246,7 +260,6 @@ const AddEmployeePage = () => {
                   )}
                 />
               </div>
-              {/* Salary, Hire Date, Driving License */}
               <div className='flex gap-6'>
                 <FormField
                   control={form.control}
@@ -261,37 +274,29 @@ const AddEmployeePage = () => {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
-                  name='date'
+                  name='hire_date'
                   render={({ field }) => (
                     <FormItem className='flex-1'>
                       <FormLabel>Hire Date</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant='outline'
-                              className={cn(
-                                "w-full text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}>
-                              {field.value
-                                ? format(field.value, "PPP")
-                                : "Pick a date"}
-                              <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
-                            </Button>
-                          </FormControl>
+                          <Button
+                            variant='outline'
+                            className='w-full text-left font-normal'>
+                            {field.value
+                              ? format(field.value, "PPP")
+                              : "Pick a date"}
+                            <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
+                          </Button>
                         </PopoverTrigger>
                         <PopoverContent className='w-auto p-0' align='start'>
                           <Calendar
                             mode='single'
                             selected={field.value}
                             onSelect={field.onChange}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
                           />
                         </PopoverContent>
                       </Popover>
@@ -299,6 +304,7 @@ const AddEmployeePage = () => {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name='license'
@@ -313,7 +319,8 @@ const AddEmployeePage = () => {
                   )}
                 />
               </div>
-              {/* Cancel and Create */}
+
+              {/* Cancel and Create buttons */}
               <div className='flex justify-end space-x-4'>
                 <Button
                   onClick={onCancel}
@@ -322,7 +329,6 @@ const AddEmployeePage = () => {
                   Cancel
                 </Button>
                 <Button
-                  onClick={onCreate}
                   type='submit'
                   className='bg-green-500 text-white hover:bg-green-600'>
                   Create
