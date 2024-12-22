@@ -13,22 +13,6 @@ const createEmployee = async (req, res) => {
             error: e
         })
     }
-    if (position == "driver" && !license) {
-      return res.status(400).json({
-        status: "ERROR",
-        message: "License is required for drivers.",
-      });
-    }
-    const response = await EmployeeService.createEmployee(req.body);
-    return res.status(201).json(response);
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({
-      status: "ERROR",
-      message: "An error occurred while creating the employee.",
-      error: e,
-    });
-  }
 };
 
 const loginEmployee = async (req, res) => {
@@ -66,17 +50,7 @@ const updateEmployee = async (req, res) => {
             error: e
         })
     }
-    const response = await EmployeeService.updateEmployee(EmployeeId, data);
-    return res.status(200).json(response);
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({
-      status: "ERROR",
-      message: "An error occurred while updating the employee.",
-      error: e,
-    });
-  }
-};
+} 
 
 const getAllEmployee = async (req, res) => {
   try {
@@ -106,16 +80,6 @@ const getDetailEmployee = async (req, res) => {
             error: e
         })
     }
-    const response = await EmployeeService.getDetailEmployee(employeeId);
-    return res.status(200).json(response);
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({
-      status: "ERROR",
-      message: "An error occurred while retrieving the employee details.",
-      error: e,
-    });
-  }
 };
 
 const refreshTokenJwtEmployee = async (req, res) => {
@@ -153,16 +117,6 @@ const deleteEmployee = async (req, res) => {
             error: e
         })
     }
-    const response = await EmployeeService.deleteEmployee(employeeId);
-    return res.status(200).json(response);
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({
-      status: "ERROR",
-      message: "An error occurred while deleting the employee.",
-      error: e,
-    });
-  }
 };
 
 module.exports = {
