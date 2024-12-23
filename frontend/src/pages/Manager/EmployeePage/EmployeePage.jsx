@@ -74,7 +74,6 @@ const EmployeePage = () => {
     },
     onSuccess: (data) => {
       setItems(data.data);
-      console.log(data.data);
     },
   });
   useEffect(() => {
@@ -218,12 +217,12 @@ const EmployeePage = () => {
               +
             </Button>
           </div>
-          <div className='overflow-x-auto bg-gray-50 rounded-lg shadow-md'>
-            <Table className='w-full border-collapse'>
-              <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
+          <div className='overflow-x-auto rounded-lg bg-white shadow-md'>
+            <Table className='min-w-full'>
+              <TableHeader className='bg-green-500 pointer-events-none'>
                 <TableRow>
                   {[
-                    "Employee ID",
+                    "ID",
                     "Avatar",
                     "Name",
                     "Role",
@@ -232,7 +231,7 @@ const EmployeePage = () => {
                   ].map((header, idx) => (
                     <TableHead
                       key={idx}
-                      className='text-center text-white text-base py-3 px-4'>
+                      className='text-center text-white font-semibold py-4'>
                       {header}
                     </TableHead>
                   ))}
@@ -264,6 +263,16 @@ const EmployeePage = () => {
                     <TableCell className='text-center py-3 px-4'>
                       {item.phone}
                     </TableCell>
+                    <TableCell className='text-center py-4'>
+                      <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            item.status === "Disable"
+                              ? "bg-red-100 text-red-600"
+                              : "bg-green-100 text-green-600"
+                          }`}>
+                          {item.status}
+                        </span>
+                    </TableCell>
                     <TableCell className='text-center flex justify-center items-center py-3 px-4'>
                       <Dialog>
                         <DropdownMenu>
@@ -288,7 +297,7 @@ const EmployeePage = () => {
                             </DialogTitle>
                             <DialogDescription className='text-gray-600'>
                               This action cannot be undone. This will
-                              permanently delete your account and remove your
+                              permanently delete your employee and remove your
                               data from our servers.
                             </DialogDescription>
                             <div className='flex items-center justify-center gap-4 pt-4'>
