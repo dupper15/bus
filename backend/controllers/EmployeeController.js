@@ -106,8 +106,7 @@ const refreshTokenJwtEmployee = async (req, res) => {
 const deleteEmployee = async (req, res) => {
     try {
         const employeeId = req.params.id
-        const data = req.body;
-        const response = await EmployeeService.deleteEmployee(data)
+        const response = await EmployeeService.deleteEmployee(employeeId)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
