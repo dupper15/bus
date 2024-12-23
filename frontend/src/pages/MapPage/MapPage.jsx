@@ -20,7 +20,7 @@ const MapPage = () => {
     } = useBusLinesViewModel();
 
     return (
-        <div className="flex flex-col h-screen">
+        <div className="flex flex-col h-screen bg-gray-100">
             <Header />
             <div className="flex flex-1">
                 {!selectedLine && <Sidebar lines={lines} onSelectLine={handleLineSelect} onSearch={handleSearch} />}
@@ -32,7 +32,9 @@ const MapPage = () => {
                         onSelectStop={handleSelectStop}
                     />
                 )}
-                <MapView stops={stops} busLines={busLines} selectedStopCoordinates={selectedStopCoordinates} />
+                <div className="flex-1">
+                    <MapView stops={stops} busLines={busLines} selectedStopCoordinates={selectedStopCoordinates} />
+                </div>
             </div>
             <Footer />
         </div>

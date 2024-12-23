@@ -1,27 +1,35 @@
 import PropTypes from "prop-types";
+import { useState } from "react";
 
-const TabSwitch = ({ activeTab, onTabChange }) => {
+const TabSwitch = ({ tabs, onTabSelect }) => {
+    const [activeTab, setActiveTab] = useState(tabs[0].key);
+
+    const handleTabClick = (key) => {
+        setActiveTab(key);
+        onTabSelect(key);
+    };
+
     return (
-        <div className="tab-switch">
-            <button
-                className={activeTab === "outbound" ? "active" : ""}
-                onClick={() => onTabChange("outbound")}
-            >
-                Outbound Trip
-            </button>
-            <button
-                className={activeTab === "return" ? "active" : ""}
-                onClick={() => onTabChange("return")}
-            >
-                Return Trip
-            </button>
+        <div className="flex border-b border-gray-200 mb-4">
+            {tabs.map((tab) => (
+                <button
+                    key={tab.key}
+                    onClick={() => handleTabClick(tab.key)}
+                    className={`p-4 focus:outline-none ${activeTab === tab.key ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+                >
+                    {tab.label}
+                </button>
+            ))}
         </div>
     );
 };
 
-export default TabSwitch;
-
 TabSwitch.propTypes = {
-    activeTab: PropTypes.string.isRequired,
-    onTabChange: PropTypes.func.isRequired,
+    tabs: PropTypes.arrayOf(PropTypes.shape({
+        key: PropTypes.string.isRequired,
+        label: PropTypes.string.isRequired,
+    })).isRequired,
+    onTabSelect: PropTypes.func.isRequired,
 };
+
+export default TabSwitch;

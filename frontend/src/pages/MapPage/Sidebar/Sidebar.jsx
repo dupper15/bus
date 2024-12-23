@@ -1,37 +1,42 @@
-import LineItem from "@/pages/MapPage/LineItem/LineItem.jsx";
 import PropTypes from "prop-types";
-import {linePropTypes} from "@/utils/PropTypes.js";
-import {useState} from "react";
+import { useState } from "react";
 
 const Sidebar = ({ lines, onSelectLine, onSearch }) => {
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
 
-    const handleInputChange = (e) => {
-        const query = e.target.value;
-        setSearchQuery(query);
-        onSearch(query);
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+        onSearch(e.target.value);
     };
 
     return (
-        <aside className="w-1/4 bg-gray-50 p-4 border-r border-gray-200">
+        <aside className="w-1/4 bg-white shadow-lg p-6 border-r border-gray-200">
             <input
                 type="text"
-                placeholder="Find a line"
-                value={searchQuery}
-                onChange={handleInputChange}
-                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Search lines..."
+                className="w-full p-2 mb-4 border border-gray-300 rounded"
             />
-            <div className="space-y-2">
+            <ul className="list-none p-0">
                 {lines.map((line) => (
-                    <LineItem key={line.id} line={line} onSelect={onSelectLine} />
+                    <li key={line.id} className="mb-2">
+                        <button
+                            onClick={() => onSelectLine(line)}
+                            className="w-full text-left p-2 bg-gray-100 hover:bg-gray-200 rounded"
+                        >
+                            <div className="font-semibold">{line.name}</div>
+                            <div className="text-sm text-gray-600">{line.start_place.name} - {line.end_place.name}</div>
+                        </button>
+                    </li>
                 ))}
-            </div>
+            </ul>
         </aside>
     );
 };
 
 Sidebar.propTypes = {
-    lines: PropTypes.arrayOf(linePropTypes).isRequired,
+    lines: PropTypes.arrayOf(PropTypes.object).isRequired,
     onSelectLine: PropTypes.func.isRequired,
     onSearch: PropTypes.func.isRequired,
 };
