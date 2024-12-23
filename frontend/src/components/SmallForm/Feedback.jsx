@@ -28,10 +28,8 @@ const Feedback = ({ handleClose, content, feedback = "" }) => {
           </div>
 
           {feedback && (
-            <div className='p-4 bg-green-50 border-l-4 border-green-500 rounded'>
-              <h3 className='text-green-600 font-semibold mb-2'>
-                Our Feedback
-              </h3>
+            <div className='p-4 bg-blue-50 border-r-4 border-blue-500 rounded text-right'>
+              <h3 className='text-blue-600 font-semibold mb-2'>Our Feedback</h3>
               <p className='text-gray-700'>{feedback}</p>
             </div>
           )}

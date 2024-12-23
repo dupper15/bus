@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Pagination,
@@ -44,7 +44,7 @@ import {
 } from "@/components/ui/pagination";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import * as EmployeeService from "../../../services/employeeService";
-import * as Message from "../../../components/ui/alert"
+import * as Message from "../../../components/ui/alert";
 
 const requests = [
   {
@@ -83,7 +83,7 @@ const EmployeePage = () => {
     mutation.mutate();
   };
   const mutationDelete = useMutation({
-    mutationFn: ({_id }) => {
+    mutationFn: ({ _id }) => {
       return EmployeeService.deleteEmployee(_id);
     },
     onError: (error) => {
@@ -100,8 +100,8 @@ const EmployeePage = () => {
   });
 
   const mutationEdit = useMutation({
-    mutationFn: ({_id, data}) => {
-      return EmployeeService.editEmployee(_id,data);
+    mutationFn: ({ _id, data }) => {
+      return EmployeeService.editEmployee(_id, data);
     },
     onError: (error) => {
       console.log(error);
@@ -117,7 +117,7 @@ const EmployeePage = () => {
   });
 
   const mutationChangeStatus = useMutation({
-    mutationFn: ({_id}) => {
+    mutationFn: ({ _id }) => {
       return EmployeeService.changeStatus(_id);
     },
     onError: (error) => {
@@ -154,21 +154,23 @@ const EmployeePage = () => {
   const handleSave = () => {
     handleEdit(editedEmployee);
     setIsEditing(false);
+    setSelectedEmployee("");
+    setEditedEmployee("");
   };
   const currentItems = items
     .filter((item) =>
       item.name.toLowerCase().includes(searchWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  
-  const [selectedEmployee, setSelectedEmployee] = useState('');
+
+  const [selectedEmployee, setSelectedEmployee] = useState("");
 
   // Query id employee into url
   const currentParams = new URLSearchParams(window.location.search);
-  currentParams.set('id', selectedEmployee._id);
+  currentParams.set("id", selectedEmployee._id);
   window.history.pushState(
     {},
-    '',
+    "",
     `${window.location.pathname}?${currentParams.toString()}`
   );
 
@@ -190,15 +192,15 @@ const EmployeePage = () => {
     setSearchParams({ page: 1 });
   };
   const handleEdit = (employee) => {
-    mutationEdit.mutate({_id: employee._id, data: employee})
+    mutationEdit.mutate({ _id: employee._id, data: employee });
   };
 
   const handleDelete = (_id) => {
-    mutationDelete.mutate({_id: _id})
+    mutationDelete.mutate({ _id: _id });
   };
 
   const handleDisable = (_id) => {
-    mutationChangeStatus.mutate({_id: _id})
+    mutationChangeStatus.mutate({ _id: _id });
   };
 
   return (
@@ -218,7 +220,10 @@ const EmployeePage = () => {
             </Button>
           </div>
           <div className='overflow-x-auto rounded-lg bg-white shadow-md'>
-            <Table className='min-w-full'>
+            <Table
+              className={`min-w-full  ${
+                isEditing ? "pointer-events-none" : ""
+              }`}>
               <TableHeader className='bg-green-500 pointer-events-none'>
                 <TableRow>
                   {[
@@ -227,6 +232,7 @@ const EmployeePage = () => {
                     "Name",
                     "Role",
                     "Contact",
+                    "Status",
                     "Action",
                   ].map((header, idx) => (
                     <TableHead
@@ -244,6 +250,7 @@ const EmployeePage = () => {
                     className='cursor-pointer hover:bg-gray-100 transition'
                     onClick={() => {
                       setSelectedEmployee(item);
+                      setEditedEmployee(item);
                     }}>
                     <TableCell className='text-center py-3 px-4'>
                       {item.id}
@@ -265,13 +272,13 @@ const EmployeePage = () => {
                     </TableCell>
                     <TableCell className='text-center py-4'>
                       <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            item.status === "Disable"
-                              ? "bg-red-100 text-red-600"
-                              : "bg-green-100 text-green-600"
-                          }`}>
-                          {item.status}
-                        </span>
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          item.status === "Disable"
+                            ? "bg-red-100 text-red-600"
+                            : "bg-green-100 text-green-600"
+                        }`}>
+                        {item.status}
+                      </span>
                     </TableCell>
                     <TableCell className='text-center flex justify-center items-center py-3 px-4'>
                       <Dialog>
@@ -280,7 +287,8 @@ const EmployeePage = () => {
                             <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className='bg-white shadow-md rounded-lg'>
-                            <DropdownMenuItem onClick={() => handleDisable(item._id)}>
+                            <DropdownMenuItem
+                              onClick={() => handleDisable(item._id)}>
                               {item.status === "Disable" ? "Enable" : "Disable"}
                             </DropdownMenuItem>
                             <DialogTrigger asChild>
@@ -301,16 +309,21 @@ const EmployeePage = () => {
                               data from our servers.
                             </DialogDescription>
                             <div className='flex items-center justify-center gap-4 pt-4'>
-                            <DialogClose asChild>
-                              <Button variant='outline' className='w-28 '>
-                                Cancel
-                              </Button>
-                            </DialogClose>
-                            <DialogClose asChild>
-                              <Button  onClick={() => handleDelete(selectedEmployee._id)} className='w-28' variant="destructive">
-                                Confirm
-                              </Button>
-                            </DialogClose>
+                              <DialogClose asChild>
+                                <Button variant='outline' className='w-28 '>
+                                  Cancel
+                                </Button>
+                              </DialogClose>
+                              <DialogClose asChild>
+                                <Button
+                                  onClick={() =>
+                                    handleDelete(selectedEmployee._id)
+                                  }
+                                  className='w-28'
+                                  variant='destructive'>
+                                  Confirm
+                                </Button>
+                              </DialogClose>
                             </div>
                           </DialogHeader>
                         </DialogContent>
@@ -384,9 +397,7 @@ const EmployeePage = () => {
                 <div className='space-y-3'>
                   <div className='flex justify-between items-center'>
                     <span className='font-medium text-gray-600'>ID:</span>
-                    <span className='text-gray-800'>
-                      {selectedEmployee.id}
-                    </span>
+                    <span className='text-gray-800'>{selectedEmployee.id}</span>
                   </div>
                   <div className='flex justify-between items-center'>
                     <span className='font-medium text-gray-600'>Name:</span>
@@ -396,7 +407,7 @@ const EmployeePage = () => {
                         name='name'
                         value={editedEmployee.name}
                         onChange={handleInputChange}
-                        className='text-gray-800 border p-2 rounded-md w-full'
+                        className='text-gray-800 border w-2/3 p-2 rounded-md '
                       />
                     ) : (
                       <span className='text-gray-800'>
@@ -405,14 +416,16 @@ const EmployeePage = () => {
                     )}
                   </div>
                   <div className='flex justify-between items-center'>
-                    <span className='font-medium text-gray-600'>National ID:</span>
+                    <span className='font-medium text-gray-600'>
+                      National ID:
+                    </span>
                     {isEditing ? (
                       <input
                         type='text'
                         name='id_card'
                         value={editedEmployee.id_card}
                         onChange={handleInputChange}
-                        className='text-gray-800 border p-2 rounded-md w-full'
+                        className='text-gray-800 border p-2 rounded-md w-2/3'
                       />
                     ) : (
                       <span className='text-gray-800'>
@@ -428,7 +441,7 @@ const EmployeePage = () => {
                         name='gender'
                         value={editedEmployee.gender}
                         onChange={handleInputChange}
-                        className='text-gray-800 border p-2 rounded-md w-full'
+                        className='text-gray-800 border p-2 rounded-md w-2/3'
                       />
                     ) : (
                       <span className='text-gray-800'>
@@ -444,7 +457,7 @@ const EmployeePage = () => {
                         name='salary'
                         value={editedEmployee.salary}
                         onChange={handleInputChange}
-                        className='text-gray-800 border p-2 rounded-md w-full'
+                        className='text-gray-800 border p-2 rounded-md w-2/3'
                       />
                     ) : (
                       <span className='text-gray-800'>
@@ -460,7 +473,7 @@ const EmployeePage = () => {
                         name='position'
                         value={editedEmployee.position}
                         onChange={handleInputChange}
-                        className='text-gray-800 border p-2 rounded-md w-full'
+                        className='text-gray-800 border p-2 rounded-md w-2/3'
                       />
                     ) : (
                       <span className='text-gray-800'>
@@ -476,7 +489,7 @@ const EmployeePage = () => {
                         name='phone'
                         value={editedEmployee.phone}
                         onChange={handleInputChange}
-                        className='text-gray-800 border p-2 rounded-md w-full'
+                        className='text-gray-800 border p-2 rounded-md w-2/3'
                       />
                     ) : (
                       <span className='text-gray-800'>
@@ -492,13 +505,17 @@ const EmployeePage = () => {
                       <input
                         type='text'
                         name='hire_date'
-                        value={new Date(selectedEmployee.hire_date).toLocaleDateString('en-GB')}
+                        value={new Date(
+                          selectedEmployee.hire_date
+                        ).toLocaleDateString("en-GB")}
                         onChange={handleInputChange}
-                        className='text-gray-800 border p-2 rounded-md w-full'
+                        className='text-gray-800 border p-2 rounded-md w-2/3'
                       />
                     ) : (
                       <span className='text-gray-800'>
-                        {new Date(selectedEmployee.hire_date).toLocaleDateString('en-GB')}
+                        {new Date(
+                          selectedEmployee.hire_date
+                        ).toLocaleDateString("en-GB")}
                       </span>
                     )}
                   </div>
@@ -513,7 +530,7 @@ const EmployeePage = () => {
                           name='license'
                           value={editedEmployee.license}
                           onChange={handleInputChange}
-                          className='text-gray-800 border p-2 rounded-md w-full'
+                          className='text-gray-800 border p-2 rounded-md w-2/3'
                         />
                       ) : (
                         <span className='text-gray-800'>
@@ -525,14 +542,14 @@ const EmployeePage = () => {
                 </div>
 
                 {isEditing && (
-                  <div className='flex justify-between mt-6'>
+                  <div className='flex justify-end gap-4 mt-6'>
                     <button
-                      className='bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition'
+                      className='bg-gray-200 text-gray-700 py-2 px-6 rounded-md hover:bg-gray-300 transition'
                       onClick={handleCancel}>
                       Cancel
                     </button>
                     <button
-                      className='bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition'
+                      className='bg-green-500 text-white py-2 px-6 rounded-md hover:bg-green-600 transition'
                       onClick={handleSave}>
                       Save
                     </button>
