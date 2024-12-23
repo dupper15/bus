@@ -47,6 +47,7 @@ const ITEMS_PER_PAGE = 10;
 const CustomerPage = () => {
   const [items, setItems] = useState([]);
   const [refresh, setRefresh] = useState(false);
+
   const mutation = useMutation({
     mutationFn: () => {
       return CustomerService.getAllCustomer();
@@ -58,6 +59,49 @@ const CustomerPage = () => {
       setItems(data.data);
     },
   });
+
+  const mutationDelete = useMutation({
+    mutationFn: ({_id}) => {
+      return CustomerService.deleteCustomer(_id);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      if (data.status === "ERROR") {
+        Message.error(data.message); // Hiển thị lỗi từ API
+      } else if (data.status === "OK") {
+        Message.success(data.message); // Hiển thị thông báo thành công
+        setRefresh(!refresh);
+      }
+    },
+  });
+
+  const mutationChangeStatus = useMutation({
+    mutationFn: ({_id}) => {
+      return CustomerService.changeStatus(_id);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      if (data.status === "ERROR") {
+        Message.error(data.message); // Hiển thị lỗi từ API
+      } else if (data.status === "OK") {
+        Message.success(data.message); // Hiển thị thông báo thành công
+        setRefresh(!refresh);
+      }
+    },
+  });
+
+  const handleDelete = (_id) => {
+    mutationDelete.mutate({ _id: _id });
+  };
+
+  const handleDisable = (_id) => {
+    mutationChangeStatus.mutate({ _id: _id });
+  };
+
   useEffect(() => {
     getAll();
   }, [refresh]);
@@ -179,48 +223,53 @@ const CustomerPage = () => {
                   </TableCell>
                   {/* Action Section */}
                   <TableCell className='text-center py-4'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger>
-                        <EllipsisVertical className='cursor-pointer text-gray-600 hover:text-gray-800' />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className='w-40'>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            console.log(item.cId);
-                          }}>
-                          Disable
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <DropdownMenuItem>Delete</DropdownMenuItem>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle className='text-center text-lg font-semibold'>
-                                Confirm Deletion
-                              </DialogTitle>
-                              <DialogDescription className='text-center text-sm text-gray-600'>
-                                Are you sure you want to delete this customer?
-                                This action cannot be undone.
-                              </DialogDescription>
-                              <div className='flex justify-center gap-4 pt-6'>
-                                <DialogClose asChild>
-                                <Button
-                                  variant='outline'
-                                  className='w-32 border-gray-300 text-gray-700'>
-                                  Cancel
-                                </Button>
-                                </DialogClose>
-                                <Button className='w-32 bg-red-600 text-white hover:bg-red-700'>
-                                  Confirm
-                                </Button>
-                              </div>
-                            </DialogHeader>
-                          </DialogContent>
-                        </Dialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                     <Dialog>
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger>
+                                                <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent className='bg-white shadow-md rounded-lg'>
+                                                <DropdownMenuItem
+                                                  onClick={() => handleDisable(item._id)}>
+                                                  {item.status === "Disable" ? "Enable" : "Disable"}
+                                                </DropdownMenuItem>
+                                                <DialogTrigger asChild>
+                                                  <DropdownMenuItem>
+                                                    <span>Delete</span>
+                                                  </DropdownMenuItem>
+                                                </DialogTrigger>
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                            <DialogContent className='p-4'>
+                                              <DialogHeader>
+                                                <DialogTitle className='text-center text-lg font-semibold'>
+                                                  Are you sure you want to delete?
+                                                </DialogTitle>
+                                                <DialogDescription className='text-gray-600'>
+                                                  This action cannot be undone. This will
+                                                  permanently delete your customer and remove your
+                                                  data from our servers.
+                                                </DialogDescription>
+                                                <div className='flex items-center justify-center gap-4 pt-4'>
+                                                  <DialogClose asChild>
+                                                    <Button variant='outline' className='w-28 '>
+                                                      Cancel
+                                                    </Button>
+                                                  </DialogClose>
+                                                  <DialogClose asChild>
+                                                    <Button
+                                                      onClick={() =>
+                                                        handleDelete(item._id)
+                                                      }
+                                                      className='w-28'
+                                                      variant='destructive'>
+                                                      Confirm
+                                                    </Button>
+                                                  </DialogClose>
+                                                </div>
+                                              </DialogHeader>
+                                            </DialogContent>
+                                          </Dialog>
                   </TableCell>
                 </TableRow>
               ))}
