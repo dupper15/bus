@@ -34,3 +34,14 @@ export const deleteEmployee = async (id) => {
     throw error;
   }
 };
+export const editEmployee = async (id, data) => {
+  try {
+    const response = await axios.put(
+      `http://localhost:3001/api/employee/edit/${id}`, data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get detail", error);
+    throw error;
+  }
+};

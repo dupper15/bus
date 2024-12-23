@@ -91,7 +91,23 @@ const EmployeePage = () => {
       console.log(error);
     },
     onSuccess: (data) => {
-      console.log("data")
+      if (data.status === "ERROR") {
+        Message.error(data.message); // Hiển thị lỗi từ API
+      } else if (data.status === "OK") {
+        Message.success(data.message); // Hiển thị thông báo thành công
+        setRefresh(!refresh);
+      }
+    },
+  });
+
+  const mutationEdit = useMutation({
+    mutationFn: ({_id, data}) => {
+      return EmployeeService.editEmployee(_id,data);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
       if (data.status === "ERROR") {
         Message.error(data.message); // Hiển thị lỗi từ API
       } else if (data.status === "OK") {
@@ -157,13 +173,17 @@ const EmployeePage = () => {
     setSearchWord(e.target.value);
     setSearchParams({ page: 1 });
   };
-  const handleEdit = (eId) => {
-    // console.log("Editing...");
-    //onNavigateDetail(eId);
+  const handleEdit = (employee) => {
+    mutationEdit.mutate({_id: employee._id, data: employee})
   };
 
   const handleDelete = (_id) => {
     mutationDelete.mutate({_id: _id})
+  };
+
+  const handleDisable = (eId) => {
+    // console.log("Editing...");
+    //onNavigateDetail(eId);
   };
 
   return (
@@ -235,7 +255,7 @@ const EmployeePage = () => {
                             <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className='bg-white shadow-md rounded-lg'>
-                            <DropdownMenuItem onClick={() => handleEdit(item._id)}>
+                            <DropdownMenuItem onClick={() => handleDisable(item._id)}>
                               Edit
                             </DropdownMenuItem>
                             <DialogTrigger asChild>
@@ -453,7 +473,7 @@ const EmployeePage = () => {
                       />
                     ) : (
                       <span className='text-gray-800'>
-                        {selectedEmployee.hire_date}
+                        {new Date(selectedEmployee.hire_date).toLocaleDateString('en-GB')}
                       </span>
                     )}
                   </div>
