@@ -7,6 +7,7 @@ const opinionSchema = new mongoose.Schema(
         status: {type: String, default: 'Pending'},
         feedback: {type: String, require: true},
         receive_date: {type: Date, require: true},
+        resolve_date: {type: Date, require: true},
         sender: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Customer',
