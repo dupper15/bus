@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FaUserEdit } from "react-icons/fa";
 
 import avatar from "../../../assets/default-profile-icon.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -105,11 +106,30 @@ const EmployeePage = () => {
   const currentPage = parseInt(searchParams.get("page")) || 1;
   const navigate = useNavigate();
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [editedEmployee, setEditedEmployee] = useState("");
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedEmployee({ ...editedEmployee, [name]: value });
+  };
+
+  const handleCancel = () => {
+    setEditedEmployee(selectedEmployee);
+    setIsEditing(false);
+  };
+
+  const handleSave = () => {
+    handleEdit(editedEmployee);
+    setIsEditing(false);
+  };
   const currentItems = items
     .filter((item) =>
       item.name.toLowerCase().includes(searchWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  
   const [selectedEmployee, setSelectedEmployee] = useState('');
 
   // Query id employee into url
@@ -292,11 +312,17 @@ const EmployeePage = () => {
             </PaginationContent>
           </Pagination>
         </div>
+
         <div className='hidden md:basis-1/3 h-max md:flex justify-start items-start gap-6 flex-col'>
-          <div className='w-full h-max bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
-            <h2 className='text-xl font-semibold text-green-500 mb-4 text-center'>
+          <div className='w-full h-max bg-white shadow-lg rounded-xl p-6 border border-gray-200'>
+            <FaUserEdit
+              onClick={() => setIsEditing(true)}
+              className='text-green-500 hover:text-green-400 cursor-pointer'
+            />
+            <h2 className='text-2xl font-semibold text-green-500 mb-4 text-center'>
               Employee Detail
             </h2>
+
             {selectedEmployee ? (
               <div className='space-y-4'>
                 <Avatar className='mx-auto w-20 h-20 border-2 border-green-500'>
@@ -358,6 +384,21 @@ const EmployeePage = () => {
                     {selectedEmployee.license}
                   </span>
                 </div>
+
+                {isEditing && (
+                  <div className='flex justify-between mt-6'>
+                    <button
+                      className='bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition'
+                      onClick={handleCancel}>
+                      Cancel
+                    </button>
+                    <button
+                      className='bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition'
+                      onClick={handleSave}>
+                      Save
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <p className='text-gray-500 text-center'>Select an employee</p>

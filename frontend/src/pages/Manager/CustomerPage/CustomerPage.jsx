@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
 import Search from "@/components/ui/search";
-import React from "react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -18,7 +17,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -30,7 +28,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
+import { useSearchParams } from "react-router-dom";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 const items = [
   {
     cId: "C001",
@@ -52,7 +58,7 @@ const items = [
   },
   {
     cId: "C003",
-    name: "John Smith",
+    name: "Tim",
     avatar: avatar,
     idNumber: "012345678913",
     phone: "0912345678",
@@ -69,16 +75,38 @@ const items = [
     password: "password",
   },
 ];
+const ITEMS_PER_PAGE = 10;
 
 const CustomerPage = () => {
+  const [searchWord, setSearchWord] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page")) || 1;
+
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const currentItems = items
+    .filter((item) =>
+      item.name.toLowerCase().includes(searchWord.toLowerCase())
+    )
+    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setSearchParams({ page: page });
+    }
+  };
+  const handleSearchChanged = (e) => {
+    setSearchWord(e.target.value);
+    setSearchParams({ page: 1 });
+  };
   return (
     <div className='flex justify-center min-h-screen w-full p-6 bg-gray-100'>
       <div className='space-y-8 w-full max-w-7xl bg-white shadow-lg rounded-xl p-8 border border-gray-300'>
         {/* Header Section */}
         <div className='flex justify-between items-center mb-8'>
           <Search
-            className='flex-grow border border-gray-300 rounded-lg px-4 py-3'
-            placeholder='Search customers...'
+            className='flex-grow border border-gray-300 rounded-lg p-2'
+            onChange={handleSearchChanged}
+            text='Type customer name...'
           />
         </div>
 
@@ -106,13 +134,16 @@ const CustomerPage = () => {
                   Username
                 </TableHead>
                 <TableHead className='text-center text-white font-semibold py-4'>
+                  Tình trạng
+                </TableHead>
+                <TableHead className='text-center text-white font-semibold py-4'>
                   Actions
                 </TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {items.map((item, index) => (
+              {currentItems.map((item, index) => (
                 <TableRow key={index} className='border-b hover:bg-gray-100'>
                   <TableCell className='text-center py-4'>{item.cId}</TableCell>
                   <TableCell className='text-center py-4'>
@@ -136,7 +167,9 @@ const CustomerPage = () => {
                   <TableCell className='text-center py-4'>
                     {item.username}
                   </TableCell>
-
+                  <TableCell className='text-center py-4'>
+                    {item.status}
+                  </TableCell>
                   {/* Action Section */}
                   <TableCell className='text-center py-4'>
                     <DropdownMenu>
@@ -144,7 +177,12 @@ const CustomerPage = () => {
                         <EllipsisVertical className='cursor-pointer text-gray-600 hover:text-gray-800' />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className='w-40'>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            console.log(item.cId);
+                          }}>
+                          Disable
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <Dialog>
                           <DialogTrigger asChild>
@@ -180,6 +218,40 @@ const CustomerPage = () => {
             </TableBody>
           </Table>
         </div>
+        <Pagination className='flex justify-center items-center gap-4'>
+          <PaginationContent className='flex gap-2'>
+            <PaginationItem>
+              <PaginationPrevious
+                href='#'
+                onClick={() => handlePageChange(currentPage - 1)}
+                className='text-green-500 hover:text-green-700'>
+                Previous
+              </PaginationPrevious>
+            </PaginationItem>
+            {[...Array(totalPages)].map((_, index) => (
+              <PaginationItem key={index}>
+                <PaginationLink
+                  href='#'
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`px-4 py-2 rounded-full transition ${
+                    index + 1 === currentPage
+                      ? "bg-green-500 text-white"
+                      : "hover:bg-gray-200"
+                  }`}>
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext
+                href='#'
+                onClick={() => handlePageChange(currentPage + 1)}
+                className='text-green-500 hover:text-green-700'>
+                Next
+              </PaginationNext>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );
