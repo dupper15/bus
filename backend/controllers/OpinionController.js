@@ -2,8 +2,8 @@ const OpinionService = require('../services/OpinionService')
 
 const createOpinion =  async (req, res) => {
     try {
-        const {customerId, data} = req.body
-        const response = await OpinionService.createOpinion(customerId, data)
+        const data = req.body
+        const response = await OpinionService.createOpinion(data)
         return res.status(201).json(response)
     } catch (e) {
         console.error(e)
