@@ -2,7 +2,7 @@ const Line = require("../models/LineModel")
 
 const createLine = (newLine) => {
     return new Promise(async (resolve, reject) => {
-        const {name, start_place, end_place, time} = newLine
+        const {name, start_place, end_place, time, arr_stop} = newLine
         try {
 
             // Need to implement checking for existing line with the same routes
@@ -20,7 +20,8 @@ const createLine = (newLine) => {
                 name,
                 start_place,
                 end_place,
-                time
+                time,
+                arr_stop
             })
             if (createdLine) {
                 resolve({
@@ -70,41 +71,37 @@ const updateLine = (LineId, data) => {
 const getAllLine = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const allLine = await Line.find();
+            const allLine = await Line.find().populate('start_place').populate('end_place').populate('arr_stop');
             resolve({
                 status: "OK", message: "Lines retrieved successfully.", data: allLine
-            })
-
+            });
         } catch (e) {
             reject({
                 status: "ERROR", message: "An error occurred while retrieving the lines.", error: e
-            })
+            });
         }
-    })
+    });
 }
 
 const getDetailLine = (LineId) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const line = await Line.findOne({
-                _id: LineId
-            })
+            const line = await Line.findOne({ _id: LineId }).populate('start_place').populate('end_place').populate('arr_stop');
             if (line === null) {
                 resolve({
                     status: 'ERROR', message: 'No line found with the provided ID.'
-                })
+                });
                 return;
             }
             resolve({
                 status: "OK", message: "Line details retrieved successfully.", data: line
-            })
-
+            });
         } catch (e) {
             reject({
                 status: "ERROR", message: "An error occurred while retrieving the line details.", error: e
-            })
+            });
         }
-    })
+    });
 }
 
 const deleteLine = (LineId) => {

@@ -1,21 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 import MapView from "@/pages/MapPage/MapView/MapView.jsx";
 import useBusLinesViewModel from "@/pages/MapPage/ViewModel/BusLinesViewModel/BusLinesViewModel.js";
-import useMapViewModel from "@/pages/MapPage/ViewModel/MapViewModel/MapViewModel.js";
 import Header from "@/components/Header/Header.jsx";
 import Footer from "@/components/Footer/Footer.jsx";
 import Sidebar from "@/pages/MapPage/Sidebar/Sidebar.jsx";
 
 const MapPage = () => {
-    const { lines, fetchLines } = useBusLinesViewModel();
-    const { mapData } = useMapViewModel();
+    const { lines, fetchLines, stops, fetchStops, busLines, fetchBusLine } = useBusLinesViewModel();
 
     useEffect(() => {
-        fetchLines();
-    }, [fetchLines]);
+        fetchStops().then(); // Fetch initial stops
+        fetchLines().then(); // Fetch initial lines
+    }, [fetchLines, fetchStops]);
 
     const handleLineSelect = (id) => {
-        console.log(`Selected line ID: ${id}`);
+        const selectedLine = lines.find((line) => line.id === id);
+        console.log("selectedLine", selectedLine);
+        if (selectedLine) {
+            fetchBusLine(selectedLine).then(); // Fetch and render the line route
+        }
     };
 
     return (
@@ -23,7 +26,7 @@ const MapPage = () => {
             <Header />
             <div className="flex flex-1">
                 <Sidebar lines={lines} onSelectLine={handleLineSelect} />
-                <MapView mapData={mapData} />
+                <MapView stops={stops} busLines={busLines} />
             </div>
             <Footer />
         </div>

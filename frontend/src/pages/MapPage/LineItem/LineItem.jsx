@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import {linePropTypes} from "@/utils/PropTypes.js";
 
 const LineItem = ({ line, onSelect }) => {
     return (
@@ -7,20 +8,14 @@ const LineItem = ({ line, onSelect }) => {
             onClick={() => onSelect(line.id)}
         >
             <h4 className="font-bold">{line.name}</h4>
-            <p className="text-sm text-gray-600">{`${line.start} - ${line.end}`}</p>
+            <p className="text-sm text-gray-600">{`${line.start_place.name} - ${line.end_place.name}`}</p>
             <p className="text-sm text-gray-500">{`Time: ${line.time}`}</p>
         </div>
     );
 };
 
 LineItem.propTypes = {
-    line: PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-        start: PropTypes.string.isRequired,
-        end: PropTypes.string.isRequired,
-        time: PropTypes.string.isRequired,
-    }).isRequired,
+    line: linePropTypes.isRequired,
     onSelect: PropTypes.func.isRequired,
 };
 

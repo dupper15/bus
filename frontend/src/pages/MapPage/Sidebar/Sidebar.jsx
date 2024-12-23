@@ -1,5 +1,6 @@
 import LineItem from "@/pages/MapPage/LineItem/LineItem.jsx";
 import PropTypes from "prop-types";
+import {linePropTypes} from "@/utils/PropTypes.js";
 
 const Sidebar = ({ lines, onSelectLine }) => {
     return (
@@ -19,15 +20,7 @@ const Sidebar = ({ lines, onSelectLine }) => {
 };
 
 Sidebar.propTypes = {
-    lines: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.number.isRequired,
-            name: PropTypes.string.isRequired,
-            start: PropTypes.string.isRequired,
-            end: PropTypes.string.isRequired,
-            time: PropTypes.string.isRequired,
-        })
-    ).isRequired,
+    lines: PropTypes.arrayOf(linePropTypes).isRequired,
     onSelectLine: PropTypes.func.isRequired,
 };
 

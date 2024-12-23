@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {signUpUser} from '@/services/userService.js';
+import {signUpUser} from '@/services/UserService.js';
 
 const useSignUpViewModel = () => {
     const [name, setName] = useState('');

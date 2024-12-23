@@ -2,8 +2,8 @@ const LineService = require('../services/LineService')
 
 const createLine = async (req, res) => {
     try {
-        const { name, start_place, end_place, time } = req.body
-        if (!name || !start_place || !end_place || !time) {
+        const { name, start_place, end_place, time, arr_stop } = req.body
+        if (!name || !start_place || !end_place || !time || !arr_stop) {
             return res.status(400).json({
                 status: 'ERROR',
                 message: 'All fields are required.'
