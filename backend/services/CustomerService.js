@@ -151,6 +151,77 @@ const updateCustomer = (customerId, data) => {
     })
 }
 
+const changeStatus = async (customerId) => {
+    try {
+        const checkCustomer = await Customer.findOne({ _id: customerId });
+        if (!checkCustomer) {
+            return {
+                status: "ERROR",
+                message: "No customer found with the provided ID."
+            };
+        }
+
+        const status = checkCustomer.status === "Disable" ? "Enable" : "Disable";
+
+        const updatedCustomer = await Customer.findByIdAndUpdate(
+            customerId,
+            { status: status },
+            { new: true }
+        );
+
+        if (!updatedCustomer) {
+            return {
+                status: "ERROR",
+                message: "Failed to update the customer or customer not found."
+            };
+        }
+
+        await Account.findOneAndUpdate(
+            { user: checkCustomer.id_card },
+            { status: status },
+            { new: true }
+        );
+
+        return {
+            status: "OK",
+            message: "Customer updated successfully.",
+            data: updatedCustomer
+        };
+    } catch (e) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while updating the customer.",
+            error: e
+        };
+    }
+};
+
+const deleteCustomer = async (customerId) => {
+    try {
+        const checkCustomer = await Customer.findOne({ _id: customerId });
+        if (!checkCustomer) {
+            return {
+                status: "ERROR",
+                message: "No customer found with the provided ID."
+            };
+        }
+
+        await Customer.findByIdAndDelete(customerId);
+        await Account.findOneAndDelete({ user: checkCustomer.id_card });
+
+        return {
+            status: "OK",
+            message: "Customer deleted successfully.",
+        };
+    } catch (e) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while updating the customer.",
+            error: e
+        };
+    }
+};
+
 // const updatePasswordCustomer = (customerId, password) => {
 //     // This function is not implemented in the service layer.
 // }
@@ -205,6 +276,8 @@ module.exports = {
     createCustomer,
     loginCustomer,
     updateCustomer,
+    changeStatus,
+    deleteCustomer,
     // updatePasswordCustomer,
     getAllCustomer,
     getDetailCustomer,

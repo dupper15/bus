@@ -56,6 +56,47 @@ const updateCustomer = async (req, res) => {
     }
 }
 
+const changeStatus = async (req, res) => {
+    try {
+        const customerId = req.params.id
+        if (!customerId) {
+            return res.status(400).json({
+                status: 'ERROR',
+                message: 'Customer ID is required.'
+            })
+        }
+        const response = await CustomerService.changeStatus(customerId)
+        return res.status(200).json(response)
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An error occurred while updating the customer.'
+        })
+    }
+}
+
+const deleteCustomer = async (req, res) => {
+    try {
+        const customerId = req.params.id
+        console.log(customerId)
+        if (!customerId) {
+            return res.status(400).json({
+                status: 'ERROR',
+                message: 'Customer ID is required.'
+            })
+        }
+        const response = await CustomerService.deleteCustomer(customerId)
+        return res.status(200).json(response)
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An error occurred while updating the customer.'
+        })
+    }
+}
+
 // const updatePasswordCustomer = async (req, res) => {
 //     try {
 //         const customerId = req.params.id
@@ -145,6 +186,8 @@ module.exports = {
     createCustomer,
     loginCustomer,
     updateCustomer,
+    changeStatus,
+    deleteCustomer,
     getAllCustomer,
     getDetailCustomer,
     refreshTokenJwtCustomer
