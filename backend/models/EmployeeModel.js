@@ -11,6 +11,7 @@ const employeeSchema = new mongoose.Schema({
     salary: {type: Number, require: true},
     hire_date: {type: Date, require: true},
     license: {type: String, default: null},
+    status: {type: String, default: 'Enable'},
     access_token: {type: String, require: true},
     refresh_token: {type: String, require: true},
 }, {

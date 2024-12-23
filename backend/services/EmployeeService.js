@@ -119,41 +119,80 @@ const loginEmployee = (EmployeeLogin) => {
   });
 };
 
-const updateEmployee = (data) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const checkEmployee = await Employee.findOne({id: data.id});
-            if (checkEmployee === null) {
-                resolve({
-                    status: "ERROR", 
-                    message: "No employee found with the provided ID."
-                })
-                return;
-            }
-            const updatedEmployee = await Employee.findByIdAndUpdate(checkEmployee._id, data, {new: true});
-            if (!updatedEmployee) {
-                resolve({
-                    status: "ERROR", 
-                    message: "Failed to update the employee or employee not found."
-                });
-                return;
-            }
-
-            resolve({
-                status: "OK", 
-                message: "Employee updated successfully.", 
-                data: updatedEmployee
-            })
-
-        } catch (e) {
-            reject({
-                status: "ERROR", 
-                message: "An error occurred while updating the employee.", 
-                error: e
-            })
+const updateEmployee = async (data) => {
+    try {
+        const checkEmployee = await Employee.findOne({ id: data.id });
+        if (!checkEmployee) {
+            return {
+                status: "ERROR",
+                message: "No employee found with the provided ID."
+            };
         }
-    })
-}
+
+        const updatedEmployee = await Employee.findByIdAndUpdate(
+            checkEmployee._id,
+            data,
+            { new: true }
+        );
+
+        if (!updatedEmployee) {
+            return {
+                status: "ERROR",
+                message: "Failed to update the employee or employee not found."
+            };
+        }
+
+        return {
+            status: "OK",
+            message: "Employee updated successfully.",
+            data: updatedEmployee
+        };
+    } catch (e) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while updating the employee.",
+            error: e
+        };
+    }
+};
+
+const changeStatus = async (employeeId) => {
+    try {
+        const checkEmployee = await Employee.findById(employeeId);
+        if (!checkEmployee) {
+            return {
+                status: "ERROR",
+                message: "No employee found with the provided ID."
+            };
+        }
+
+        const status = checkEmployee.status === "Disable" ? "Enable" : "Disable";
+        const updatedEmployee = await Employee.findByIdAndUpdate(
+            checkEmployee._id,
+            { status: status },
+            { new: true }
+        );
+
+        if (!updatedEmployee) {
+            return {
+                status: "ERROR",
+                message: "Failed to update the employee or employee not found."
+            };
+        }
+
+        return {
+            status: "OK",
+            message: "Employee change status successfully.",
+            data: updatedEmployee
+        };
+    } catch (e) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while updating the employee.",
+            error: e
+        };
+    }
+};
 
 const getAllEmployee = async () => {
     try {
@@ -225,6 +264,7 @@ module.exports = {
     createEmployee, 
     loginEmployee, 
     updateEmployee, 
+    changeStatus,
     getAllEmployee, 
     getDetailEmployee, 
     deleteEmployee

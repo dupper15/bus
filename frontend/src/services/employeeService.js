@@ -45,3 +45,14 @@ export const editEmployee = async (id, data) => {
     throw error;
   }
 };
+export const changeStatus = async (id) => {
+  try {
+    const response = await axios.put(
+      `http://localhost:3001/api/employee/change-status/${id}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get detail", error);
+    throw error;
+  }
+};
