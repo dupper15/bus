@@ -3,24 +3,8 @@ const JwtService = require('../services/jwtService')
 
 const createManager = async (req, res) => {
     try {
-        const { name, image, id_card, password, confirmPassword, phone } = req.body
-        if (!name || !image || !id_card || !password || !confirmPassword || !phone) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'All fields are required.'
-            })
-        } else if (!/^\d{12}$/.test(id_card)) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'ID card must be exactly 12 digits.'
-            });
-        } else if (password !== confirmPassword) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Password and confirm password do not match.'
-            })
-        }
-        const response = await ManagerService.createManager(req.body)
+        const data = req.body   
+        const response = await ManagerService.createManager(data)
         return res.status(201).json(response)
     } catch (e) {
         console.error(e)
@@ -63,7 +47,49 @@ const updateManager = async (req, res) => {
                 message: 'Manager ID is required.'
             })
         }
-        const response = await ManagerService.updateManager(managerId, data)
+        const response = await ManagerService.updateManager(data)
+        return res.status(200).json(response)
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An error occurred while updating the manager.',
+            error: e
+        })
+    }
+}
+
+const changeStatusManager = async (req, res) => {
+    try {
+        const managerId = req.params.id
+        if (!managerId) {
+            return res.status(400).json({
+                status: 'ERROR',
+                message: 'Manager ID is required.'
+            })
+        }
+        const response = await ManagerService.changeStatusManager(managerId)
+        return res.status(200).json(response)
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An error occurred while updating the manager.',
+            error: e
+        })
+    }
+}
+
+const deleteManager = async (req, res) => {
+    try {
+        const managerId = req.params.id
+        if (!managerId) {
+            return res.status(400).json({
+                status: 'ERROR',
+                message: 'Manager ID is required.'
+            })
+        }
+        const response = await ManagerService.deleteManager(managerId)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -135,6 +161,8 @@ module.exports = {
     createManager,
     loginManager,
     updateManager,
+    changeStatusManager,
+    deleteManager,
     getAllManager,
     getDetailManager,
     refreshTokenJwtManager

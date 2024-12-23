@@ -79,7 +79,6 @@ const changeStatus = async (req, res) => {
 const deleteCustomer = async (req, res) => {
     try {
         const customerId = req.params.id
-        console.log(customerId)
         if (!customerId) {
             return res.status(400).json({
                 status: 'ERROR',
