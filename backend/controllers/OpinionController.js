@@ -2,15 +2,8 @@ const OpinionService = require('../services/OpinionService')
 
 const createOpinion =  async (req, res) => {
     try {
-        const { title, content, sender} = req.body
-        if (!title || !content || !sender) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'All fields are required.'
-            })
-        }
-
-        const response = await OpinionService.createOpinion(req.body)
+        const {customerId, data} = req.body
+        const response = await OpinionService.createOpinion(customerId, data)
         return res.status(201).json(response)
     } catch (e) {
         console.error(e)
@@ -38,7 +31,6 @@ const getAllOpinion =  async (req, res) => {
 
 const getDetailOpinion =  async (req, res) => {
     try {
-        const opinionId = req.params.id
         if (!opinionId){
             return res.status(400).json({
                 status: 'ERROR',
@@ -60,21 +52,15 @@ const getDetailOpinion =  async (req, res) => {
 const resolveOpinion =  async (req, res) => {
     try {
         const opinionId = req.params.id
-        const {feedback, receiver} = req.body
+        const {managerId, data} = req.body
         if (!opinionId){
             return res.status(400).json({
                 status: 'ERROR',
                 message: 'Opinion ID is required.'
             })
         }
-        if (!feedback || !receiver) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Feedback and receiver are required.'
-            });
-        }
 
-        const response = await OpinionService.resolveOpinion(opinionId, { feedback, receiver })
+        const response = await OpinionService.resolveOpinion(managerId, data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
