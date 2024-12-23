@@ -63,17 +63,19 @@ const FormBus = ({
       <Form {...form}>
         <form
           onSubmit={(e) => onCreate(e)}
-          className='w-full max-w-3xl bg-white shadow-xl border border-slate-300 rounded-lg p-8 h-[90%] overflow-y-auto scrollbar-hide space-y-6'>
+          className='w-full max-w-3xl bg-white shadow-xl border border-slate-300 rounded-lg p-8 h-max-[90%] my-10 h-max overflow-y-auto scrollbar-hide space-y-6'>
           <h1 className='text-3xl font-semibold text-green-600 text-center'>
             {isAdd === "true" ? "Add New Bus" : "Edit Bus"}
           </h1>
 
-          <div className='flex justify-center mb-6'>
-            <Avatar className='w-28 h-28 border-4 border-green-500 shadow-lg'>
-              <AvatarImage src={image || "default-avatar.jpg"} />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-          </div>
+          {isAdd === "false" && (
+            <div className='flex justify-center mb-6'>
+              <Avatar className='w-28 h-28 border-4 border-green-500 shadow-lg'>
+                <AvatarImage src={image || "default-avatar.jpg"} />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+            </div>
+          )}
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             <FormField
