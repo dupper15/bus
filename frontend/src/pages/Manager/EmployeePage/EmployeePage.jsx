@@ -107,7 +107,6 @@ const EmployeePage = () => {
   const navigate = useNavigate();
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [editedEmployee, setEditedEmployee] = useState("");
 
   const handleInputChange = (e) => {
@@ -325,64 +324,159 @@ const EmployeePage = () => {
 
             {selectedEmployee ? (
               <div className='space-y-4'>
-                <Avatar className='mx-auto w-20 h-20 border-2 border-green-500'>
-                  <AvatarImage
-                    src={
-                      selectedEmployee.image ? selectedEmployee.image : avatar
-                    }
-                  />
-                  <AvatarFallback>CN</AvatarFallback>
-                </Avatar>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>ID:</span>
-                  <span className='text-gray-800'>{selectedEmployee.id}</span>
+                <div className='flex justify-center'>
+                  <Avatar className='w-24 h-24 border-4 border-green-500 shadow-xl'>
+                    <AvatarImage
+                      src={
+                        selectedEmployee.image
+                          ? selectedEmployee.image
+                          : "default-avatar.jpg"
+                      }
+                    />
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
                 </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Name:</span>
-                  <span className='text-gray-800'>{selectedEmployee.name}</span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>National ID:</span>
-                  <span className='text-gray-800'>{selectedEmployee.id_card}</span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Gender:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.gender}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Salary:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.salary}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Role:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.position}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Phone:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.phone}
-                  </span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Hire date:</span>
-                  <span className='text-gray-800'>
-                    {new Date(selectedEmployee.hire_date).toLocaleDateString('en-GB')}
-                  </span>
-                </div>
-                <div
-                  className={`${
-                    selectedEmployee.license == null ? "hidden" : "flex"
-                  } justify-between items-center`}>
-                  <span className='font-medium text-gray-600'>License:</span>
-                  <span className='text-gray-800'>
-                    {selectedEmployee.license}
-                  </span>
+                <div className='space-y-3'>
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>ID:</span>
+                    <span className='text-gray-800'>
+                      {selectedEmployee.id}
+                    </span>
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>Name:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='name'
+                        value={editedEmployee.name}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.name}
+                      </span>
+                    )}
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>National ID:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='id_card'
+                        value={editedEmployee.id_card}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.id_card}
+                      </span>
+                    )}
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>Gender:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='gender'
+                        value={editedEmployee.gender}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.gender}
+                      </span>
+                    )}
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>Salary:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='salary'
+                        value={editedEmployee.salary}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.salary}
+                      </span>
+                    )}
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>Role:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='position'
+                        value={editedEmployee.position}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.position}
+                      </span>
+                    )}
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>Phone:</span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='phone'
+                        value={editedEmployee.phone}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.phone}
+                      </span>
+                    )}
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <span className='font-medium text-gray-600'>
+                      Hire date:
+                    </span>
+                    {isEditing ? (
+                      <input
+                        type='text'
+                        name='hire_date'
+                        value={new Date(selectedEmployee.hire_date).toLocaleDateString('en-GB')}
+                        onChange={handleInputChange}
+                        className='text-gray-800 border p-2 rounded-md w-full'
+                      />
+                    ) : (
+                      <span className='text-gray-800'>
+                        {selectedEmployee.hire_date}
+                      </span>
+                    )}
+                  </div>
+                  {selectedEmployee.license && (
+                    <div className='flex justify-between items-center'>
+                      <span className='font-medium text-gray-600'>
+                        License:
+                      </span>
+                      {isEditing ? (
+                        <input
+                          type='text'
+                          name='license'
+                          value={editedEmployee.license}
+                          onChange={handleInputChange}
+                          className='text-gray-800 border p-2 rounded-md w-full'
+                        />
+                      ) : (
+                        <span className='text-gray-800'>
+                          {selectedEmployee.license}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {isEditing && (
