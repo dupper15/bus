@@ -15,7 +15,9 @@ const MapView = ({ mapData, busLines, stops }) => {
             container: mapContainerRef.current,
             style: "mapbox://styles/mapbox/streets-v11",
             center: [106.70098, 10.77584],
-            zoom: 12,
+            zoom: 13,
+            maxZoom: 15,
+            minZoom: 9
         });
 
         // Add navigation controls

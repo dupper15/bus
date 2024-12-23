@@ -11,6 +11,7 @@ const useBusLinesViewModel = () => {
     const [stops, setStops] = useState([]);
     const [lines, setLines] = useState([]);
     const [busLines, setBusLines] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const fetchLines = useCallback(async () => {
         try {
@@ -45,13 +46,22 @@ const useBusLinesViewModel = () => {
         }
     };
 
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+    };
+
+    const filteredLines = lines.filter((line) =>
+        line.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return {
-        lines,
+        lines: filteredLines,
         fetchLines,
         stops,
         fetchStops,
         busLines,
         fetchBusLine,
+        handleSearch,
     };
 };
 
