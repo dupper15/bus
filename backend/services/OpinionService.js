@@ -1,7 +1,8 @@
 const Opinion = require("../models/OpinionModel")
 
-const createOpinion = async (customerId, data) => {
+const createOpinion = async (data) => {
     try {
+        console.log("customerId", data)
         const opinions = await Opinion.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
         const ids = opinions.map((op) => parseInt(op.id.replace('O', ''), 10));
         let newIdNumber = 1;
@@ -19,8 +20,8 @@ const createOpinion = async (customerId, data) => {
             id: newId,
             title: data.title,
             content: data.content,
-            sender: customerId,
-            receive_date: data.receive_date
+            sender: data.sender,
+            receive_date: new Date() 
         });
 
         if (createdOpinion) {
