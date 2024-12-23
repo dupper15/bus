@@ -2,11 +2,11 @@ import { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import {stopPropTypes, linePropTypes} from "@/utils/PropTypes.js";
+import { stopPropTypes, linePropTypes } from "@/utils/PropTypes.js";
 
 mapboxgl.accessToken = "pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg";
 
-const MapView = ({ mapData, busLines, stops }) => {
+const MapView = ({ mapData, busLines, stops, selectedStopCoordinates }) => {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
 
@@ -112,6 +112,17 @@ const MapView = ({ mapData, busLines, stops }) => {
         }
     }, [stops]);
 
+    useEffect(() => {
+        // Zoom in on the selected stop
+        if (mapRef.current && selectedStopCoordinates) {
+            mapRef.current.flyTo({
+                center: selectedStopCoordinates,
+                zoom: 15,
+                essential: true,
+            });
+        }
+    }, [selectedStopCoordinates]);
+
     return (
         <div
             ref={mapContainerRef}
@@ -127,6 +138,7 @@ MapView.propTypes = {
     mapData: PropTypes.arrayOf(stopPropTypes),
     busLines: PropTypes.arrayOf(linePropTypes),
     stops: PropTypes.arrayOf(stopPropTypes),
+    selectedStopCoordinates: PropTypes.arrayOf(PropTypes.number),
 };
 
 export default MapView;

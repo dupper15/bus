@@ -1,11 +1,8 @@
-// frontend/src/pages/MapPage/ViewModel/BusLinesViewModel/BusLinesViewModel.js
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import LineService from "@/services/LineService";
 import StopService from "@/services/StopService";
-
-import {fetchBusLineRoute} from "@/services/MapboxService.js";
-import {transformLine, transformStop} from "@/utils/Transformer.js";
-
+import { fetchBusLineRoute } from "@/services/MapboxService.js";
+import { transformLine, transformStop } from "@/utils/Transformer.js";
 
 const useBusLinesViewModel = () => {
     const [stops, setStops] = useState([]);
@@ -13,6 +10,8 @@ const useBusLinesViewModel = () => {
     const [busLines, setBusLines] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedLine, setSelectedLine] = useState(null);
+    const [selectedStop, setSelectedStop] = useState(null);
+    const [selectedStopCoordinates, setSelectedStopCoordinates] = useState(null);
 
     const fetchLines = useCallback(async () => {
         try {
@@ -50,6 +49,31 @@ const useBusLinesViewModel = () => {
         setSearchQuery(query);
     };
 
+    const handleLineSelect = (line) => {
+        setSelectedLine(line);
+        fetchBusLine(line).then();
+    };
+
+    const handleBack = () => {
+        setSelectedLine(null);
+        setBusLines([]);
+        setSelectedStop(null);
+        setSelectedStopCoordinates(null);
+    };
+
+    const handleSelectStop = (stop) => {
+        setSelectedStop(stop);
+        const selectedStopData = stops.find(s => s.name === stop);
+        if (selectedStopData) {
+            setSelectedStopCoordinates([selectedStopData.pointX, selectedStopData.pointY]);
+        }
+    };
+
+    useEffect(() => {
+        fetchStops().then();
+        fetchLines().then();
+    }, [fetchLines, fetchStops]);
+
     const filteredLines = lines.filter((line) =>
         line.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -65,6 +89,12 @@ const useBusLinesViewModel = () => {
         handleSearch,
         selectedLine,
         setSelectedLine,
+        selectedStop,
+        setSelectedStop,
+        selectedStopCoordinates,
+        handleLineSelect,
+        handleBack,
+        handleSelectStop
     };
 };
 

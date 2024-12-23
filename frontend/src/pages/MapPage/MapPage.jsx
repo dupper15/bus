@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import MapView from "@/pages/MapPage/MapView/MapView.jsx";
 import useBusLinesViewModel from "@/pages/MapPage/ViewModel/BusLinesViewModel/BusLinesViewModel.js";
 import Header from "@/components/Header/Header.jsx";
@@ -8,32 +7,32 @@ import LineDetailSideBar from "@/pages/MapPage/LineDetailSideBar/LineDetailSideB
 
 const MapPage = () => {
     const {
-        lines, fetchLines, stops, fetchStops, busLines, setBusLines, fetchBusLine, handleSearch, selectedLine, setSelectedLine
+        lines,
+        stops,
+        busLines,
+        selectedLine,
+        selectedStop,
+        selectedStopCoordinates,
+        handleLineSelect,
+        handleBack,
+        handleSelectStop,
+        handleSearch
     } = useBusLinesViewModel();
-
-    useEffect(() => {
-        fetchStops().then(); // Fetch initial stops
-        fetchLines().then(); // Fetch initial lines
-    }, [fetchLines, fetchStops]);
-
-    const handleLineSelect = (line) => {
-        setSelectedLine(line);
-        fetchBusLine(line);
-    };
-
-
-    const handleBack = () => {
-        setSelectedLine(null);
-        setBusLines([]);
-    };
 
     return (
         <div className="flex flex-col h-screen">
             <Header />
             <div className="flex flex-1">
                 {!selectedLine && <Sidebar lines={lines} onSelectLine={handleLineSelect} onSearch={handleSearch} />}
-                {selectedLine && <LineDetailSideBar line={selectedLine} onBack={handleBack} />}
-                <MapView stops={stops} busLines={busLines} />
+                {selectedLine && (
+                    <LineDetailSideBar
+                        line={selectedLine}
+                        onBack={handleBack}
+                        selectedStop={selectedStop}
+                        onSelectStop={handleSelectStop}
+                    />
+                )}
+                <MapView stops={stops} busLines={busLines} selectedStopCoordinates={selectedStopCoordinates} />
             </div>
             <Footer />
         </div>
