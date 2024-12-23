@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Search from "@/components/ui/search";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -37,47 +38,34 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-const items = [
-  {
-    cId: "C001",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678911",
-    phone: "0912345678",
-    username: "js1",
-    password: "password",
-  },
-  {
-    cId: "C002",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678912",
-    phone: "0912345678",
-    username: "js2",
-    password: "password",
-  },
-  {
-    cId: "C003",
-    name: "Tim",
-    avatar: avatar,
-    idNumber: "012345678913",
-    phone: "0912345678",
-    username: "js3",
-    password: "password",
-  },
-  {
-    cId: "C004",
-    name: "John Smith",
-    avatar: avatar,
-    idNumber: "012345678914",
-    phone: "0912345678",
-    username: "js4",
-    password: "password",
-  },
-];
+import { useMutation } from "react-query";
+import * as CustomerService from "../../../services/customerService";
+import * as Message from "../../../components/ui/alert"
+
 const ITEMS_PER_PAGE = 10;
 
 const CustomerPage = () => {
+  const [items, setItems] = useState([]);
+  const [refresh, setRefresh] = useState(false);
+  const mutation = useMutation({
+    mutationFn: () => {
+      return CustomerService.getAllCustomer();
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      setItems(data.data);
+    },
+  });
+  useEffect(() => {
+    getAll();
+  }, [refresh]);
+  const getAll = () => {
+    mutation.mutate();
+  };
+
+
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
@@ -88,6 +76,18 @@ const CustomerPage = () => {
       item.name.toLowerCase().includes(searchWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  
+  const [selectedEmployee, setSelectedEmployee] = useState('');
+
+  // Query id employee into url
+  const currentParams = new URLSearchParams(window.location.search);
+  currentParams.set('id', selectedEmployee._id);
+  window.history.pushState(
+    {},
+    '',
+    `${window.location.pathname}?${currentParams.toString()}`
+  );
+
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -116,7 +116,7 @@ const CustomerPage = () => {
             <TableHeader className='bg-green-500 pointer-events-none'>
               <TableRow>
                 <TableHead className='text-center text-white font-semibold py-4'>
-                  Customer ID
+                  ID
                 </TableHead>
                 <TableHead className='text-center text-white font-semibold py-4'>
                   Avatar
@@ -125,7 +125,7 @@ const CustomerPage = () => {
                   Name
                 </TableHead>
                 <TableHead className='text-center text-white font-semibold py-4'>
-                  ID Number
+                  National ID
                 </TableHead>
                 <TableHead className='text-center text-white font-semibold py-4'>
                   Contact
@@ -134,7 +134,7 @@ const CustomerPage = () => {
                   Username
                 </TableHead>
                 <TableHead className='text-center text-white font-semibold py-4'>
-                  Tình trạng
+                  Status
                 </TableHead>
                 <TableHead className='text-center text-white font-semibold py-4'>
                   Actions
@@ -168,7 +168,14 @@ const CustomerPage = () => {
                     {item.username}
                   </TableCell>
                   <TableCell className='text-center py-4'>
-                    {item.status}
+                  <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        item.status === "Disable"
+                          ? "bg-red-100 text-red-600"
+                          : "bg-green-100 text-green-600"
+                      }`}>
+                      {item.status}
+                    </span>
                   </TableCell>
                   {/* Action Section */}
                   <TableCell className='text-center py-4'>
@@ -198,11 +205,13 @@ const CustomerPage = () => {
                                 This action cannot be undone.
                               </DialogDescription>
                               <div className='flex justify-center gap-4 pt-6'>
+                                <DialogClose asChild>
                                 <Button
                                   variant='outline'
                                   className='w-32 border-gray-300 text-gray-700'>
                                   Cancel
                                 </Button>
+                                </DialogClose>
                                 <Button className='w-32 bg-red-600 text-white hover:bg-red-700'>
                                   Confirm
                                 </Button>

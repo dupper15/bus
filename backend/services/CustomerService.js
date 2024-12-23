@@ -134,25 +134,22 @@ const updateCustomer = (customerId, data) => {
 //     // This function is not implemented in the service layer.
 // }
 
-const getAllCustomer = () => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const allCustomer = await Customer.find();
-            resolve({
-                status: "OK",
-                message: "Customers retrieved successfully.",
-                data: allCustomer
-            })
-
-        } catch (e) {
-            reject({
-                status: "ERROR",
-                message: "An error occurred while retrieving the customers.",
-                error: e
-            })
-        }
-    })
-}
+const getAllCustomer = async () => {
+    try {
+        const allCustomer = await Customer.find();
+        return {
+            status: "OK",
+            message: "Customers retrieved successfully.",
+            data: allCustomer
+        };
+    } catch (e) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while retrieving the customers.",
+            error: e
+        };
+    }
+};
 
 const getDetailCustomer = (customerId) => {
     return new Promise(async (resolve, reject) => {
