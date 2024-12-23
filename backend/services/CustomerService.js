@@ -1,48 +1,69 @@
 const Customer = require("../models/CustomerModel")
 const bcrypt =  require("bcrypt")
 const { generalAccessToken, generalRefreshToken } = require("./jwtService")
+const Account = require("../models/AccountModel")
 
-const createCustomer = (newCustomer) => {
-    return new Promise(async (resolve, reject) => {
-        const { name, image, id_card, password, confirmPassword, phone} = newCustomer
-        try {
-            const checkCustomer = await Customer.findOne({
-                id_card: id_card
-            })
-            if (checkCustomer !== null){
-                resolve({
-                    status: "ERROR",
-                    message: "A customer with this ID card already exists."
-                })
-                return;
-            }
-
-            const hash = bcrypt.hashSync(password, 10)
-
-            const createdCustomer = await Customer.create({
-                name,
-                image,
-                id_card,
-                password: hash,
-                confirmPassword: hash,
-                phone
-            })
-            if (createdCustomer){
-                resolve({
-                    status: "OK",
-                    message: "Customer created successfully.",
-                    data: createdCustomer
-                })
-            }
-        } catch (e) {
-            reject({
+const createCustomer = async (data) => {
+    try {
+        const existingCustomer = await Account.findOne({ user: data.id_card });
+        if (existingCustomer) {
+            return {
                 status: "ERROR",
-                message: "An error occurred while creating the customer.",
-                error: e
-            })
+                message: "A account with this ID card already exists."
+            };
         }
-    })
-}
+
+        const hashedPassword = bcrypt.hashSync(data.password, 10);
+
+        // Get all existing IDs and sort them
+        const customers = await Customer.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
+
+        const ids = customers.map((emp) => parseInt(emp.id.replace('C', ''), 10));
+
+        // Find the smallest missing ID
+        let newIdNumber = 1;
+        for (const id of ids) {
+            if (id === newIdNumber) {
+                newIdNumber++;
+            } else {
+                break;
+            }
+        }
+        const newId = `C${String(newIdNumber).padStart(3, '0')}`;
+
+        const createdCustomer = await Customer.create({
+            id: newId,
+            name: data.name,
+            gender: data.gender,
+            image: data.image,
+            phone: data.phone,
+            id_card: data.id_card,
+            username: data.username,
+            password: hashedPassword,
+        });
+
+        await Account.create({
+            user: createdCustomer.id_card,
+            userType: "Customer", 
+            username: data.username,
+            password: hashedPassword,
+        });
+
+        return {
+            status: "OK",
+            message: "Customer created successfully.",
+            data: createdCustomer
+        };
+
+    } catch (error) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while creating the customer.",
+            error: error.message
+        };
+    }
+};
+
 
 const loginCustomer = (customerLogin) => {
     return new Promise(async (resolve, reject) => {

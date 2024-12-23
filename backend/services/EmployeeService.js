@@ -1,18 +1,18 @@
 const Employee = require("../models/EmployeeModel");
 const bcrypt = require("bcrypt");
 const { generalAccessToken, generalRefreshToken } = require("./jwtService");
+const Account = require("../models/AccountModel");
 
 const createEmployee = async (data) => {
     try {
         // Check if an employee with the same ID card already exists
-        const checkEmployee = await Employee.findOne({ id_card: data.id_card });
+        const checkEmployee = await Account.findOne({ user: data.id_card });
         if (checkEmployee) {
             return {
                 status: "ERROR",
-                message: "An employee with this ID card already exists."
+                message: "A account with this ID card already exists."
             };
         }
-        console.log('data',data)
         // If the employee is a driver, check for duplicate license
         if (data.license && data.license.trim() !== '') {
             const checkLicense = await Employee.findOne({ license: data.license });
@@ -22,7 +22,7 @@ const createEmployee = async (data) => {
                     message: "An employee with this license already exists."
                 };
             }
-        }        
+        }      
         // Get all existing IDs and sort them
         const employees = await Employee.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
 
@@ -39,7 +39,6 @@ const createEmployee = async (data) => {
         }
         const newId = `E${String(newIdNumber).padStart(3, '0')}`;
 
-
         // Hash the password
         const hash = bcrypt.hashSync(data.password, 10);
 
@@ -54,9 +53,16 @@ const createEmployee = async (data) => {
             id_card: data.id_card,
             password: hash,
             salary: data.salary,
-            hire_date: new Date(data.hire_date).toLocaleDateString('en-GB'),
+            hire_date: data.hire_date,
             license: data.license || null
         });
+
+        await Account.create({
+            user: data.id_card,
+            userType: "Employee",
+            username: data.username,
+            password: hash,
+        })
        
         if (createdEmployee) {
             return {
@@ -66,7 +72,7 @@ const createEmployee = async (data) => {
             };
         }
     } catch (e) {
-       console.error("Error creating employee:", e); 
+        console.error("Error creating employee:", e); 
         return {
             status: "ERROR",
             message: "An error occurred while creating the employee.",
@@ -173,6 +179,12 @@ const changeStatus = async (employeeId) => {
             { new: true }
         );
 
+        await Account.findOneAndUpdate(
+            { user: checkEmployee.id_card },
+            { status: status },
+            { new: true }
+        );
+
         if (!updatedEmployee) {
             return {
                 status: "ERROR",
@@ -246,6 +258,8 @@ const deleteEmployee = async (employeeId) => {
         }
         
         await Employee.findByIdAndDelete(employeeId);
+
+        await Account.findOneAndDelete({ user: employee.id_card });
         
         return {
             status: "OK",
