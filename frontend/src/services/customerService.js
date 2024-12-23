@@ -10,3 +10,14 @@ export const getAllCustomer = async () => {
     throw error;
   }
 };
+export const createCustomer = async (data) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3001/api/customer/sign-up", data
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to get detail", error);
+      throw error;
+    }
+  };

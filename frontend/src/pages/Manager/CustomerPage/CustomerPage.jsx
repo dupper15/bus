@@ -145,7 +145,7 @@ const CustomerPage = () => {
             <TableBody>
               {currentItems.map((item, index) => (
                 <TableRow key={index} className='border-b hover:bg-gray-100'>
-                  <TableCell className='text-center py-4'>{item.cId}</TableCell>
+                  <TableCell className='text-center py-4'>{item.id}</TableCell>
                   <TableCell className='text-center py-4'>
                     <Avatar className='mx-auto'>
                       <AvatarImage
@@ -159,7 +159,7 @@ const CustomerPage = () => {
                     {item.name}
                   </TableCell>
                   <TableCell className='text-center py-4'>
-                    {item.idNumber}
+                    {item.id_card}
                   </TableCell>
                   <TableCell className='text-center py-4'>
                     {item.phone}
