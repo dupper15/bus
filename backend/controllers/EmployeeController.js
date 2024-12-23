@@ -40,6 +40,7 @@ const updateEmployee = async (req, res) => {
     try {
         const employeeId = req.params.id
         const data = req.body
+        console.log("employeeId, data", employeeId, data)
         const response = await EmployeeService.updateEmployee(data)
         return res.status(200).json(response)
     } catch (e) {
