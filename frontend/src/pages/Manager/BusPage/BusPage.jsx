@@ -26,7 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FaRegCalendarMinus } from "react-icons/fa";
-import FormSchedule from "../../../components/SmallForm/FormSchedule";
+import FormBus from "../../../components/SmallForm/FormBus";
 import avatar from "../../../assets/default-profile-icon.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -214,29 +214,37 @@ const BusPage = () => {
     setSearchWord(e.target.value);
     setSearchParams({ page: 1 });
   };
-  const [showForm, setShowForm] = useState(false); // Quản lý trạng thái hiển thị FormSchedule
-  const [showDialog, setShowDialog] = useState(false); // Quản lý trạng thái hiển thị Dialog
-  const [dialogType, setDialogType] = useState(""); // Quản lý loại Dialog (edit, delete)
+  const [showForm, setShowForm] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+  const [dialogType, setDialogType] = useState("");
 
-  // Hàm xử lý khi click vào nút thêm mới
   const handleAddClick = () => {
     setDialogType("add");
-    setShowForm(true); // Hiển thị form thêm mới
-    setShowDialog(false); // Đảm bảo Dialog không hiển thị
+    setShowForm(true);
+    setShowDialog(false);
+  };
+  const handleEditClick = () => {
+    setDialogType("edit");
+    setShowForm(true);
+    setShowDialog(false);
   };
 
-  // Hàm xử lý khi click vào nút edit hoặc delete
   const handleDialogOpen = (type) => {
     setDialogType(type);
-    setShowDialog(true); // Hiển thị Dialog
-    setShowForm(false); // Đảm bảo form thêm mới không hiển thị
+    setShowDialog(true);
+    setShowForm(false);
   };
 
-  // Hàm đóng form và dialog
   const handleClose = () => {
     setShowForm(false);
     setShowDialog(false);
   };
+  const [type, setType] = useState("");
+  const [manufactureYear, setManufactureYear] = useState("");
+  const [image, setImage] = useState("");
+  const [licensePlate, setLicensePlate] = useState("");
+  const [countSeat, setCountSeat] = useState("");
+  const [status, setStatus] = useState("");
   return (
     <div className='flex justify-center min-h-screen w-full p-4'>
       <div className='space-y-6 w-full max-w-6xl'>
@@ -318,7 +326,15 @@ const BusPage = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem
-                          onClick={() => handleDialogOpen("edit")}>
+                          onClick={() => {
+                            setType(item.type);
+                            setManufactureYear(item.manufacture_year);
+                            setImage(item.image);
+                            setLicensePlate(item.license_plate);
+                            setCountSeat(item.count_seat);
+                            setStatus(item.status);
+                            handleEditClick();
+                          }}>
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -369,12 +385,21 @@ const BusPage = () => {
         </Pagination>
         {showForm && dialogType == "add" && (
           <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormSchedule handleClose={handleClose} isAdd='true' />
+            <FormBus handleClose={handleClose} isAdd='true' />
           </div>
         )}
         {showForm && dialogType == "edit" && (
           <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormSchedule handleClose={handleClose} isAdd='false' />
+            <FormBus
+              handleClose={handleClose}
+              isAdd='false'
+              type={type}
+              manufacture_year={manufactureYear}
+              image={image}
+              license_plate={licensePlate}
+              count_seat={countSeat}
+              status={status}
+            />
           </div>
         )}
         {/* Hiển thị Dialog khi showDialog là true */}

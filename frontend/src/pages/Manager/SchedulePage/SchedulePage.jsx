@@ -85,6 +85,11 @@ const SchedulePage = () => {
     setShowForm(true);
     setShowDialog(false);
   };
+  const handleEditClick = () => {
+    setDialogType("edit");
+    setShowForm(true);
+    setShowDialog(false);
+  };
 
   const handleDialogOpen = (type) => {
     setDialogType(type);
@@ -109,6 +114,11 @@ const SchedulePage = () => {
     setSearchWord(e.target.value);
     setSearchParams({ page: 1 });
   };
+  const [bus, setBus] = useState("");
+  const [line, setLine] = useState("");
+  const [driver, setDriver] = useState("");
+  const [busboy, setBusboy] = useState("");
+  const [time_start, setTime_start] = useState("");
   return (
     <div className='flex justify-center min-h-screen w-full p-4'>
       <div className='space-y-6 w-full max-w-6xl'>
@@ -187,7 +197,14 @@ const SchedulePage = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem
-                          onClick={() => handleDialogOpen("edit")}>
+                          onClick={() => {
+                            setBus(item.bId);
+                            setLine(item.lId);
+                            setDriver(item.date);
+                            setBusboy(item.time);
+                            setTime_start(item.time_start);
+                            handleEditClick();
+                          }}>
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -243,7 +260,15 @@ const SchedulePage = () => {
         )}
         {showForm && dialogType == "edit" && (
           <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormSchedule handleClose={handleClose} isAdd='false' />
+            <FormSchedule
+              handleClose={handleClose}
+              isAdd='false'
+              bus={bus}
+              line={line}
+              driver={driver}
+              busboy={busboy}
+              time_start={time_start}
+            />
           </div>
         )}
         {showDialog && dialogType == "delete" && (
