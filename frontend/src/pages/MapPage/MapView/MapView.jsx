@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import {stopPropTypes, linePropTypes} from "@/utils/PropTypes.js";
 
 mapboxgl.accessToken = "pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg";
 
@@ -43,33 +44,59 @@ const MapView = ({ mapData, busLines, stops }) => {
     }, [mapData]);
 
     useEffect(() => {
-        // Add bus line routes
-        if (mapRef.current && busLines.length) {
-            busLines.forEach((line) => {
-                if (!mapRef.current.getSource(`line-${line.id}`)) {
-                    mapRef.current.addSource(`line-${line.id}`, {
-                        type: "geojson",
-                        data: {
-                            type: "Feature",
-                            geometry: line.route,
-                        },
-                    });
+        if (mapRef.current) {
+            const map = mapRef.current;
 
-                    mapRef.current.addLayer({
-                        id: `line-${line.id}`,
-                        type: "line",
-                        source: `line-${line.id}`,
-                        layout: {
-                            "line-join": "round",
-                            "line-cap": "round",
-                        },
-                        paint: {
-                            "line-color": "#FF5733",
-                            "line-width": 4,
-                        },
+            const handleStyleData = () => {
+                // Remove previous line layers
+                const layers = map.getStyle().layers;
+                if (layers) {
+                    layers.forEach((layer) => {
+                        if (layer.id.startsWith("line-")) {
+                            map.removeLayer(layer.id);
+                            map.removeSource(layer.id);
+                        }
                     });
                 }
-            });
+
+                // Add the selected bus line route
+                if (busLines.length > 0) {
+                    const line = busLines[0];
+                    if (!map.getSource(`line-${line.id}`)) {
+                        map.addSource(`line-${line.id}`, {
+                            type: "geojson",
+                            data: {
+                                type: "Feature",
+                                geometry: line.route,
+                            },
+                        });
+
+                        map.addLayer({
+                            id: `line-${line.id}`,
+                            type: "line",
+                            source: `line-${line.id}`,
+                            layout: {
+                                "line-join": "round",
+                                "line-cap": "round",
+                            },
+                            paint: {
+                                "line-color": "#FF5733",
+                                "line-width": 4,
+                            },
+                        });
+                    }
+                }
+            };
+
+            if (map.isStyleLoaded()) {
+                handleStyleData();
+            } else {
+                map.on('styledata', handleStyleData);
+            }
+
+            return () => {
+                map.off('styledata', handleStyleData);
+            };
         }
     }, [busLines]);
 
@@ -97,57 +124,9 @@ const MapView = ({ mapData, busLines, stops }) => {
 };
 
 MapView.propTypes = {
-    mapData: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.string.isRequired,
-            name: PropTypes.string.isRequired,
-            pointY: PropTypes.number.isRequired,
-            pointX: PropTypes.number.isRequired,
-        })
-    ),
-    busLines: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.string.isRequired,
-            name: PropTypes.string.isRequired,
-            start_place: PropTypes.shape({
-                id: PropTypes.string.isRequired,
-                name: PropTypes.string.isRequired,
-                address: PropTypes.string.isRequired,
-                pointX: PropTypes.number.isRequired,
-                pointY: PropTypes.number.isRequired,
-                isStation: PropTypes.bool.isRequired,
-            }).isRequired,
-            end_place: PropTypes.shape({
-                id: PropTypes.string.isRequired,
-                name: PropTypes.string.isRequired,
-                address: PropTypes.string.isRequired,
-                pointX: PropTypes.number.isRequired,
-                pointY: PropTypes.number.isRequired,
-                isStation: PropTypes.bool.isRequired,
-            }).isRequired,
-            time: PropTypes.number.isRequired,
-            arr_stop: PropTypes.arrayOf(
-                PropTypes.shape({
-                    id: PropTypes.string.isRequired,
-                    name: PropTypes.string.isRequired,
-                    address: PropTypes.string.isRequired,
-                    pointX: PropTypes.number.isRequired,
-                    pointY: PropTypes.number.isRequired,
-                    isStation: PropTypes.bool.isRequired,
-                })
-            ).isRequired,
-        })
-    ),
-    stops: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.string.isRequired,
-            name: PropTypes.string.isRequired,
-            address: PropTypes.string.isRequired,
-            pointY: PropTypes.number.isRequired,
-            pointX: PropTypes.number.isRequired,
-            isStation: PropTypes.bool.isRequired,
-        })
-    ),
+    mapData: PropTypes.arrayOf(stopPropTypes),
+    busLines: PropTypes.arrayOf(linePropTypes),
+    stops: PropTypes.arrayOf(stopPropTypes),
 };
 
 export default MapView;

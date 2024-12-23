@@ -1,34 +1,43 @@
-import {useEffect} from "react";
+import { useEffect } from "react";
 import MapView from "@/pages/MapPage/MapView/MapView.jsx";
 import useBusLinesViewModel from "@/pages/MapPage/ViewModel/BusLinesViewModel/BusLinesViewModel.js";
 import Header from "@/components/Header/Header.jsx";
 import Footer from "@/components/Footer/Footer.jsx";
 import Sidebar from "@/pages/MapPage/Sidebar/Sidebar.jsx";
+import LineDetailSideBar from "@/pages/MapPage/LineDetailSideBar/LineDetailSideBar.jsx";
 
 const MapPage = () => {
-    const {lines, fetchLines, stops, fetchStops, busLines, fetchBusLine, handleSearch} = useBusLinesViewModel();
+    const {
+        lines, fetchLines, stops, fetchStops, busLines, setBusLines, fetchBusLine, handleSearch, selectedLine, setSelectedLine
+    } = useBusLinesViewModel();
 
     useEffect(() => {
         fetchStops().then(); // Fetch initial stops
         fetchLines().then(); // Fetch initial lines
     }, [fetchLines, fetchStops]);
 
-    const handleLineSelect = (id) => {
-        const selectedLine = lines.find((line) => line.id === id);
-        console.log("selectedLine", selectedLine);
-        if (selectedLine) {
-            fetchBusLine(selectedLine).then(); // Fetch and render the line route
-        }
+    const handleLineSelect = (line) => {
+        setSelectedLine(line);
+        fetchBusLine(line);
     };
 
-    return (<div className="flex flex-col h-screen">
-        <Header/>
-        <div className="flex flex-1">
-            <Sidebar lines={lines} onSelectLine={handleLineSelect} onSearch={handleSearch}/>
-            <MapView stops={stops} busLines={busLines}/>
+
+    const handleBack = () => {
+        setSelectedLine(null);
+        setBusLines([]);
+    };
+
+    return (
+        <div className="flex flex-col h-screen">
+            <Header />
+            <div className="flex flex-1">
+                {!selectedLine && <Sidebar lines={lines} onSelectLine={handleLineSelect} onSearch={handleSearch} />}
+                {selectedLine && <LineDetailSideBar line={selectedLine} onBack={handleBack} />}
+                <MapView stops={stops} busLines={busLines} />
+            </div>
+            <Footer />
         </div>
-        <Footer/>
-    </div>);
+    );
 };
 
 export default MapPage;

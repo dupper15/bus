@@ -12,6 +12,7 @@ const useBusLinesViewModel = () => {
     const [lines, setLines] = useState([]);
     const [busLines, setBusLines] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedLine, setSelectedLine] = useState(null);
 
     const fetchLines = useCallback(async () => {
         try {
@@ -39,8 +40,7 @@ const useBusLinesViewModel = () => {
         try {
             const stops = [line.start_place, ...line.arr_stop, line.end_place];
             const route = await fetchBusLineRoute(stops);
-            console.log("Route:", route);
-            setBusLines((prevLines) => [...prevLines, { ...line, route }]);
+            setBusLines([{ ...line, route }]); // Clear previous lines and set the new one
         } catch (error) {
             console.error(error.message);
         }
@@ -60,8 +60,11 @@ const useBusLinesViewModel = () => {
         stops,
         fetchStops,
         busLines,
+        setBusLines,
         fetchBusLine,
         handleSearch,
+        selectedLine,
+        setSelectedLine,
     };
 };
 

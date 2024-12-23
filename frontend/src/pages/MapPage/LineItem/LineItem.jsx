@@ -5,7 +5,7 @@ const LineItem = ({ line, onSelect }) => {
     return (
         <div
             className="p-4 border rounded shadow-sm hover:shadow-md hover:bg-gray-100 cursor-pointer"
-            onClick={() => onSelect(line.id)}
+            onClick={() => onSelect(line)}
         >
             <h4 className="font-bold">{line.name}</h4>
             <p className="text-sm text-gray-600">{`${line.start_place.name} - ${line.end_place.name}`}</p>
