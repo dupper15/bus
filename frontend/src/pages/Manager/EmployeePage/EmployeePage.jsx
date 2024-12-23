@@ -117,6 +117,23 @@ const EmployeePage = () => {
     },
   });
 
+  const mutationChangeStatus = useMutation({
+    mutationFn: ({_id}) => {
+      return EmployeeService.changeStatus(_id);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      if (data.status === "ERROR") {
+        Message.error(data.message); // Hiển thị lỗi từ API
+      } else if (data.status === "OK") {
+        Message.success(data.message); // Hiển thị thông báo thành công
+        setRefresh(!refresh);
+      }
+    },
+  });
+
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
@@ -181,9 +198,8 @@ const EmployeePage = () => {
     mutationDelete.mutate({_id: _id})
   };
 
-  const handleDisable = (eId) => {
-    // console.log("Editing...");
-    //onNavigateDetail(eId);
+  const handleDisable = (_id) => {
+    mutationChangeStatus.mutate({_id: _id})
   };
 
   return (
@@ -256,7 +272,7 @@ const EmployeePage = () => {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className='bg-white shadow-md rounded-lg'>
                             <DropdownMenuItem onClick={() => handleDisable(item._id)}>
-                              Edit
+                              {item.status === "Disable" ? "Enable" : "Disable"}
                             </DropdownMenuItem>
                             <DialogTrigger asChild>
                               <DropdownMenuItem>

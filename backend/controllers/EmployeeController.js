@@ -53,6 +53,21 @@ const updateEmployee = async (req, res) => {
     }
 } 
 
+const changeStatus = async (req, res) => {
+  try {
+      const employeeId = req.params.id
+      const response = await EmployeeService.changeStatus(employeeId)
+      return res.status(200).json(response)
+  } catch (e) {
+      console.error(e)
+      return res.status(500).json({
+          status: 'ERROR',
+          message: 'An error occurred while updating the employee.',
+          error: e
+      })
+  }
+} 
+
 const getAllEmployee = async (req, res) => {
   try {
     const response = await EmployeeService.getAllEmployee();
@@ -123,6 +138,7 @@ module.exports = {
   createEmployee,
   loginEmployee,
   updateEmployee,
+  changeStatus,
   getAllEmployee,
   getDetailEmployee,
   refreshTokenJwtEmployee,
