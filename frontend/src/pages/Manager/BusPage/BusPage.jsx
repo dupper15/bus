@@ -252,7 +252,7 @@ const BusPage = () => {
           <Search
             className='flex-grow border border-gray-300 rounded-lg p-2'
             onChange={handleSearchChanged}
-            text='Type customer name...'
+            text='Type license plate...'
           />
           <Button className='flex-shrink-0'>
             <FaRegCalendarMinus />

@@ -65,7 +65,7 @@ const FormBus = ({
           onSubmit={(e) => onCreate(e)}
           className='w-full max-w-3xl bg-white shadow-xl border border-slate-300 rounded-lg p-8 h-[90%] overflow-y-auto scrollbar-hide space-y-6'>
           <h1 className='text-3xl font-semibold text-green-600 text-center'>
-            {isAdd === "true" ? "Add New Schedule" : "Edit Schedule"}
+            {isAdd === "true" ? "Add New Bus" : "Edit Bus"}
           </h1>
 
           <div className='flex justify-center mb-6'>
