@@ -84,14 +84,19 @@ const items = [
     url: "/manage/incentives",
     icon: SquareChartGantt,
   },
+  {
+    title: "ManageManager",
+    url: "/manage/manage-manager",
+    icon: SquareChartGantt,
+  },
 ];
 
 export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="text-xl font-bold items-center justify-center">
-          <span className="font-extrabold text-2xl text-[#4CAF50]">Busty</span>
+        <div className='text-xl font-bold items-center justify-center'>
+          <span className='font-extrabold text-2xl text-[#4CAF50]'>Busty</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -101,7 +106,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="hover:bg-green-200">
+                  <SidebarMenuButton asChild className='hover:bg-green-200'>
                     <Link to={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -115,15 +120,15 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         {/* Profile Image */}
-        <div className="flex items-center space-x-4 justify-start">
+        <div className='flex items-center space-x-4 justify-start'>
           <img
             src={icon}
-            alt="Profile Icon"
-            className="w-10 h-10 rounded-full border border-gray-200 cursor-pointer"
+            alt='Profile Icon'
+            className='w-10 h-10 rounded-full border border-gray-200 cursor-pointer'
           />
-          <div className="flex flex-col">
-            <span className="font-semibold">Dương Lâm</span>
-            <span className="text-sm text-gray-500">Manager</span>
+          <div className='flex flex-col'>
+            <span className='font-semibold'>Dương Lâm</span>
+            <span className='text-sm text-gray-500'>Manager</span>
           </div>
         </div>
       </SidebarFooter>

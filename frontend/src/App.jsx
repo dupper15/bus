@@ -19,6 +19,7 @@ import OpinionPage from "./pages/Manager/OpinionPage/OpinionPage";
 import SchedulePage from "./pages/Manager/SchedulePage/SchedulePage";
 import BusPage from "./pages/Manager/BusPage/BusPage";
 import StopPage from "./pages/Manager/StopPage/StopPage";
+import ManageManagerPage from "./pages/Manager/ManageManagerPage/ManageManagerPage";
 import LinePage from "./pages/Manager/LinePage/LinePage";
 import TicketPage from "./pages/Manager/TicketPage/TicketPage";
 import MaintenancePage from "./pages/Manager/MaintenancePage/MaintenancePage";
@@ -56,6 +57,7 @@ export default function App() {
           <Route path='/manage' element={<DashboardLayout />}>
             <Route index element={<Navigate to='dashboard' replace />} />
             <Route path='dashboard' element={<DashboardPage />} />
+            <Route path='manage-manager' element={<ManageManagerPage />} />
             <Route path='employee' element={<EmployeePage />} />
             <Route path='employee/add-employee' element={<AddEmployeePage />} />
             <Route
