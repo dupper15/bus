@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose
 } from "@/components/ui/dialog";
 import {
   Pagination,
@@ -42,7 +43,7 @@ import {
 } from "@/components/ui/pagination";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import * as EmployeeService from "../../../services/employeeService";
-import { set } from "date-fns";
+import * as Message from "../../../components/ui/alert"
 
 const requests = [
   {
@@ -62,6 +63,7 @@ const ITEMS_PER_PAGE = 10;
 
 const EmployeePage = () => {
   const [items, setItems] = useState([]);
+  const [refresh, setRefresh] = useState(false);
   const mutation = useMutation({
     mutationFn: () => {
       return EmployeeService.getAllEmployee();
@@ -76,25 +78,28 @@ const EmployeePage = () => {
   });
   useEffect(() => {
     getAll();
-    console.log(items);
-  }, []);
+  }, [refresh]);
   const getAll = () => {
     mutation.mutate();
   };
-  const mutation1 = useMutation({
-    mutationFn: ({ data }) => {
-      return EmployeeService.deleteEmployee(data);
+  const mutationDelete = useMutation({
+    mutationFn: ({_id }) => {
+      return EmployeeService.deleteEmployee(_id);
     },
     onError: (error) => {
       console.log(error);
     },
     onSuccess: (data) => {
-      console.log(data.data);
+      console.log("data")
+      if (data.status === "ERROR") {
+        Message.error(data.message); // Hiển thị lỗi từ API
+      } else if (data.status === "OK") {
+        Message.success(data.message); // Hiển thị thông báo thành công
+        setRefresh(!refresh);
+      }
     },
   });
-  const handleDelete = (eId) => {
-    //mutation1.mutate({ data: eId });
-  };
+
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
@@ -105,7 +110,16 @@ const EmployeePage = () => {
       item.name.toLowerCase().includes(searchWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState('');
+
+  // Query id employee into url
+  const currentParams = new URLSearchParams(window.location.search);
+  currentParams.set('id', selectedEmployee._id);
+  window.history.pushState(
+    {},
+    '',
+    `${window.location.pathname}?${currentParams.toString()}`
+  );
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -120,9 +134,6 @@ const EmployeePage = () => {
     navigate("add-employee");
   };
 
-  const onNavigateDetail = (eId) => {
-    // navigate(`/manage/employee/${eId}/detail-employee`);
-  };
   const handleSearchChanged = (e) => {
     setSearchWord(e.target.value);
     setSearchParams({ page: 1 });
@@ -130,6 +141,10 @@ const EmployeePage = () => {
   const handleEdit = (eId) => {
     // console.log("Editing...");
     //onNavigateDetail(eId);
+  };
+
+  const handleDelete = (_id) => {
+    mutationDelete.mutate({_id: _id})
   };
 
   return (
@@ -174,11 +189,10 @@ const EmployeePage = () => {
                     key={index}
                     className='cursor-pointer hover:bg-gray-100 transition'
                     onClick={() => {
-                      //onNavigateDetail(item.eId);
                       setSelectedEmployee(item);
                     }}>
                     <TableCell className='text-center py-3 px-4'>
-                      {item.eId}
+                      {item.id}
                     </TableCell>
                     <TableCell className='flex justify-center items-center py-3 px-4'>
                       <Avatar className='w-10 h-10 border-2 border-green-500'>
@@ -202,12 +216,11 @@ const EmployeePage = () => {
                             <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className='bg-white shadow-md rounded-lg'>
-                            <DropdownMenuItem onClick={handleEdit(item.eId)}>
+                            <DropdownMenuItem onClick={() => handleEdit(item._id)}>
                               Edit
                             </DropdownMenuItem>
                             <DialogTrigger asChild>
-                              <DropdownMenuItem
-                                onClick={handleDelete(item.eId)}>
+                              <DropdownMenuItem>
                                 <span>Delete</span>
                               </DropdownMenuItem>
                             </DialogTrigger>
@@ -224,14 +237,16 @@ const EmployeePage = () => {
                               data from our servers.
                             </DialogDescription>
                             <div className='flex items-center justify-center gap-4 pt-4'>
-                              <Button
-                                variant='outline'
-                                className='w-28 bg-gray-200 hover:bg-gray-300'>
+                            <DialogClose asChild>
+                              <Button variant='outline' className='w-28 '>
                                 Cancel
                               </Button>
-                              <Button className='w-28 bg-red-500 text-white hover:bg-red-600'>
+                            </DialogClose>
+                            <DialogClose asChild>
+                              <Button  onClick={() => handleDelete(selectedEmployee._id)} className='w-28' variant="destructive">
                                 Confirm
                               </Button>
+                            </DialogClose>
                             </div>
                           </DialogHeader>
                         </DialogContent>
@@ -294,11 +309,15 @@ const EmployeePage = () => {
                 </Avatar>
                 <div className='flex justify-between items-center'>
                   <span className='font-medium text-gray-600'>ID:</span>
-                  <span className='text-gray-800'>{selectedEmployee.eId}</span>
+                  <span className='text-gray-800'>{selectedEmployee.id}</span>
                 </div>
                 <div className='flex justify-between items-center'>
                   <span className='font-medium text-gray-600'>Name:</span>
                   <span className='text-gray-800'>{selectedEmployee.name}</span>
+                </div>
+                <div className='flex justify-between items-center'>
+                  <span className='font-medium text-gray-600'>National ID:</span>
+                  <span className='text-gray-800'>{selectedEmployee.id_card}</span>
                 </div>
                 <div className='flex justify-between items-center'>
                   <span className='font-medium text-gray-600'>Gender:</span>
@@ -327,12 +346,12 @@ const EmployeePage = () => {
                 <div className='flex justify-between items-center'>
                   <span className='font-medium text-gray-600'>Hire date:</span>
                   <span className='text-gray-800'>
-                    {selectedEmployee.hire_date}
+                    {new Date(selectedEmployee.hire_date).toLocaleDateString('en-GB')}
                   </span>
                 </div>
                 <div
                   className={`${
-                    selectedEmployee.license == "" ? "hidden" : "flex"
+                    selectedEmployee.license == null ? "hidden" : "flex"
                   } justify-between items-center`}>
                   <span className='font-medium text-gray-600'>License:</span>
                   <span className='text-gray-800'>

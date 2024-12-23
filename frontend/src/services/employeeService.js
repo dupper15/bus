@@ -23,11 +23,10 @@ export const addEmployee = async (data) => {
     throw error;
   }
 };
-export const deleteEmployee = async (data) => {
+export const deleteEmployee = async (id) => {
   try {
-    console.log(data);
     const response = await axios.delete(
-      `http://localhost:3001/api/employee/delete/${data}`
+      `http://localhost:3001/api/employee/delete/${id}`
     );
     return response.data;
   } catch (error) {

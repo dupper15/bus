@@ -12,8 +12,9 @@ const createEmployee = async (data) => {
                 message: "An employee with this ID card already exists."
             };
         }
+        console.log('data',data)
         // If the employee is a driver, check for duplicate license
-        if (data.license) {
+        if (data.license && data.license.trim() !== '') {
             const checkLicense = await Employee.findOne({ license: data.license });
             if (checkLicense) {
                 return {
@@ -24,6 +25,7 @@ const createEmployee = async (data) => {
         }        
         // Get all existing IDs and sort them
         const employees = await Employee.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
+
         const ids = employees.map((emp) => parseInt(emp.id.replace('E', ''), 10));
 
         // Find the smallest missing ID
@@ -52,10 +54,10 @@ const createEmployee = async (data) => {
             id_card: data.id_card,
             password: hash,
             salary: data.salary,
-            hire_date: data.hire_date,
+            hire_date: new Date(data.hire_date).toLocaleDateString('en-GB'),
             license: data.license || null
         });
-  
+       
         if (createdEmployee) {
             return {
                 status: "OK",
@@ -64,6 +66,7 @@ const createEmployee = async (data) => {
             };
         }
     } catch (e) {
+       console.error("Error creating employee:", e); 
         return {
             status: "ERROR",
             message: "An error occurred while creating the employee.",
@@ -193,16 +196,17 @@ const getDetailEmployee = async (data) => {
     }
 };
 
-const deleteEmployee = async (data) => {
+const deleteEmployee = async (employeeId) => {
     try {
-        const employee = await Employee.findOne({ id: data.id });
+        const employee = await Employee.findById(employeeId);
         if (!employee) {
             return {
                 status: "ERROR",
                 message: "No employee found with the provided ID."
             };
         }
-        await Employee.findOneAndDelete({ id: data.id });
+        
+        await Employee.findByIdAndDelete(employeeId);
         
         return {
             status: "OK",
