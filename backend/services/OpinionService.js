@@ -97,7 +97,9 @@ const resolveOpinion = async (managerId, data) => {
             data._id,
             {
                 feedback: data.feedback,
-                receiver: managerId
+                receiver: managerId,
+                status: "Resolved",
+                resolve_date: new Date()
             },
             { new: true }
         );

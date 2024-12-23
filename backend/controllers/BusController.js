@@ -2,15 +2,8 @@ const BusService = require('../services/BusService')
 
 const createBus = async (req, res) => {
     try {
-        const { type, manufacture_year, image, count_seat, license_plate } = req.body
-        if (!type || !manufacture_year || !image || !count_seat || !license_plate) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'All fields are required.'
-            })
-        }
-
-        const response = await BusService.createBus(req.body)
+        const data = req.body;
+        const response = await BusService.createBus(data)
         return res.status(201).json(response)
     } catch (e) {
         console.error(e)
@@ -23,15 +16,15 @@ const createBus = async (req, res) => {
 
 const updateBus = async (req, res) => {
     try {
-        const BusId = req.params.id
-        const data = req.body
-        if (!BusId) {
+        const busId = req.params.id;
+        const data = req.body;
+        if (!busId) {
             return res.status(400).json({
                 status: 'ERROR',
                 message: 'Bus ID is required.'
             })
         }
-        const response = await BusService.updateBus(BusId, data)
+        const response = await BusService.updateBus(data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
