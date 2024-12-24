@@ -16,14 +16,7 @@ const createBus = async (req, res) => {
 
 const updateBus = async (req, res) => {
     try {
-        const busId = req.params.id;
         const data = req.body;
-        if (!busId) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Bus ID is required.'
-            })
-        }
         const response = await BusService.updateBus(data)
         return res.status(200).json(response)
     } catch (e) {
@@ -70,14 +63,8 @@ const getDetailBus = async (req, res) => {
 
 const deleteBus = async (req, res) => {
     try {
-        const busId = req.params.id
-        if (!busId) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Bus ID is required.'
-            })
-        }
-        const response = await BusService.deleteBus(busId)
+        const data = req.body;
+        const response = await BusService.deleteBus(data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)

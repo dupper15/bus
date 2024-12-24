@@ -2,6 +2,7 @@ const Bus = require("../models/BusModel")
 
 const createBus = async (data) => {
     try {
+        console.log("data", data)
         // Kiểm tra xe buýt với biển số xe đã tồn tại
         const checkBus = await Bus.findOne({ license_plate: data.license_plate });
         if (checkBus !== null) {
@@ -26,7 +27,6 @@ const createBus = async (data) => {
             }
         }
         const newId = `B${String(newIdNumber).padStart(3, '0')}`;
-
         // Tạo xe buýt mới
         const createdBus = await Bus.create({
             id: newId,
@@ -133,10 +133,10 @@ const getDetailBus = (BusId) => {
     })
 }
 
-const deleteBus = async (busId) => {
+const deleteBus = async (data) => {
     try {
         // Tìm và xóa bus bằng ID
-        await Bus.findByIdAndDelete(busId);
+        await Bus.findByIdAndDelete(data._id);
 
         return {
             status: "OK",
