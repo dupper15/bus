@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const billSchema = new mongoose.Schema(
     {
+        id: {type: String, require: true, unique: true},
         bus: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Bus",

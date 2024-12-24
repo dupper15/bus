@@ -1,29 +1,32 @@
 const Bill = require("../models/MaintenanceBillModel")
 
-const createBill = (newBill) => {
+const createBill = (data) => {
     return new Promise(async (resolve, reject) => {
-        const { bus, employee, start_date, end_date, content, price } = newBill
         try {
-            // const checkBill = await Bill.findOne({
-            //     bus: bus,
-            //     employee: employee,
-            // });
-            //
-            // if (checkBill !== null) {
-            //     resolve({
-            //         status: "ERROR",
-            //         message: "A maintenance bill for this bus and employee already exists."
-            //     });
-            //     return;
-            // }
+            // Lấy tất cả ID hiện có và sắp xếp
+            const bills = await Bill.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
+
+            const ids = bills.map((bus) => parseInt(bus.id.replace('M', ''), 10));
+
+            // Tìm ID nhỏ nhất bị thiếu
+            let newIdNumber = 1;
+            for (const id of ids) {
+                if (id === newIdNumber) {
+                    newIdNumber++;
+                } else {
+                    break;
+                }
+            }
+            const newId = `M${String(newIdNumber).padStart(3, '0')}`;
 
             const createdBill = await Bill.create({
-                bus,
-                employee,
-                start_date,
-                end_date,
-                content,
-                price
+                id: newId,
+                bus: data.bus,
+                employee: data.employee,
+                start_date: data.start_date,
+                end_date: data.end_date,
+                content: data.content,
+                price: data.price
             })
             if (createdBill) {
                 resolve({
