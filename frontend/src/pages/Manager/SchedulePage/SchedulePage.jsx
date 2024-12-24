@@ -120,24 +120,24 @@ const SchedulePage = () => {
   const [busboy, setBusboy] = useState("");
   const [time_start, setTime_start] = useState("");
   return (
-    <div className='flex justify-center min-h-screen w-full p-4'>
-      <div className='space-y-6 w-full max-w-6xl'>
-        <div className='flex items-center gap-4'>
+    <div className="flex justify-center min-h-screen w-full p-4">
+      <div className="space-y-6 w-full max-w-6xl">
+        <div className="flex items-center gap-4">
           <Search
-            className='flex-grow border border-gray-300 rounded-lg p-2'
+            className="flex-grow border border-gray-300 rounded-lg p-2"
             onChange={handleSearchChanged}
-            text='Type line id...'
+            text="Type line id..."
           />
-          <Button className='flex-shrink-0'>
+          <Button className="flex-shrink-0">
             <FaRegCalendarMinus />
           </Button>
-          <Button onClick={handleAddClick} className='flex-shrink-0'>
+          <Button onClick={handleAddClick} className="flex-shrink-0">
             +
           </Button>
         </div>
-        <div className='overflow-x-auto'>
-          <Table className='overflow-hidden rounded-lg border border-gray-300 '>
-            <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
+        <div className="overflow-x-auto">
+          <Table className="overflow-hidden rounded-lg border border-gray-300 ">
+            <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
               <TableRow>
                 {[
                   "Schedule ID",
@@ -151,7 +151,7 @@ const SchedulePage = () => {
                 ].map((header, idx) => (
                   <TableHead
                     key={idx}
-                    className='text-center text-white text-base py-3 px-4'>
+                    className="text-center text-white text-base py-3 px-4">
                     {header}
                   </TableHead>
                 ))}
@@ -160,25 +160,25 @@ const SchedulePage = () => {
             <TableBody>
               {currentItems.map((item, index) => (
                 <TableRow key={index}>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     {item.sId}
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     {item.bId}
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     {item.lId}
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     {item.date}
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     {item.time}
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     {item.time}
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     <span
                       className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
                         item.status === "Pending"
@@ -190,10 +190,10 @@ const SchedulePage = () => {
                       {item.status}
                     </span>
                   </TableCell>
-                  <TableCell className='text-center flex justify-center items-center py-3 px-4'>
+                  <TableCell className="text-center flex justify-center items-center py-3 px-4">
                     <DropdownMenu>
                       <DropdownMenuTrigger>
-                        <EllipsisVertical className='mb-2 ' />
+                        <EllipsisVertical className="mb-2 " />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem
@@ -219,20 +219,20 @@ const SchedulePage = () => {
             </TableBody>
           </Table>
         </div>
-        <Pagination className='flex justify-center items-center gap-4'>
-          <PaginationContent className='flex gap-2'>
+        <Pagination className="flex justify-center items-center gap-4">
+          <PaginationContent className="flex gap-2">
             <PaginationItem>
               <PaginationPrevious
-                href='#'
+                href="#"
                 onClick={() => handlePageChange(currentPage - 1)}
-                className='text-green-500 hover:text-green-700'>
+                className="text-green-500 hover:text-green-700">
                 Previous
               </PaginationPrevious>
             </PaginationItem>
             {[...Array(totalPages)].map((_, index) => (
               <PaginationItem key={index}>
                 <PaginationLink
-                  href='#'
+                  href="#"
                   onClick={() => handlePageChange(index + 1)}
                   className={`px-4 py-2 rounded-full transition ${
                     index + 1 === currentPage
@@ -245,24 +245,24 @@ const SchedulePage = () => {
             ))}
             <PaginationItem>
               <PaginationNext
-                href='#'
+                href="#"
                 onClick={() => handlePageChange(currentPage + 1)}
-                className='text-green-500 hover:text-green-700'>
+                className="text-green-500 hover:text-green-700">
                 Next
               </PaginationNext>
             </PaginationItem>
           </PaginationContent>
         </Pagination>
         {showForm && dialogType == "add" && (
-          <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormSchedule handleClose={handleClose} isAdd='true' />
+          <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
+            <FormSchedule handleClose={handleClose} isAdd="true" />
           </div>
         )}
         {showForm && dialogType == "edit" && (
-          <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
+          <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
             <FormSchedule
               handleClose={handleClose}
-              isAdd='false'
+              isAdd="false"
               bus={bus}
               line={line}
               driver={driver}
@@ -275,21 +275,21 @@ const SchedulePage = () => {
           <Dialog open={showDialog} onOpenChange={handleClose}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle className='text-center'>
+                <DialogTitle className="text-center">
                   Are you sure you want to delete?
                 </DialogTitle>
                 <DialogDescription>
                   This action cannot be undone. This will permanently delete the
                   schedule.
                 </DialogDescription>
-                <div className='flex items-center justify-center gap-2 pt-4'>
+                <div className="flex items-center justify-center gap-2 pt-4">
                   <Button
-                    variant='outline'
-                    className='w-[120px]'
+                    variant="outline"
+                    className="w-[120px]"
                     onClick={handleClose}>
                     Cancel
                   </Button>
-                  <Button className='w-[120px]' onClick={handleClose}>
+                  <Button className="w-[120px]" onClick={handleClose}>
                     Confirm
                   </Button>
                 </div>
