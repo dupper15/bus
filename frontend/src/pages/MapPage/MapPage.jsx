@@ -1,3 +1,5 @@
+// frontend/src/pages/MapPage/MapPage.jsx
+import { useState } from "react";
 import MapView from "@/pages/MapPage/MapView/MapView.jsx";
 import useBusLinesViewModel from "@/pages/MapPage/ViewModel/BusLinesViewModel/BusLinesViewModel.js";
 import Header from "@/components/Header/Header.jsx";
@@ -19,6 +21,8 @@ const MapPage = () => {
         handleSearch
     } = useBusLinesViewModel();
 
+    const [viewMode, setViewMode] = useState("outbound");
+
     return (
         <div className="flex flex-col h-screen bg-gray-100">
             <Header />
@@ -30,10 +34,16 @@ const MapPage = () => {
                         onBack={handleBack}
                         selectedStop={selectedStop}
                         onSelectStop={handleSelectStop}
+                        onTabSelect={setViewMode} // Pass the setViewMode function to LineDetailSideBar
                     />
                 )}
                 <div className="flex-1">
-                    <MapView stops={stops} busLines={busLines} selectedStopCoordinates={selectedStopCoordinates} />
+                    <MapView
+                        stops={stops}
+                        busLines={busLines}
+                        selectedStopCoordinates={selectedStopCoordinates}
+                        mode={viewMode} // Pass the viewMode to MapView
+                    />
                 </div>
             </div>
             <Footer />

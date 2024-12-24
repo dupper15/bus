@@ -6,7 +6,7 @@ import { stopPropTypes, linePropTypes } from "@/utils/PropTypes.js";
 
 mapboxgl.accessToken = "pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg";
 
-const MapView = ({ mapData, busLines, stops, selectedStopCoordinates }) => {
+const MapView = ({ mapData, busLines, stops, selectedStopCoordinates, mode }) => {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
 
@@ -59,31 +59,38 @@ const MapView = ({ mapData, busLines, stops, selectedStopCoordinates }) => {
                     });
                 }
 
-                // Add the selected bus line route
+                // Add the selected bus line route based on mode
                 if (busLines.length > 0) {
                     const line = busLines[0];
-                    if (!map.getSource(`line-${line.id}`)) {
-                        map.addSource(`line-${line.id}`, {
-                            type: "geojson",
-                            data: {
-                                type: "Feature",
-                                geometry: line.route,
-                            },
-                        });
+                    const routeCoordinates = mode === "inbound" ? [...line.route.coordinates].reverse() : line.route.coordinates;
 
-                        map.addLayer({
-                            id: `line-${line.id}`,
-                            type: "line",
-                            source: `line-${line.id}`,
-                            layout: {
-                                "line-join": "round",
-                                "line-cap": "round",
-                            },
-                            paint: {
-                                "line-color": "#FF5733",
-                                "line-width": 4,
-                            },
-                        });
+                    if (routeCoordinates) {
+                        if (!map.getSource(`line-${line.id}`)) {
+                            map.addSource(`line-${line.id}`, {
+                                type: "geojson",
+                                data: {
+                                    type: "Feature",
+                                    geometry: {
+                                        type: "LineString",
+                                        coordinates: routeCoordinates,
+                                    },
+                                },
+                            });
+
+                            map.addLayer({
+                                id: `line-${line.id}`,
+                                type: "line",
+                                source: `line-${line.id}`,
+                                layout: {
+                                    "line-join": "round",
+                                    "line-cap": "round",
+                                },
+                                paint: {
+                                    "line-color": "#FF5733",
+                                    "line-width": 4,
+                                },
+                            });
+                        }
                     }
                 }
             };
@@ -98,7 +105,7 @@ const MapView = ({ mapData, busLines, stops, selectedStopCoordinates }) => {
                 map.off('styledata', handleStyleData);
             };
         }
-    }, [busLines]);
+    }, [busLines, mode]);
 
     useEffect(() => {
         // Add markers for selected stops
@@ -139,6 +146,7 @@ MapView.propTypes = {
     busLines: PropTypes.arrayOf(linePropTypes),
     stops: PropTypes.arrayOf(stopPropTypes),
     selectedStopCoordinates: PropTypes.arrayOf(PropTypes.number),
+    mode: PropTypes.oneOf(["outbound", "inbound"]).isRequired,
 };
 
 export default MapView;
