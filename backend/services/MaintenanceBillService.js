@@ -1,7 +1,7 @@
-const Bill = require("../models/MaintenanceBillModel")
+const Bill = require("../models/MaintenanceBillModel");
+const { all } = require("../routes/ManagerRouter");
 
-const createBill = (data) => {
-    return new Promise(async (resolve, reject) => {
+const createBill = async (data) => {
         try {
             // Lấy tất cả ID hiện có và sắp xếp
             const bills = await Bill.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
@@ -36,19 +36,17 @@ const createBill = (data) => {
                 })
             }
         } catch (e) {
-            reject({
+            return{
                 status: "ERROR",
                 message: "An error occurred while creating the maintenance bill.",
                 error: e
-            })
+            };
         }
-    })
-}
+};
 
-const getAllBill = () => {
-    return new Promise(async (resolve, reject) => {
+const getAllBill = async () => {
         try {
-            const allBill = await Bill.find().populate('bus').populate('employee')
+            const allBill = await Bill.find()
             resolve({
                 status: "OK",
                 message: "Maintenance bills retrieved successfully.",
@@ -56,13 +54,12 @@ const getAllBill = () => {
             })
 
         } catch (e) {
-            reject({
+            return({
                 status: "ERROR",
                 message: "An error occurred while retrieving the maintenance bills.",
                 error: e
             })
         }
-    })
 }
 
 const getDetailBill = (BillId) => {
