@@ -1,32 +1,9 @@
-const EmployeeService = require('../services/EmployeeService')
-const JwtService = require('../services/JwtService')
+const EmployeeService = require("../services/EmployeeService");
 
 const createEmployee = async (req, res) => {
     try {
-        const { name, image, id_card, password, confirmPassword, phone, salary, isDriver, license } = req.body
-        if (!name || !image || !id_card || !password || !confirmPassword || !phone || !salary) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'All fields are required.'
-            })
-        } else if (!/^\d{12}$/.test(id_card)) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'ID card must be exactly 12 digits.'
-            })
-        } else if (password !== confirmPassword) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Password and confirm password do not match.'
-            })
-        }
-        if (isDriver && !license) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'License is required for drivers.'
-            })
-        }
-        const response = await EmployeeService.createEmployee(req.body)
+        const data = req.body
+        const response = await EmployeeService.createEmployee(data)
         return res.status(201).json(response)
     } catch (e) {
         console.error(e)
@@ -36,40 +13,35 @@ const createEmployee = async (req, res) => {
             error: e
         })
     }
-}
+};
 
 const loginEmployee = async (req, res) => {
-    try {
-        const { id_card, password } = req.body
-        if (!id_card || !password) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'ID card and password are required.'
-            })
-        }
-        const response = await EmployeeService.loginEmployee(req.body)
-        return res.status(200).json(response)
-    } catch (e) {
-        console.error(e)
-        return res.status(500).json({
-            status: 'ERROR',
-            message: 'An error occurred while logging in the employee.',
-            error: e
-        })
+  try {
+    const { id_card, password } = req.body;
+    if (!id_card || !password) {
+      return res.status(400).json({
+        status: "ERROR",
+        message: "ID card and password are required.",
+      });
     }
-}
+    const response = await EmployeeService.loginEmployee(req.body);
+    return res.status(200).json(response);
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({
+      status: "ERROR",
+      message: "An error occurred while logging in the employee.",
+      error: e,
+    });
+  }
+};
 
 const updateEmployee = async (req, res) => {
     try {
-        const EmployeeId = req.params.id
+        const employeeId = req.params.id
         const data = req.body
-        if (!EmployeeId) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Employee ID is required.'
-            })
-        }
-        const response = await EmployeeService.updateEmployee(EmployeeId, data)
+        console.log("employeeId, data", employeeId, data)
+        const response = await EmployeeService.updateEmployee(data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -79,32 +51,42 @@ const updateEmployee = async (req, res) => {
             error: e
         })
     }
-}
+} 
+
+const changeStatus = async (req, res) => {
+  try {
+      const employeeId = req.params.id
+      const response = await EmployeeService.changeStatus(employeeId)
+      return res.status(200).json(response)
+  } catch (e) {
+      console.error(e)
+      return res.status(500).json({
+          status: 'ERROR',
+          message: 'An error occurred while updating the employee.',
+          error: e
+      })
+  }
+} 
 
 const getAllEmployee = async (req, res) => {
-    try {
-        const response = await EmployeeService.getAllEmployee()
-        return res.status(200).json(response)
-    } catch (e) {
-        console.error(e)
-        return res.status(500).json({
-            status: 'ERROR',
-            message: 'An error occurred while retrieving the employees.',
-            error: e
-        })
-    }
-}
+  try {
+    const response = await EmployeeService.getAllEmployee();
+    return res.status(200).json(response);
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({
+      status: "ERROR",
+      message: "An error occurred while retrieving the employees.",
+      error: e,
+    });
+  }
+};
 
 const getDetailEmployee = async (req, res) => {
     try {
-        const employeeId = req.params.id
-        if (!employeeId) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Employee ID is required.'
-            })
-        }
-        const response = await EmployeeService.getDetailEmployee(employeeId)
+        const employeeId = req.params.id;
+        const data = req.body;
+        const response = await EmployeeService.getDetailEmployee(data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -114,38 +96,32 @@ const getDetailEmployee = async (req, res) => {
             error: e
         })
     }
-}
+};
 
 const refreshTokenJwtEmployee = async (req, res) => {
-    try {
-        const token = req.headers.token.split(' ')[1]
-        if (!token) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Token is required.'
-            })
-        }
-        const response = await JwtService.refreshTokenJwtEmployee(token)
-        return res.status(200).json(response)
-    } catch (e) {
-        console.error(e)
-        return res.status(500).json({
-            status: 'ERROR',
-            message: 'An error occurred while refreshing the token.',
-            error: e
-        })
+  try {
+    const token = req.headers.token.split(" ")[1];
+    if (!token) {
+      return res.status(400).json({
+        status: "ERROR",
+        message: "Token is required.",
+      });
     }
-}
+    const response = await JwtService.refreshTokenJwtEmployee(token);
+    return res.status(200).json(response);
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({
+      status: "ERROR",
+      message: "An error occurred while refreshing the token.",
+      error: e,
+    });
+  }
+};
 
 const deleteEmployee = async (req, res) => {
     try {
         const employeeId = req.params.id
-        if (!employeeId) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Employee ID is required.'
-            })
-        }
         const response = await EmployeeService.deleteEmployee(employeeId)
         return res.status(200).json(response)
     } catch (e) {
@@ -156,14 +132,15 @@ const deleteEmployee = async (req, res) => {
             error: e
         })
     }
-}
+};
 
 module.exports = {
-    createEmployee,
-    loginEmployee,
-    updateEmployee,
-    getAllEmployee,
-    getDetailEmployee,
-    refreshTokenJwtEmployee,
-    deleteEmployee
-}
+  createEmployee,
+  loginEmployee,
+  updateEmployee,
+  changeStatus,
+  getAllEmployee,
+  getDetailEmployee,
+  refreshTokenJwtEmployee,
+  deleteEmployee,
+};

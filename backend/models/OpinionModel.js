@@ -1,13 +1,13 @@
 const mongoose = require('mongoose')
 const opinionSchema = new mongoose.Schema(
     {
+        id: {type: String, require: true, unique: true},
         title: {type: String, require: true},
         content: {type: String, require:true},
-        isResolved: {type: Boolean, default: false, require: true},
-        feedback: {
-            type: String,
-            require: function () { return this.isResolved},
-        },
+        status: {type: String, default: 'Pending'},
+        feedback: {type: String, require: true},
+        receive_date: {type: Date, require: true},
+        resolve_date: {type: Date, require: true},
         sender: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Customer',
@@ -16,7 +16,7 @@ const opinionSchema = new mongoose.Schema(
         receiver: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Manager',
-            require: function () { return this.isResolved}
+            require: true,
         },
     },
     {
