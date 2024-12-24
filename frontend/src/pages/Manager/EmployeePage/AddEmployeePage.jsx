@@ -1,12 +1,11 @@
-import React from 'react';
+import React, { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
- 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -15,300 +14,382 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import * as EmployeeService from "../../../services/employeeService";
+import { useMutation } from "@tanstack/react-query";
 
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
-import { CalendarIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-  
-const formSchema = z.object({
-  fullname: z.string().min(10, {
-    message: "Full name must be at least 10 characters.",
-  }),
-  phonenumber: z.string().length(10, {
-    message: "Phone number must be exactly 10 digits.",
-  }).regex(/^\d{10}$/, {
-    message: "Phone number must contain only digits.",
-  }),
-  salary: z.string().length(7, {
-    message: "Salary must be at least 1 000 000 VND.",
-  }).regex(/^\d{10}$/, {
-    message: "Salary must contain only digits.",
-  }),
-  id: z.string().length(12, {
-    message: "National ID must be exactly 12 digits.",
-  }).regex(/^\d{12}$/, {
-    message: "National ID must contain only digits.",
-  }),
-  gender: z.string().refine((value) => value === "male" || value === "female", {
-    message: "Please select a gender.",
-  }),
-  position: z.string().refine((value) => value === "busboy" || value === "driver", {
-    message: "Please select a position.",
-  }),
-})
- 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import * as Message from "../../../components/ui/alert"
+
+const formSchema = z
+  .object({
+    name: z
+      .string()
+      .min(10, { message: "Full name must be at least 10 characters." }),
+    password: z
+      .string()
+      .min(6, { message: "Password must be at least 6 characters." }),
+    confirmPassword: z
+      .string()
+      .min(6, { message: "Password must be at least 6 characters." }),
+    phone: z
+      .string()
+      .length(10, { message: "Phone number must be exactly 10 digits." })
+      .regex(/^\d{10}$/, { message: "Phone number must contain only digits." }),
+    salary: z
+      .string()
+      .length(7, { message: "Salary must be at least 1 000 000 VND." }),
+    id_card: z
+      .string()
+      .length(12, { message: "National ID must be exactly 12 digits." })
+      .regex(/^\d{12}$/, { message: "National ID must contain only digits." }),
+    gender: z
+      .string()
+      .refine((value) => value === "Male" || value === "Female", {
+        message: "Please select a gender.",
+      }),
+    position: z
+      .string()
+      .refine((value) => value === "Bus boy" || value === "Driver", {
+        message: "Please select a position.",
+      }),
+    hire_date: z
+      .date()
+      .refine((date) => date <= new Date(), {
+        message: "Hire date must be a valid date and cannot be in the future.",
+      }),
+    license: z
+      .string()
+      .optional(), // License là trường optional cho mọi người không phải Driver 
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match",
+    path: ["confirmPassword"], // Định nghĩa trường hiển thị lỗi
+  })
+  .refine(
+    (data) => {
+      // Kiểm tra nếu position là "Driver" và license phải có giá trị và đủ 12 ký tự
+      if (data.position === "Driver") {
+        if (!data.license || data.license.length !== 12) {
+          return false; // Nếu không hợp lệ, trigger lỗi
+        }
+      }
+      return true; // Nếu hợp lệ
+    },
+    {
+      message: "License is required and must be exactly 12 digits for drivers.",
+      path: ["license"], // Định nghĩa trường hiển thị lỗi
+    }
+  );
+
 
 const AddEmployeePage = () => {
-    const navigate = useNavigate()
-    // 1. Define your form.
-    const form = useForm({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-          fullname: "",
-          gender: "",
-          position: "",
-          phonenumber: "",
-          id: "",
-          password: "",
-          confirm: "",
-          salary: "",
-          date: "",
-          license: "",
-        },
-      });
-    // 2. Hàm xử lý submit
-    const onCreate = (values) => {
-      console.log(values);
-    };
+  const navigate = useNavigate();
+  const [isDriver, setIsDriver] = useState(false); 
+  const mutation = useMutation({
+    mutationFn: async ({ data }) => {
+      return await EmployeeService.addEmployee(data);
+    },
+    onError: (error) => {
+      const errorMessage =
+        error.response?.data?.message || "An unexpected error occurred.";
+      Message.error(errorMessage); // Hiển thị lỗi
+    },
+    onSuccess: (data) => {
+      if (data.status === "ERROR") {
+        Message.error(data.message); // Hiển thị lỗi từ API
+      } else if (data.status === "OK") {
+        Message.success(data.message); // Hiển thị thông báo thành công
+        navigate(-1);
+      }
+    },
+  });
+  
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      gender: "",
+      position: "",
+      phone: "",
+      id_card: "",
+      password: "",
+      confirmPassword: "",
+      salary: "",
+      hire_date: "",
+      license: "",
+    },
+  });
 
-    // 3. Hàm xử lý submit
-    const onCancel = () => {
-      navigate(-1);
-    };
-    return (
-      <div className="justify-center pt-4 px-10 ">
-      <Card >
-        <CardHeader className="flex justify-center items-center bg-[#4CAF50] h-7 rounded-t-lg mb-8">
-            <CardTitle className='text-white font-semibold text-2xl'>Create employee</CardTitle>
+  const onCreate = async () => {
+    const isValid = await form.trigger();
+
+    if (!isValid) {
+      console.log("Validation errors:", form.formState.errors); // Log lỗi nếu có
+      return; // Dừng lại nếu form có lỗi
+    }
+    const values = form.getValues();
+    mutation.mutate({ data: values });
+    
+  };
+
+
+  const onCancel = () => {
+    navigate(-1);
+  };
+
+  return (
+    
+    <div className='justify-center pt-4 px-10'>
+      <Card>
+        <CardHeader className='flex justify-center items-center bg-green-500 h-12 rounded-t-lg mb-8'>
+          <CardTitle className='text-white font-semibold text-2xl'>
+            Create Employee
+          </CardTitle>
         </CardHeader>
         <CardContent>
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onCreate)} className="space-y-8">
-                <div className="flex gap-8">
-                {/* Full name */}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onCreate)} className='space-y-6'>
+              <div className='flex gap-6'>
                 <FormField
-                    control={form.control}
-                    name="fullname"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Full name</FormLabel>
+                  control={form.control}
+                  name='name'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder='Full name' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='gender'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Gender</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}>
                         <FormControl>
-                        <Input placeholder="Full name" {...field} />
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select a gender' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='Male'>Male</SelectItem>
+                          <SelectItem value='Female'>Female</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='position'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Position</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setIsDriver(value === "Driver"); 
+                        }}
+                        value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select a position' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='Bus boy'>Bus boy</SelectItem>
+                          <SelectItem value='Driver'>Driver</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Phone Number, National ID */}
+              <div className='flex gap-6'>
+                <FormField
+                  control={form.control}
+                  name='phone'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder='Phone number' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='id_card'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>National ID</FormLabel>
+                      <FormControl>
+                        <Input placeholder='National ID' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className='flex gap-6'>
+                <FormField
+                  control={form.control}
+                  name='password'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='password'
+                          placeholder='Password'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='confirmPassword'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Confirm Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='password'
+                          placeholder='Confirm password'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className='flex gap-6'>
+                <FormField
+                  control={form.control}
+                  name='salary'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Salary</FormLabel>
+                      <FormControl>
+                        <Input placeholder='Salary' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='hire_date'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Hire Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant='outline'
+                            className='w-full text-left font-normal'>
+                            {field.value
+                              ? format(field.value, "PPP")
+                              : "Pick a date"}
+                            <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-auto p-0' align='start'>
+                          <Calendar
+                            mode='single'
+                            selected={field.value}
+                            onSelect={field.onChange}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {isDriver && ( // Chỉ hiển thị khi vị trí là driver
+                  <FormField
+                    control={form.control}
+                    name='license'
+                    render={({ field }) => (
+                      <FormItem className='flex-1'>
+                        <FormLabel>Driving License</FormLabel>
+                        <FormControl>
+                          <Input placeholder='Driving license' {...field} />
                         </FormControl>
                         <FormMessage />
-                    </FormItem>
+                      </FormItem>
                     )}
-                />
-                {/* Gender */}
-                <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Gender</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a gender" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {/* Position */}
-                <FormField
-                    control={form.control}
-                    name="position"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Position</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a position" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            <SelectItem value="busboy">Bus boy</SelectItem>
-                            <SelectItem value="driver">Driver</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                </div>
-                <div className="flex gap-8">
-                {/* Phone number */}
-                <FormField
-                    control={form.control}
-                    name="phonenumber"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Phone number</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Phone number"  {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {/* National ID */}
-                <FormField
-                    control={form.control}
-                    name="id"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>National ID</FormLabel>
-                        <FormControl>
-                        <Input placeholder="National ID" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                </div>
-                <div className="flex gap-8">
-                {/* Password */}
-                <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {/* Confirm password */}
-                <FormField
-                    control={form.control}
-                    name="confirm"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Confirm pasword</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Confirm password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                </div>
-                <div className="flex gap-8">
-                {/* Salary */}
-                <FormField
-                    control={form.control}
-                    name="salary"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Salary</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Salary" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {/* Hire date */}
-                <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                    <FormItem className="flex flex-col pt-2.5">
-                        <FormLabel>Hire date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-[240px] text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date > new Date() || date < new Date("1900-01-01")
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                 {/* Lincense */}
-                 <FormField
-                    control={form.control}
-                    name="license"
-                    render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Driving license</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Driving license" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                </div>
-                {/* Cancel and Create */}
-                <div className="flex justify-end space-x-2">
-                    <Button onClick={onCancel} variant="outline">Cancel</Button>
-                    <Button onClick={onCreate} type="submit">Create</Button>
-               </div>
+                  />
+                )}  
+              </div>
+
+              {/* Cancel and Create buttons */}
+              <div className='flex justify-end space-x-4'>
+                <Button
+                  onClick={onCancel}
+                  variant='outline'
+                  className='bg-white border-green-500 text-green-500 hover:bg-green-100'>
+                  Cancel
+                </Button>
+                <Button
+                  // onClick={onCreate}
+                  type='submit'
+                  className='bg-green-500 text-white hover:bg-green-600'>
+                  Create
+                </Button>
+              </div>
             </form>
-        </Form>
+          </Form>
         </CardContent>
-    </Card>
+      </Card>
     </div>
-  )
+  );
 };
 
 export default AddEmployeePage;

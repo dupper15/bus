@@ -25,7 +25,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import FormLine from "../../../components/SmallForm/FormLine";
+import FormManager from "../../../components/SmallForm/FormManager";
+import avatar from "../../../assets/default-profile-icon.png";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { useSearchParams } from "react-router-dom";
 import {
@@ -39,43 +41,53 @@ import {
 
 const items = [
   {
-    id: "L001",
-    name: "01",
-    start_place: "võ văn ngân",
-    end_place: "nguyễn thị minh khai",
-    time: "1 tiếng 15p",
+    id: "M001",
+    name: "Luffy",
+    phone: "09234",
+    image:
+      "https://th.bing.com/th/id/R.320477280e71dd5d55e746cbdc10ee91?rik=J9vHtZqGd2aiYA&pid=ImgRaw&r=0",
+    id_card: "4323",
+    status: "Active",
   },
   {
-    id: "L002",
-    name: "02",
-    start_place: "Tân Sơn Nhất",
-    end_place: "Bến Thành",
-    time: "45 phút",
+    id: "M002",
+    name: "Zoro",
+    phone: "09876",
+    image:
+      "https://th.bing.com/th/id/R.1eec83c64722e48fda6aa72bc843e255?rik=4LkZT1k0VAhVEQ&pid=ImgRaw&r=0",
+    id_card: "5678",
+    status: "Normal",
   },
   {
-    id: "L003",
-    name: "03",
-    start_place: "Bến Thành",
-    end_place: "Chợ Lớn",
-    time: "1 tiếng",
+    id: "M003",
+    name: "Nami",
+    phone: "07654",
+    image:
+      "https://th.bing.com/th/id/R.c879ac7f8f5db0e2a7d5a27e62019cfb?rik=WyD3eCSYt%2fwfsA&pid=ImgRaw&r=0",
+    id_card: "9876",
+    status: "Inactive",
   },
   {
-    id: "L004",
-    name: "04",
-    start_place: "Chợ Lớn",
-    end_place: "Gò Vấp",
-    time: "1 tiếng 20 phút",
+    id: "M004",
+    name: "Sanji",
+    phone: "08456",
+    image:
+      "https://th.bing.com/th/id/R.8c05e3f1bfc63dc4c508dcedf1644a4d?rik=l%2bYr3iZcrZMsZw&pid=ImgRaw&r=0",
+    id_card: "5432",
+    status: "Active",
   },
   {
-    id: "L005",
-    name: "05",
-    start_place: "Bình Thạnh",
-    end_place: "Quận 7",
-    time: "50 phút",
+    id: "M005",
+    name: "Chopper",
+    phone: "08321",
+    image:
+      "https://th.bing.com/th/id/R.5a2d6f16c626d29abf75553c6277557a?rik=UvPn4yO3XyZuyA&pid=ImgRaw&r=0",
+    id_card: "1234",
+    status: "Maintenance",
   },
 ];
 
-const LinePage = () => {
+const ManageManagerPage = () => {
   const ITEMS_PER_PAGE = 10;
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
@@ -124,9 +136,10 @@ const LinePage = () => {
   };
   const [id, setId] = useState("");
   const [name, setName] = useState("");
-  const [start_place, setStart_place] = useState("");
-  const [end_place, setEnd_place] = useState("");
-  const [time, setTime] = useState("");
+  const [phone, setPhone] = useState("");
+  const [image, setImage] = useState("");
+  const [idCard, setIdCard] = useState("");
+  const [status, setStatus] = useState("");
   return (
     <div className='flex justify-center min-h-screen w-full p-4'>
       <div className='space-y-6 w-full max-w-6xl'>
@@ -134,12 +147,7 @@ const LinePage = () => {
           <Search
             className='flex-grow border border-gray-300 rounded-lg p-2'
             onChange={handleSearchChanged}
-            text='Type start place...'
-          />
-          <Search
-            className='flex-grow border border-gray-300 rounded-lg p-2'
-            onChange={handleSearchChanged}
-            text='Type end place...'
+            text='Type name...'
           />
           <Button onClick={handleAddClick} className='flex-shrink-0'>
             +
@@ -152,9 +160,10 @@ const LinePage = () => {
                 {[
                   "Id",
                   "Name",
-                  "Start place",
-                  "End place",
-                  "Time",
+                  "Phone",
+                  "Image",
+                  "Id card",
+                  "Status",
                   "Action",
                 ].map((header, idx) => (
                   <TableHead
@@ -175,13 +184,28 @@ const LinePage = () => {
                     {item.name}
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
-                    {item.start_place}
+                    {item.phone}
+                  </TableCell>
+                  <TableCell className=' py-3 px-4'>
+                    <Avatar className='w-10 h-10 border-2 mx-auto border-green-500'>
+                      <AvatarImage src={item.image ? item.image : avatar} />
+                      <AvatarFallback>CN</AvatarFallback>
+                    </Avatar>
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
-                    {item.end_place}
+                    {item.id_card}
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
-                    {item.time}
+                    <span
+                      className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
+                        item.status === "Inactive"
+                          ? "bg-slate-200 text-gray-800"
+                          : item.status === "Maintenance"
+                          ? "bg-yellow-100 text-orange-600"
+                          : "bg-green-100 text-green-600"
+                      }`}>
+                      {item.status}
+                    </span>
                   </TableCell>
                   <TableCell className='text-center flex justify-center items-center py-3 px-4'>
                     <DropdownMenu>
@@ -193,9 +217,10 @@ const LinePage = () => {
                           onClick={() => {
                             setId(item.id);
                             setName(item.name);
-                            setStart_place(item.start_place);
-                            setEnd_place(item.end_place);
-                            setTime(item.time);
+                            setPhone(item.phone);
+                            setImage(item.image);
+                            setIdCard(item.id_card);
+                            setStatus(item.status);
                             handleEditClick();
                           }}>
                           Edit
@@ -248,19 +273,20 @@ const LinePage = () => {
         </Pagination>
         {showForm && dialogType == "add" && (
           <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormLine handleClose={handleClose} isAdd='true' />
+            <FormManager handleClose={handleClose} isAdd='true' />
           </div>
         )}
         {showForm && dialogType == "edit" && (
           <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormLine
+            <FormManager
               handleClose={handleClose}
               isAdd='false'
               id={id}
               name={name}
-              start_place={start_place}
-              end_place={end_place}
-              time={time}
+              phone={phone}
+              image={image}
+              id_card={idCard}
+              status={status}
             />
           </div>
         )}
@@ -295,4 +321,4 @@ const LinePage = () => {
     </div>
   );
 };
-export default LinePage;
+export default ManageManagerPage;
