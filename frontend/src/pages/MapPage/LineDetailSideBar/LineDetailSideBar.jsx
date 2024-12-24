@@ -1,10 +1,11 @@
+// frontend/src/pages/MapPage/LineDetailSideBar/LineDetailSideBar.jsx
 import PropTypes from "prop-types";
 import { useState } from "react";
 import { linePropTypes } from "@/utils/PropTypes.js";
 import StopList from "@/pages/MapPage/SubComponents/StopList/StopList.jsx";
 import TabSwitch from "@/pages/MapPage/SubComponents/TabSwitch/TabSwitch.jsx";
 
-const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop }) => {
+const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSelect }) => {
     const [activeTab, setActiveTab] = useState("details");
 
     const tabs = [
@@ -12,6 +13,13 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop }) => {
         { key: "outbound", label: "Outbound" },
         { key: "inbound", label: "Inbound" },
     ];
+
+    const handleTabSelect = (key) => {
+        setActiveTab(key);
+        if (key === "outbound" || key === "inbound") {
+            onTabSelect(key);
+        }
+    };
 
     return (
         <aside className="w-1/4 bg-white shadow-lg p-6 border-r border-gray-200">
@@ -22,7 +30,7 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop }) => {
                 &larr; Back
             </button>
             <h2 className="text-2xl font-semibold mb-4">{line.name}</h2>
-            <TabSwitch tabs={tabs} onTabSelect={setActiveTab} />
+            <TabSwitch tabs={tabs} onTabSelect={handleTabSelect} />
             {activeTab === "details" && (
                 <div className="mb-4">
                     <p className="text-gray-700"><strong>Start Place:</strong> {line.start_place.name}</p>
@@ -44,7 +52,7 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop }) => {
                 <div>
                     <h3 className="text-xl font-semibold mt-4 mb-2">Inbound Stops:</h3>
                     <StopList
-                        stops={line.arr_stop.map(stop => stop.name).reverse()} // Assuming inbound is the reverse of outbound
+                        stops={line.arr_stop.map(stop => stop.name).reverse()}
                         selectedStop={selectedStop}
                         onSelectStop={onSelectStop}
                     />
@@ -59,6 +67,7 @@ LineDetailSideBar.propTypes = {
     onBack: PropTypes.func.isRequired,
     selectedStop: PropTypes.string,
     onSelectStop: PropTypes.func.isRequired,
+    onTabSelect: PropTypes.func.isRequired,
 };
 
 export default LineDetailSideBar;
