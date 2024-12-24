@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import {
   Sidebar,
   SidebarHeader,
@@ -27,7 +28,7 @@ import {
 import { Link } from "react-router-dom";
 import icon from "../assets/default-profile-icon.png";
 
-//Menu item
+// Menu item
 const items = [
   {
     title: "Dashboard",
@@ -92,6 +93,25 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  useEffect(() => {
+    console.log(isMenuOpen);
+  });
+  // Đóng menu khi click ra ngoài
+  // useEffect(() => {
+  //   const handleClickOutside = (event) => {
+  //     if (menuRef.current && !menuRef.current.contains(event.target)) {
+  //       setIsMenuOpen(false);
+  //     }
+  //   };
+
+  //   document.addEventListener("click", handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener("click", handleClickOutside);
+  //   };
+  // }, []);
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -118,18 +138,38 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      {isMenuOpen && (
+        <div
+          ref={menuRef}
+          className='absolute left-2 bottom-16 bg-white shadow-lg border rounded-lg p-3 w-48 z-50 transition-transform transform scale-95 hover:scale-100 origin-top'>
+          <ul className='text-sm text-gray-700'>
+            <Link to='profile'>
+              <li className='hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200'>
+                Profile
+              </li>
+            </Link>
+            <li className='hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200'>
+              Logout
+            </li>
+          </ul>
+        </div>
+      )}
+
       <SidebarFooter>
-        {/* Profile Image */}
-        <div className='flex items-center space-x-4 justify-start'>
+        <div
+          onClick={() => setIsMenuOpen((prev) => !prev)}
+          className='flex items-center space-x-4 justify-start h-500 cursor-pointer relative'>
           <img
             src={icon}
             alt='Profile Icon'
-            className='w-10 h-10 rounded-full border border-gray-200 cursor-pointer'
+            className='w-10 h-10 rounded-full border border-gray-200'
           />
           <div className='flex flex-col'>
             <span className='font-semibold'>Dương Lâm</span>
             <span className='text-sm text-gray-500'>Manager</span>
           </div>
+
+          {/* Menu */}
         </div>
       </SidebarFooter>
     </Sidebar>

@@ -26,6 +26,8 @@ import MaintenancePage from "./pages/Manager/MaintenancePage/MaintenancePage";
 import IncentivesPage from "./pages/Manager/IncentivesPage/IncentivesPage";
 import AddEmployeePage from "./pages/Manager/EmployeePage/AddEmployeePage";
 import DetailEmployeePage from "./pages/Manager/EmployeePage/DetailEmployeePage";
+import ProfilePage from "./pages/Manager/ProfilePage/ProfilePage";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const queryClient = new QueryClient();
 
@@ -66,7 +68,7 @@ export default function App() {
             />
             {/* <Route path="edit/:id" element={<EditEmployee />} />
             <Route path="details/:id" element={<EmployeeDetails />} /> */}
-
+            <Route path='profile' element={<ProfilePage />} />
             <Route path='customer' element={<CustomerPage />} />
             <Route path='opinion' element={<OpinionPage />} />
             <Route path='schedule' element={<SchedulePage />} />
