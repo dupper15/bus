@@ -246,189 +246,191 @@ const BusPage = () => {
   const [countSeat, setCountSeat] = useState("");
   const [status, setStatus] = useState("");
   return (
-    <div className='flex justify-center min-h-screen w-full p-4'>
-      <div className='space-y-6 w-full max-w-6xl'>
-        <div className='flex items-center gap-4'>
-          <Search
-            className='flex-grow border border-gray-300 rounded-lg p-2'
-            onChange={handleSearchChanged}
-            text='Type license plate...'
-          />
-          <Button className='flex-shrink-0'>
-            <FaRegCalendarMinus />
-          </Button>
-          <Button onClick={handleAddClick} className='flex-shrink-0'>
-            +
-          </Button>
-        </div>
-        <div className='overflow-x-auto'>
-          <Table className='overflow-hidden rounded-lg border border-gray-300 '>
-            <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
-              <TableRow>
-                {[
-                  "Bus ID",
-                  "Type",
-                  "Manufacture year",
-                  "Image",
-                  "License plate",
-                  "Count seat",
-                  "Status",
-                  "Action",
-                ].map((header, idx) => (
-                  <TableHead
-                    key={idx}
-                    className='text-center text-white text-base py-3 px-4'>
-                    {header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentItems.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.id}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.type}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.manufacture_year}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    <Avatar className='w-10 h-10 border-2 mx-auto border-green-500'>
-                      <AvatarImage src={item.image ? item.image : avatar} />
-                      <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.license_plate}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.count_seat}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    <span
-                      className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
-                        item.status === "Inactive"
-                          ? "bg-slate-200 text-gray-800"
-                          : item.status === "Maintenance"
-                          ? "bg-yellow-100 text-orange-600"
-                          : "bg-green-100 text-green-600"
-                      }`}>
-                      {item.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className='text-center flex justify-center items-center py-3 px-4'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger>
-                        <EllipsisVertical className='mb-2 ' />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setType(item.type);
-                            setManufactureYear(item.manufacture_year);
-                            setImage(item.image);
-                            setLicensePlate(item.license_plate);
-                            setCountSeat(item.count_seat);
-                            setStatus(item.status);
-                            handleEditClick();
-                          }}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDialogOpen("delete")}>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <Pagination className='flex justify-center items-center gap-4'>
-          <PaginationContent className='flex gap-2'>
-            <PaginationItem>
-              <PaginationPrevious
-                href='#'
-                onClick={() => handlePageChange(currentPage - 1)}
-                className='text-green-500 hover:text-green-700'>
-                Previous
-              </PaginationPrevious>
-            </PaginationItem>
-            {[...Array(totalPages)].map((_, index) => (
-              <PaginationItem key={index}>
-                <PaginationLink
-                  href='#'
-                  onClick={() => handlePageChange(index + 1)}
-                  className={`px-4 py-2 rounded-full transition ${
-                    index + 1 === currentPage
-                      ? "bg-green-500 text-white"
-                      : "hover:bg-gray-200"
-                  }`}>
-                  {index + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            <PaginationItem>
-              <PaginationNext
-                href='#'
-                onClick={() => handlePageChange(currentPage + 1)}
-                className='text-green-500 hover:text-green-700'>
-                Next
-              </PaginationNext>
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-        {showForm && dialogType == "add" && (
-          <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormBus handleClose={handleClose} isAdd='true' />
-          </div>
-        )}
-        {showForm && dialogType == "edit" && (
-          <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormBus
-              handleClose={handleClose}
-              isAdd='false'
-              type={type}
-              manufacture_year={manufactureYear}
-              image={image}
-              license_plate={licensePlate}
-              count_seat={countSeat}
-              status={status}
+    <div className="flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4">
+      <div className="flex w-full space-x-6">
+        <div className="flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300">
+          <div className="flex items-center gap-4">
+            <Search
+              className="flex-grow border border-gray-300 rounded-lg p-2"
+              onChange={handleSearchChanged}
+              text="Type license plate..."
             />
+            <Button className="flex-shrink-0">
+              <FaRegCalendarMinus />
+            </Button>
+            <Button onClick={handleAddClick} className="flex-shrink-0">
+              +
+            </Button>
           </div>
-        )}
-        {/* Hiển thị Dialog khi showDialog là true */}
-        {showDialog && dialogType == "delete" && (
-          <Dialog open={showDialog} onOpenChange={handleClose}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className='text-center'>
-                  Are you sure you want to delete?
-                </DialogTitle>
-                <DialogDescription>
-                  This action cannot be undone. This will permanently delete the
-                  schedule.
-                </DialogDescription>
-                <div className='flex items-center justify-center gap-2 pt-4'>
-                  <Button
-                    variant='outline'
-                    className='w-[120px]'
-                    onClick={handleClose}>
-                    Cancel
-                  </Button>
-                  <Button className='w-[120px]' onClick={handleClose}>
-                    Confirm
-                  </Button>
-                </div>
-              </DialogHeader>
-            </DialogContent>
-          </Dialog>
-        )}
+          <div className="overflow-x-auto rounded-lg bg-white shadow-md">
+            <Table className="overflow-hidden rounded-t-lg border border-gray-300">
+              <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
+                <TableRow>
+                  {[
+                    "Bus ID",
+                    "Type",
+                    "Manufacture year",
+                    "Image",
+                    "License plate",
+                    "Count seat",
+                    "Status",
+                    "Action",
+                  ].map((header, idx) => (
+                    <TableHead
+                      key={idx}
+                      className="text-center text-white text-base py-3 px-4">
+                      {header}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentItems.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="text-center py-3 px-4">
+                      {item.id}
+                    </TableCell>
+                    <TableCell className="text-center py-3 px-4">
+                      {item.type}
+                    </TableCell>
+                    <TableCell className="text-center py-3 px-4">
+                      {item.manufacture_year}
+                    </TableCell>
+                    <TableCell className="text-center py-3 px-4">
+                      <Avatar className="w-10 h-10 border-2 mx-auto border-green-500">
+                        <AvatarImage src={item.image ? item.image : avatar} />
+                        <AvatarFallback>CN</AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell className="text-center py-3 px-4">
+                      {item.license_plate}
+                    </TableCell>
+                    <TableCell className="text-center py-3 px-4">
+                      {item.count_seat}
+                    </TableCell>
+                    <TableCell className="text-center py-3 px-4">
+                      <span
+                        className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
+                          item.status === "Inactive"
+                            ? "bg-slate-200 text-gray-800"
+                            : item.status === "Maintenance"
+                            ? "bg-yellow-100 text-orange-600"
+                            : "bg-green-100 text-green-600"
+                        }`}>
+                        {item.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center flex justify-center items-center py-3 px-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          <EllipsisVertical className="mb-2 " />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setType(item.type);
+                              setManufactureYear(item.manufacture_year);
+                              setImage(item.image);
+                              setLicensePlate(item.license_plate);
+                              setCountSeat(item.count_seat);
+                              setStatus(item.status);
+                              handleEditClick();
+                            }}>
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDialogOpen("delete")}>
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <Pagination className="flex justify-center items-center gap-4">
+            <PaginationContent className="flex gap-2">
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className="text-green-500 hover:text-green-700">
+                  Previous
+                </PaginationPrevious>
+              </PaginationItem>
+              {[...Array(totalPages)].map((_, index) => (
+                <PaginationItem key={index}>
+                  <PaginationLink
+                    href="#"
+                    onClick={() => handlePageChange(index + 1)}
+                    className={`px-4 py-2 rounded-full transition ${
+                      index + 1 === currentPage
+                        ? "bg-green-500 text-white"
+                        : "hover:bg-gray-200"
+                    }`}>
+                    {index + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className="text-green-500 hover:text-green-700">
+                  Next
+                </PaginationNext>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+          {showForm && dialogType == "add" && (
+            <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
+              <FormBus handleClose={handleClose} isAdd="true" />
+            </div>
+          )}
+          {showForm && dialogType == "edit" && (
+            <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
+              <FormBus
+                handleClose={handleClose}
+                isAdd="false"
+                type={type}
+                manufacture_year={manufactureYear}
+                image={image}
+                license_plate={licensePlate}
+                count_seat={countSeat}
+                status={status}
+              />
+            </div>
+          )}
+          {/* Hiển thị Dialog khi showDialog là true */}
+          {showDialog && dialogType == "delete" && (
+            <Dialog open={showDialog} onOpenChange={handleClose}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="text-center">
+                    Are you sure you want to delete?
+                  </DialogTitle>
+                  <DialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    the schedule.
+                  </DialogDescription>
+                  <div className="flex items-center justify-center gap-2 pt-4">
+                    <Button
+                      variant="outline"
+                      className="w-[120px]"
+                      onClick={handleClose}>
+                      Cancel
+                    </Button>
+                    <Button className="w-[120px]" onClick={handleClose}>
+                      Confirm
+                    </Button>
+                  </div>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
     </div>
   );
