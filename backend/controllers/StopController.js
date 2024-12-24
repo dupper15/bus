@@ -3,7 +3,7 @@ require("../services/OpinionService");
 const createStop =  async (req, res) => {
     try {
         const { name, address, pointX, pointY , isStation} = req.body
-        if (!name || !address || !pointX || !pointY || !isStation) {
+        if (!name || !address || !pointX || !pointY || isStation === undefined) {
             return res.status(400).json({
                 status: 'ERROR',
                 message: 'All fields are required.'

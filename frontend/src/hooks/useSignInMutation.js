@@ -1,7 +1,7 @@
 import {useMutation} from 'react-query';
 import {useNavigate} from 'react-router-dom';
 import {jwtDecode} from "jwt-decode";
-import {getUserDetails, loginUser} from "@/services/userService.js";
+import {getUserDetails, loginUser} from "@/services/UserService.js";
 
 const useSignInMutation = (request, navigatePath) => {
     const navigate = useNavigate();
