@@ -5,6 +5,7 @@ import MapBoxService from "@/services/MapboxService.js";
 import { transformLine, transformStop } from "@/utils/Transformer.js";
 
 const useBusLinesViewModel = () => {
+    // State variables
     const [stops, setStops] = useState([]);
     const [lines, setLines] = useState([]);
     const [busLines, setBusLines] = useState([]);
@@ -12,52 +13,60 @@ const useBusLinesViewModel = () => {
     const [selectedLine, setSelectedLine] = useState(null);
     const [selectedStop, setSelectedStop] = useState(null);
     const [selectedStopCoordinates, setSelectedStopCoordinates] = useState(null);
+    const [path, setPath] = useState([]);
+    const [error, setError] = useState(null);
+    const [focusedInput, setFocusedInput] = useState(null);
+    const [startCoordinates, setStartCoordinates] = useState("");
+    const [endCoordinates, setEndCoordinates] = useState("");
+    const [viewMode, setViewMode] = useState("outbound");
 
+    // Fetch lines
     const fetchLines = useCallback(async () => {
         try {
             const response = await LineService.getLines();
-            console.log("response", response)
             const rawLines = response.data;
-            console.log("rawlines", rawLines);
-            console.log("first line", rawLines[0]._id);
-            const transformedLines = rawLines.map(transformLine);
-            setLines(transformedLines);
+            setLines(rawLines.map(transformLine));
         } catch (error) {
             console.error("Error fetching lines:", error);
         }
     }, []);
 
+    // Fetch stops
     const fetchStops = useCallback(async () => {
         try {
             const response = await StopService.getStops();
             const rawStops = response.data;
-            const transformedStops = rawStops.map(transformStop);
-            console.log("transformedStops", transformedStops);
-            setStops(transformedStops);
+            setStops(rawStops.map(transformStop));
         } catch (error) {
             console.error("Failed to fetch stops:", error);
         }
     }, []);
 
+    // Fetch bus line route
     const fetchBusLine = async (line) => {
         try {
-            const stops = [line.start_place, ...line.arr_stop, line.end_place];
-            const route = await MapBoxService.fetchBusLineRoute(stops);
-            setBusLines([{ ...line, route }]); // Clear previous lines and set the new one
+            const stopsSequence =
+                viewMode === "outbound"
+                    ? [line.end_place, ...line.arr_stop.slice().reverse(), line.start_place]
+                    : [line.start_place, ...line.arr_stop, line.end_place];
+            const route = await MapBoxService.fetchBusLineRoute(stopsSequence);
+            setBusLines([{ ...line, route }]);
         } catch (error) {
-            console.error(error.message);
+            console.error("Error fetching bus line route:", error);
         }
     };
 
-    const handleSearch = (query) => {
-        setSearchQuery(query);
-    };
+    // Handle search
+    const handleSearch = (query) => setSearchQuery(query);
 
+    // Handle line selection
     const handleLineSelect = (line) => {
         setSelectedLine(line);
-        fetchBusLine(line).then();
+        setBusLines([]); // Clear bus lines to indicate loading
+        fetchBusLine(line);
     };
 
+    // Handle back
     const handleBack = () => {
         setSelectedLine(null);
         setBusLines([]);
@@ -65,19 +74,47 @@ const useBusLinesViewModel = () => {
         setSelectedStopCoordinates(null);
     };
 
+    // Handle stop selection
     const handleSelectStop = (stop) => {
         setSelectedStop(stop);
-        const selectedStopData = stops.find(s => s.name === stop);
+        const selectedStopData = stops.find((s) => s.name === stop);
         if (selectedStopData) {
             setSelectedStopCoordinates([selectedStopData.pointX, selectedStopData.pointY]);
         }
     };
 
+    // Handle path finding
+    const handleFindPath = (newPath, newError) => {
+        setPath(newPath);
+        setError(newError);
+    };
+
+    // Handle input focus
+    const handleInputFocus = (inputName) => setFocusedInput(inputName);
+
+    // Handle map click
+    const handleMapClick = (coordinates) => {
+        if (focusedInput === "start") {
+            setStartCoordinates(coordinates.join(", "));
+        } else if (focusedInput === "end") {
+            setEndCoordinates(coordinates.join(", "));
+        }
+    };
+
+    // Fetch stops and lines on mount
     useEffect(() => {
-        fetchStops().then();
-        fetchLines().then();
+        fetchStops();
+        fetchLines();
     }, [fetchLines, fetchStops]);
 
+    // Update bus lines when view mode changes
+    useEffect(() => {
+        if (selectedLine) {
+            fetchBusLine(selectedLine);
+        }
+    }, [selectedLine, viewMode]);
+
+    // Filter lines based on search query
     const filteredLines = lines.filter((line) =>
         line.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -98,7 +135,16 @@ const useBusLinesViewModel = () => {
         selectedStopCoordinates,
         handleLineSelect,
         handleBack,
-        handleSelectStop
+        handleSelectStop,
+        path,
+        error,
+        handleFindPath,
+        handleInputFocus,
+        handleMapClick,
+        startCoordinates,
+        endCoordinates,
+        viewMode,
+        setViewMode,
     };
 };
 
