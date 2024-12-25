@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Search from "@/components/ui/search";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -38,57 +38,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-
-const items = [
-  {
-    id: "M001",
-    name: "Luffy",
-    phone: "09234",
-    image:
-      "https://th.bing.com/th/id/R.320477280e71dd5d55e746cbdc10ee91?rik=J9vHtZqGd2aiYA&pid=ImgRaw&r=0",
-    id_card: "4323",
-    status: "Active",
-  },
-  {
-    id: "M002",
-    name: "Zoro",
-    phone: "09876",
-    image:
-      "https://th.bing.com/th/id/R.1eec83c64722e48fda6aa72bc843e255?rik=4LkZT1k0VAhVEQ&pid=ImgRaw&r=0",
-    id_card: "5678",
-    status: "Normal",
-  },
-  {
-    id: "M003",
-    name: "Nami",
-    phone: "07654",
-    image:
-      "https://th.bing.com/th/id/R.c879ac7f8f5db0e2a7d5a27e62019cfb?rik=WyD3eCSYt%2fwfsA&pid=ImgRaw&r=0",
-    id_card: "9876",
-    status: "Inactive",
-  },
-  {
-    id: "M004",
-    name: "Sanji",
-    phone: "08456",
-    image:
-      "https://th.bing.com/th/id/R.8c05e3f1bfc63dc4c508dcedf1644a4d?rik=l%2bYr3iZcrZMsZw&pid=ImgRaw&r=0",
-    id_card: "5432",
-    status: "Active",
-  },
-  {
-    id: "M005",
-    name: "Chopper",
-    phone: "08321",
-    image:
-      "https://th.bing.com/th/id/R.5a2d6f16c626d29abf75553c6277557a?rik=UvPn4yO3XyZuyA&pid=ImgRaw&r=0",
-    id_card: "1234",
-    status: "Maintenance",
-  },
-];
+import { useMutation } from "react-query";
+import { getAllManager, deleteManager } from "../../../services/managerService";
+import { de } from "date-fns/locale";
 
 const ManageManagerPage = () => {
   const ITEMS_PER_PAGE = 10;
+  const [items, setItems] = useState([]);
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
@@ -109,6 +65,33 @@ const ManageManagerPage = () => {
     setSearchWord(e.target.value);
     setSearchParams({ page: 1 });
   };
+
+  const mutationGetAll = useMutation({
+    mutationFn: () => getAllManager(),
+    onSuccess: (data) => {
+      setItems(data.data);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  })
+
+  const mutaionDelete = useMutation({
+    mutationFn: ({data}) => deleteManager(data),
+    onSuccess: (data) => {
+      setItems(data.data);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  })
+
+
+  useEffect(() => {
+    mutationGetAll.mutate()
+  }, [])
+
+
   const [showForm, setShowForm] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [dialogType, setDialogType] = useState("");
@@ -130,7 +113,7 @@ const ManageManagerPage = () => {
     setShowForm(false);
   };
 
-  const handleClose = () => {
+  const handleClose = (manager) => {
     setShowForm(false);
     setShowDialog(false);
   };
@@ -158,11 +141,11 @@ const ManageManagerPage = () => {
             <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
               <TableRow>
                 {[
-                  "Id",
+                  "ID",
                   "Name",
                   "Phone",
                   "Image",
-                  "Id card",
+                  "National ID",
                   "Status",
                   "Action",
                 ].map((header, idx) => (
@@ -309,7 +292,7 @@ const ManageManagerPage = () => {
                     onClick={handleClose}>
                     Cancel
                   </Button>
-                  <Button className='w-[120px]' onClick={handleClose}>
+                  <Button variant='destructive' className='w-[120px]' onClick={handleClose}>
                     Confirm
                   </Button>
                 </div>
