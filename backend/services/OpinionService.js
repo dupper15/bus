@@ -62,6 +62,32 @@ const getAllOpinion = async () => {
     }
 };
 
+const getAllStatus = async () => {
+    try {
+        const count_pending = await Opinion.countDocuments({status: "Pending"});
+        const count_resolved = await Opinion.countDocuments({status: "Resolved"});
+        const opinionPending = await Opinion.find({status: "Pending"}).populate("sender").populate("receiver");
+        const opinionResolved = await Opinion.find({status: "Resolved"}).populate("sender").populate("receiver");
+
+        return {
+            status: "OK",
+            message: "Opinions retrieved successfully.",
+            data: {
+                pending: count_pending,
+                resolved: count_resolved,
+                opinionPending: opinionPending,
+                opinionResolved: opinionResolved
+            }
+        };
+    } catch (e) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while retrieving the opinions.",
+            error: e
+        };
+    }
+};
+
 const getDetailOpinion = (OpinionId) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -128,6 +154,7 @@ const resolveOpinion = async (managerId, data) => {
 module.exports = {
     createOpinion,
     getAllOpinion,
+    getAllStatus,
     getDetailOpinion,
     resolveOpinion
 }

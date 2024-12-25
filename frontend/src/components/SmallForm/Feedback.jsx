@@ -1,11 +1,34 @@
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
+import { useMutation } from "react-query";
+import * as OpinionService from "../../services/opinionService";
+import * as Message from "../../components/ui/alert";
 
 const Feedback = ({ handleClose, content, feedback = "" }) => {
-  const onCreate = (e) => {
-    e.preventDefault();
-    console.log("Form submitted successfully");
+
+  const mutationResolved = useMutation({
+    mutationFn: (data) => {
+      return OpinionService.resolvedOpinion(data);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      if (data.status === "ERROR") {
+        Message.error(data.message); // Hiển thị lỗi từ API
+      } else if (data.status === "OK") {
+        Message.success(data.message); // Hiển thị thông báo thành công
+        handleClose();
+      }
+    },
+  })
+
+  const onCreate = () => {
+    mutationResolved.mutate({ data: feedbackValue });
   };
+  
+  const [feedbackValue, setFeedbackValue] = useState(feedback);
 
   return (
     <div className="absolute inset-0 bg-black bg-opacity-50 w-screen h-screen backdrop-blur-sm flex justify-center items-center">
@@ -28,18 +51,20 @@ const Feedback = ({ handleClose, content, feedback = "" }) => {
           </div>
 
           {feedback && (
-            <div className="p-4 bg-blue-50 border-r-4 border-blue-500 rounded text-right">
-              <h3 className="text-blue-600 font-semibold mb-2">Our Feedback</h3>
-              <p className="text-gray-700">{feedback}</p>
+            <div className='p-4 bg-blue-50 border-r-4 border-blue-500 rounded text-right'>
+              <h3 className='text-blue-600 font-semibold mb-2'>Our Feedback</h3>
+              <p className='text-gray-700'>{feedback}</p>
             </div>
           )}
         </div>
 
         <div className="space-y-4">
           <Input
-            type="text"
-            placeholder="Write your feedback here..."
-            className="w-full border border-green-500 rounded p-3"
+            type='text'
+            value={feedbackValue}
+            onChange={(e) => setFeedbackValue(e.target.value)}
+            placeholder='Write your feedback here...'
+            className='w-full border border-green-500 rounded p-3'
           />
           <button
             onClick={onCreate}
