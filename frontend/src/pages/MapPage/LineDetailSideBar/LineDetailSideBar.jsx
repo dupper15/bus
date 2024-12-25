@@ -22,42 +22,44 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
     };
 
     return (
-        <aside className="w-1/4 bg-white shadow-lg p-6 border-r border-gray-200">
+        <aside className="w-1/4 bg-white shadow-lg p-6 border-r border-gray-200 h-full flex flex-col">
             <button
-                className="mb-4 text-blue-600 hover:underline"
+                className="mb-4 text-blue-600 hover:underline self-start"
                 onClick={onBack}
             >
                 &larr; Back
             </button>
             <h2 className="text-2xl font-semibold mb-4">{line.name}</h2>
-            <TabSwitch tabs={tabs} onTabSelect={handleTabSelect} />
-            {activeTab === "details" && (
-                <div className="mb-4">
-                    <p className="text-gray-700"><strong>Start Place:</strong> {line.start_place.name}</p>
-                    <p className="text-gray-700"><strong>End Place:</strong> {line.end_place.name}</p>
-                    <p className="text-gray-700"><strong>Time:</strong> {line.time} minutes</p>
-                </div>
-            )}
-            {activeTab === "outbound" && (
-                <div>
-                    <h3 className="text-xl font-semibold mt-4 mb-2">Outbound Stops:</h3>
-                    <StopList
-                        stops={line.arr_stop.map(stop => stop.name)}
-                        selectedStop={selectedStop}
-                        onSelectStop={onSelectStop}
-                    />
-                </div>
-            )}
-            {activeTab === "inbound" && (
-                <div>
-                    <h3 className="text-xl font-semibold mt-4 mb-2">Inbound Stops:</h3>
-                    <StopList
-                        stops={line.arr_stop.map(stop => stop.name).reverse()}
-                        selectedStop={selectedStop}
-                        onSelectStop={onSelectStop}
-                    />
-                </div>
-            )}
+            <TabSwitch tabs={tabs} onTabSelect={handleTabSelect}/>
+            <div className="flex-1 overflow-y-auto">
+                {activeTab === "details" && (
+                    <div className="mb-4">
+                        <p className="text-gray-700"><strong>Start Place:</strong> {line.start_place.name}</p>
+                        <p className="text-gray-700"><strong>End Place:</strong> {line.end_place.name}</p>
+                        <p className="text-gray-700"><strong>Time:</strong> {line.time} minutes</p>
+                    </div>
+                )}
+                {activeTab === "outbound" && (
+                    <div>
+                        <h3 className="text-xl font-semibold mt-4 mb-2">Outbound Stops:</h3>
+                        <StopList
+                            stops={line.arr_stop.map(stop => stop.name)}
+                            selectedStop={selectedStop}
+                            onSelectStop={onSelectStop}
+                        />
+                    </div>
+                )}
+                {activeTab === "inbound" && (
+                    <div>
+                        <h3 className="text-xl font-semibold mt-4 mb-2">Inbound Stops:</h3>
+                        <StopList
+                            stops={line.arr_stop.map(stop => stop.name).reverse()}
+                            selectedStop={selectedStop}
+                            onSelectStop={onSelectStop}
+                        />
+                    </div>
+                )}
+            </div>
         </aside>
     );
 };

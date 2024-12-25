@@ -32,6 +32,7 @@ const useBusLinesViewModel = () => {
             const response = await StopService.getStops();
             const rawStops = response.data;
             const transformedStops = rawStops.map(transformStop);
+            console.log("transformedStops", transformedStops);
             setStops(transformedStops);
         } catch (error) {
             console.error("Failed to fetch stops:", error);

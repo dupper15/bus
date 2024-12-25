@@ -22,8 +22,8 @@ const Sidebar = ({ lines, onSelectLine, onSearch, onFindPath, busStops, onInputF
     };
 
     return (
-        <aside className="w-1/4 bg-white shadow-lg p-6 border-r border-gray-200">
-            <TabSwitch tabs={tabs} onTabSelect={handleTabSelect} />
+        <aside className="w-1/4 bg-white shadow-lg p-6 border-r border-gray-200 h-full flex flex-col">
+            <TabSwitch tabs={tabs} onTabSelect={handleTabSelect}/>
             {activeTab === "lines" && (
                 <>
                     <input
@@ -33,15 +33,16 @@ const Sidebar = ({ lines, onSelectLine, onSearch, onFindPath, busStops, onInputF
                         placeholder="Search lines..."
                         className="w-full p-2 mb-4 border border-gray-300 rounded"
                     />
-                    <ul className="list-none p-0">
+                    <ul className="list-none pr-2 flex-1 overflow-y-auto">
                         {lines.map((line) => (
                             <li key={line.id} className="mb-2">
                                 <button
                                     onClick={() => onSelectLine(line)}
-                                    className="w-full text-left p-2 bg-gray-100 hover:bg-gray-200 rounded"
+                                    className="w-full text-left p-2 bg-gray-100 hover:bg-gray-200 rounded h-20"
                                 >
                                     <div className="font-semibold">{line.name}</div>
-                                    <div className="text-sm text-gray-600">{line.start_place.name} - {line.end_place.name}</div>
+                                    <div
+                                        className="text-sm text-gray-600">{line.start_place.name} - {line.end_place.name}</div>
                                 </button>
                             </li>
                         ))}
@@ -49,8 +50,9 @@ const Sidebar = ({ lines, onSelectLine, onSearch, onFindPath, busStops, onInputF
                 </>
             )}
             {activeTab === "pathfinding" && (
-                <div>
-                    <NavigationTab onFindPath={onFindPath} busStops={busStops} onInputFocus={onInputFocus} startCoordinates={startCoordinates} endCoordinates={endCoordinates} />
+                <div className="flex-1 overflow-y-auto">
+                    <NavigationTab onFindPath={onFindPath} busStops={busStops} onInputFocus={onInputFocus}
+                                   startCoordinates={startCoordinates} endCoordinates={endCoordinates}/>
                 </div>
             )}
         </aside>

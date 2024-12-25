@@ -46,9 +46,9 @@ const MapPage = () => {
     const [viewMode, setViewMode] = useState("outbound");
 
     return (
-        <div className="flex flex-col h-screen bg-gray-100">
+        <div className="flex flex-col h-screen w-screen bg-gray-100">
             <Header />
-            <div className="flex flex-1">
+            <div className="flex flex-1 h-[calc(100%-120px)]">
                 {!selectedLine && <Sidebar lines={lines} onSelectLine={handleLineSelect} onSearch={handleSearch} onFindPath={handleFindPath} busStops={stops} onInputFocus={handleInputFocus} startCoordinates={startCoordinates} endCoordinates={endCoordinates} />}
                 {selectedLine && (
                     <LineDetailSideBar
