@@ -60,7 +60,7 @@ const createEmployee = async (data) => {
         await Account.create({
             user: data.id_card,
             userType: "Employee",
-            username: data.username,
+            username: data.id_card,
             password: hash,
         })
        
