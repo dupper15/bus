@@ -20,12 +20,15 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useSearchParams } from "react-router-dom";
+import MaintenanceDetail from "@/components/SmallForm/MaintenanceDetail";
 
 const items = [
   {
     mId: "M001",
     license: "59A 999.99",
     name: "John Smith",
+    title: "Brake System Malfunctions",
+    content: "Inspect the brake pads for wear and replace them if necessary.",
     sDate: "20-10-2024",
     eDate: "22-10-2024",
     price: "1.000.000",
@@ -34,6 +37,9 @@ const items = [
     mId: "M002",
     license: "59A 999.99",
     name: "John Smith",
+    title: "Electrical Problems",
+    content:
+      "Test individual electrical components, including lights, indicators, and HVAC systems.",
     sDate: "20-10-2024",
     eDate: "22-10-2024",
     price: "1.000.000",
@@ -42,6 +48,9 @@ const items = [
     mId: "M003",
     license: "59A 999.99",
     name: "John Smith",
+    title: "Cooling System Leaks",
+    content:
+      "Examine the cooling system, including hoses, connections, and the radiator, for any signs of leaks",
     sDate: "20-10-2024",
     eDate: "22-10-2024",
     price: "1.000.000",
@@ -50,6 +59,9 @@ const items = [
     mId: "M004",
     license: "59A 999.99",
     name: "John Smith",
+    title: "Fuel System Concerns",
+    content:
+      "Inspect the fuel system for leaks and repair or replace damaged components",
     sDate: "20-10-2024",
     eDate: "22-10-2024",
     price: "1.000.000",
@@ -62,6 +74,13 @@ const MaintenancePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const [currentContent, setCurrentContent] = useState("");
+  const [currentTitle, setCurrentTitle] = useState("");
+  const [showForm, setShowForm] = useState(false);
+
+  const handleClose = () => {
+    setShowForm(false);
+  };
 
   const currentItems = items
     .filter((item) => item.mId.toLowerCase().includes(searchWord.toLowerCase()))
@@ -104,6 +123,9 @@ const MaintenancePage = () => {
                     Employee Name
                   </TableHead>
                   <TableHead className="text-center text-white text-base py-3 px-4">
+                    Title
+                  </TableHead>
+                  <TableHead className="text-center text-white text-base py-3 px-4">
                     Start Date
                   </TableHead>
                   <TableHead className="text-center text-white text-base py-3 px-4">
@@ -116,7 +138,14 @@ const MaintenancePage = () => {
               </TableHeader>
               <TableBody>
                 {currentItems.map((item, index) => (
-                  <TableRow key={index}>
+                  <TableRow
+                    key={index}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setShowForm(true);
+                      setCurrentContent(item.content);
+                      setCurrentTitle(item.title);
+                    }}>
                     <TableCell className="text-center py-3 px-4">
                       {item.mId}
                     </TableCell>
@@ -125,6 +154,9 @@ const MaintenancePage = () => {
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
                       {item.name}
+                    </TableCell>
+                    <TableCell className="text-center py-3 px-4">
+                      {item.title}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
                       {item.sDate}
@@ -175,6 +207,16 @@ const MaintenancePage = () => {
             </PaginationContent>
           </Pagination>
         </div>
+
+        {showForm && (
+          <div className="fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform">
+            <MaintenanceDetail
+              handleClose={handleClose}
+              content={currentContent}
+              title={currentTitle}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
