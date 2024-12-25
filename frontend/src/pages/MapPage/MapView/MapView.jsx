@@ -35,7 +35,7 @@ const MapView = ({ mapData, busLines, stops, selectedStopCoordinates, mode, path
                 mapRef.current.remove();
             }
         };
-    }, []);
+    }, [onMapClick]);
 
     useEffect(() => {
         // Add markers for mapData (general stops)
