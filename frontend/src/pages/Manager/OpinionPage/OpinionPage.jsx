@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FaRegCalendarAlt } from "react-icons/fa";
+import { FaLeaf, FaRegCalendarAlt } from "react-icons/fa";
 import { useSearchParams } from "react-router-dom";
 import Feedback from "@/components/SmallForm/Feedback";
 import {
@@ -22,121 +22,36 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-const items = [
-  {
-    oId: "O001",
-    title: "Impolite attitude",
-    cId: "C001",
-    name: "John Smith",
-    content: "The staff was impolite to me",
-    date: "20-10-2024",
-    status: "Resolved",
-  },
-  {
-    oId: "O002",
-    title: "Impolite attitude",
-    cId: "C001",
-    name: "John Smith",
-    content: "The staff was impolite to me2",
-    feedback: "We are sorry for the inconvenience",
-    date: "21-12-2024",
-    status: "Pending",
-  },
-  {
-    oId: "O003",
-    title: "test",
-    cId: "C001",
-    name: "John Smith",
-    content: "",
-    date: "20-12-2024",
-    status: "Pending",
-  },
-  {
-    oId: "O004",
-    title: "Impolite attitude",
-    cId: "C001",
-    name: "John Smith",
-    date: "01-12-2021",
-    status: "Pending",
-  },
-];
+import { useMutation } from "react-query";
+import * as Opinion from "../../../services/opinionService"
 
 const OpinionPage = () => {
   const ITEMS_PER_PAGE = 10;
-  const [selectedStatus, setSelectedStatus] = useState("");
+  const [items, setItems] = useState([]);
+  const [refresh, setRefresh]= useState(0);
+  const [countPending, setCountPending] = useState("");
+  const [countResolved, setCountResolved] = useState("");
+  const [opinionPending, setOpinionPending] = useState([]);
+  const [opinionResolved, setOpinionResolved] = useState([]);
+  const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedTime, setSelectedTime] = useState("All");
+
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
-  const [currentContent, setCurrentContent] = useState("");
+  
   const [currentFeedback, setCurrentFeedback] = useState("");
   const [showForm, setShowForm] = useState(false);
+
+  const [currentItems, setCurrentItems] = useState([]);
+  const [currentContent, setCurrentContent] = useState("");
+  
   const handleClose = () => {
     setShowForm(false);
   };
 
-  const [currentItems, setCurrentItems] = useState([]);
-
-  useEffect(() => {
-    filterItems();
-  }, [selectedStatus, selectedTime, searchWord, currentPage]);
-
-  const parseDate = (dateString) => {
-    const [day, month, year] = dateString.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  };
-
-  const filterItems = () => {
-    const currentDate = new Date();
-
-    const filtered = items.filter((item) => {
-      if (selectedStatus && item.status !== selectedStatus) return false;
-
-      if (
-        searchWord &&
-        !item.title.toLowerCase().includes(searchWord.toLowerCase())
-      ) {
-        return false;
-      }
-
-      if (selectedTime) {
-        const itemDate = parseDate(item.date);
-
-        switch (selectedTime) {
-          case "Today":
-            return itemDate.toDateString() === currentDate.toDateString();
-          case "This Week": {
-            const startOfWeek = new Date(currentDate);
-            startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            return itemDate >= startOfWeek && itemDate <= endOfWeek;
-          }
-          case "This Month": {
-            return (
-              itemDate.getFullYear() === currentDate.getFullYear() &&
-              itemDate.getMonth() === currentDate.getMonth()
-            );
-          }
-          case "This Year":
-            return itemDate.getFullYear() === currentDate.getFullYear();
-          default:
-            return true;
-        }
-      }
-
-      return true;
-    });
-
-    const paginatedItems = filtered.slice(
-      (currentPage - 1) * ITEMS_PER_PAGE,
-      currentPage * ITEMS_PER_PAGE
-    );
-
-    setCurrentItems(paginatedItems);
-  };
-
+  
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setSearchParams({ page: page });
@@ -147,6 +62,101 @@ const OpinionPage = () => {
     setSearchWord(e.target.value);
     setSearchParams({ page: 1 });
   };
+
+  const paginatedItems = currentItems.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handleSearchStatus = () => {
+    if (selectedStatus === "Pending") {
+      setCurrentItems(
+        items.filter((item) => item.status.toLowerCase() === "pending")
+      );
+    } else if (selectedStatus === "Resolved") {
+      setCurrentItems(
+        items.filter((item) => item.status.toLowerCase() === "resolved")
+      );
+    } else {
+      setCurrentItems(
+        items.filter((item) =>
+          item.sender.name.toLowerCase().includes(searchWord.toLowerCase())
+        )
+      );
+    }
+  };  
+  
+  const handleSearchTime = () => {
+    const currentDate = new Date();
+  
+    const filteredItems = items.filter((item) => {
+      const itemDate = new Date(item.receive_date); // Đảm bảo `item.date` là chuỗi ngày hợp lệ
+  
+      switch (selectedTime) {
+        case "Today":
+          return itemDate.toDateString() === currentDate.toDateString();
+        case "This Week": {
+          const startOfWeek = new Date(currentDate);
+          startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); // Bắt đầu tuần (Chủ nhật)
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6); // Kết thúc tuần (Thứ bảy)
+          return itemDate >= startOfWeek && itemDate <= endOfWeek;
+        }
+        case "This Month":
+          return (
+            itemDate.getFullYear() === currentDate.getFullYear() &&
+            itemDate.getMonth() === currentDate.getMonth()
+          );
+        case "This Year":
+          return itemDate.getFullYear() === currentDate.getFullYear();
+        default: // "All"
+          return true;
+      }
+    });
+  
+    setCurrentItems(filteredItems);
+  };
+  
+  useEffect(() => {
+    handleSearchStatus();
+    handleSearchTime();
+  }, [selectedStatus, selectedTime, searchWord, items]);
+
+  const mutationGetAll = useMutation({
+    mutationFn: () => {
+      return Opinion.getAllOpinion();
+    },
+    onSuccess: (data) => {
+      setItems(data.data)
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+
+  const mutationGetStatus = useMutation({
+    mutationFn: () => {
+      return Opinion.getAllStatus();
+    },
+    onSuccess: (data) => {
+      setCountPending(data.data.pending);
+      setCountResolved(data.data.resolved);
+      setOpinionPending(data.data.opinionPending);
+      setOpinionResolved(data.data.opinionResolved);
+
+      setRefresh(!refresh)
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+
+  useEffect(() => {
+    mutationGetAll.mutate();
+    mutationGetStatus.mutate();
+  }, [])
+  
+  
 
   return (
     <div className='flex flex-row justify-center min-h-screen w-full p-6 bg-gray-100 space-x-6 py-4'>
@@ -222,19 +232,21 @@ const OpinionPage = () => {
                     setCurrentFeedback(item.feedback);
                   }}>
                   <TableCell className='text-center' py-3 px-4>
-                    {item.oId}
+                    {item.id}
                   </TableCell>
                   <TableCell className='font-medium text-center py-3 px-4'>
                     {item.title}
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
-                    {item.cId}
+                    {item.sender.id}
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
-                    {item.name}
+                    {item.sender.name}
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
-                    {item.date}
+                    {new Date(
+                      item.receive_date
+                    ).toLocaleDateString("en-GB")}
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
                     <span
@@ -297,11 +309,11 @@ const OpinionPage = () => {
           <div className='grid grid-cols-2 gap-4'>
             <div className='flex flex-col items-center justify-center bg-gradient-to-r from-red-400 to-red-500 text-white rounded-lg py-6 shadow-md'>
               <div className='text-xl font-semibold'>Pending</div>
-              <div className='text-lg font-normal'>1234</div>
+              <div className='text-lg font-normal'>{countPending}</div>
             </div>
             <div className='flex flex-col items-center justify-center bg-gradient-to-r from-green-400 to-green-600 text-white rounded-lg py-6 shadow-md'>
               <div className='text-xl font-semibold'>Resolved</div>
-              <div className='text-lg font-normal'>1244</div>
+              <div className='text-lg font-normal'>{countResolved}</div>
             </div>
           </div>
         </div>
@@ -311,7 +323,7 @@ const OpinionPage = () => {
           </div>
           <div className='flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-700 text-white rounded-lg py-6 shadow-md'>
             <div className='text-xl font-semibold'>Sum of Opinions</div>
-            <div className='text-lg font-normal'>4435</div>
+            <div className='text-lg font-normal'>{countPending+countResolved}</div>
           </div>
         </div>
       </div>
