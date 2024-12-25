@@ -12,100 +12,40 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-import {
-  Activity,
-  Bus,
-  BusFront,
-  Calendar,
-  Home,
-  SquareChartGantt,
-  StickyNote,
-  Ticket,
-  User,
-  Users,
-  Wrench,
-} from "lucide-react";
+import { Calendar, SquareChartGantt, Wrench, CalendarX } from "lucide-react";
 import { Link } from "react-router-dom";
-import icon from "../assets/default-profile-icon.png";
+import icon from "../../assets/default-profile-icon.png";
 
 // Menu item
 const items = [
   {
-    title: "Dashboard",
-    url: "/manage/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Employee",
-    url: "/manage/employee",
-    icon: Users,
-  },
-  {
-    title: "Customer",
-    url: "/manage/customer",
-    icon: User,
-  },
-  {
-    title: "Opinion",
-    url: "/manage/opinion",
-    icon: StickyNote,
-  },
-  {
     title: "Schedule",
-    url: "/manage/schedule",
+    url: "#",
     icon: Calendar,
   },
   {
-    title: "Bus",
-    url: "/manage/bus",
-    icon: BusFront,
-  },
-  {
-    title: "Bus Stop",
-    url: "/manage/bus-stop",
-    icon: Bus,
-  },
-  {
-    title: "Line",
-    url: "/manage/line",
-    icon: Activity,
-  },
-  {
-    title: "Ticket",
-    url: "/manage/ticket",
-    icon: Ticket,
-  },
-  {
     title: "Maintenance",
-    url: "/manage/maintenance",
+    url: "#",
     icon: Wrench,
   },
   {
     title: "Incentives",
-    url: "/manage/incentives",
+    url: "#",
     icon: SquareChartGantt,
+  },
+  {
+    title: "Day off",
+    url: "#",
+    icon: CalendarX,
   },
 ];
 
-export function AppSidebar() {
+export function EmployeeSideBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
   useEffect(() => {
     console.log(isMenuOpen);
   });
-  // Đóng menu khi click ra ngoài
-  // useEffect(() => {
-  //   const handleClickOutside = (event) => {
-  //     if (menuRef.current && !menuRef.current.contains(event.target)) {
-  //       setIsMenuOpen(false);
-  //     }
-  //   };
-
-  //   document.addEventListener("click", handleClickOutside);
-  //   return () => {
-  //     document.removeEventListener("click", handleClickOutside);
-  //   };
-  // }, []);
 
   return (
     <Sidebar>
@@ -160,11 +100,9 @@ export function AppSidebar() {
             className="w-10 h-10 rounded-full border border-gray-200"
           />
           <div className="flex flex-col">
-            <span className="font-semibold">Dương Lâm</span>
-            <span className="text-sm text-gray-500">Manager</span>
+            <span className="font-semibold">Lâm Cow</span>
+            <span className="text-sm text-gray-500">Employee</span>
           </div>
-
-          {/* Menu */}
         </div>
       </SidebarFooter>
     </Sidebar>
