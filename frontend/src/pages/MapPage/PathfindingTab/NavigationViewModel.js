@@ -1,5 +1,5 @@
-import { useState } from "react";
-import MapBoxService from "@/services/MapboxService";
+import { useState, useCallback, useEffect } from "react";
+import GeoapifyService from "@/services/GeoapifyService";
 
 const useNavigationViewModel = () => {
     const [path, setPath] = useState([]);
@@ -9,15 +9,43 @@ const useNavigationViewModel = () => {
     const [startSuggestions, setStartSuggestions] = useState([]);
     const [endSuggestions, setEndSuggestions] = useState([]);
 
-    const findNearestBusStop = async (coords, busStops) => {
+    const debounce = (func, delay) => {
+        let timeoutId;
+        return (...args) => {
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                func(...args);
+            }, delay);
+        };
+    };
+
+    const fetchSuggestions = async (query, setSuggestions) => {
+        if (!query) return;
+        const bbox = [106.491, 10.348, 107.020, 11.160]; // Ho Chi Minh City bounding box
+        const suggestions = await GeoapifyService.fetchSuggestions(query, bbox);
+        setSuggestions(suggestions);
+    };
+
+    const debouncedFetchSuggestions = useCallback(debounce(fetchSuggestions, 300), []);
+
+    const handleChange = (value, setField, setSuggestions) => {
+        setField((prev) => ({ ...prev, name: value }));
+        debouncedFetchSuggestions(value, setSuggestions);
+    };
+
+    const handleSuggestionClick = (suggestion, setField, setSuggestions) => {
+        setField(suggestion);
+        setSuggestions([]);
+    };
+
+    const findNearestBusStop = (coords, busStops) => {
         let nearestStop = null;
         let minDistance = Infinity;
 
-        busStops.forEach(stop => {
+        busStops.forEach((stop) => {
             const distance = Math.sqrt(
                 Math.pow(stop.pointX - coords[0], 2) + Math.pow(stop.pointY - coords[1], 2)
             );
-            console.log(stop.name, distance);
             if (distance < minDistance) {
                 minDistance = distance;
                 nearestStop = stop;
@@ -29,9 +57,8 @@ const useNavigationViewModel = () => {
 
     const findPath = async (startCoords, endCoords, busStops) => {
         try {
-            const startStop = await findNearestBusStop(startCoords, busStops);
-            const endStop = await findNearestBusStop(endCoords, busStops);
-            console.log(startStop, endStop);
+            const startStop = findNearestBusStop(startCoords, busStops);
+            const endStop = findNearestBusStop(endCoords, busStops);
 
             if (!startStop || !endStop) {
                 setPath([]);
@@ -39,38 +66,13 @@ const useNavigationViewModel = () => {
                 return;
             }
 
-            const newPath = await MapBoxService.fetchPath(startStop, endStop);
-            setPath(newPath);
+            // Placeholder logic for setting path
+            setPath([startStop, endStop]);
             setError(null);
         } catch (err) {
             setPath([]);
-            setError("Error fetching route.");
-            console.error(err);
+            setError(err);
         }
-    };
-
-    const handleStartChange = async (value) => {
-        setStart((prevStart) => ({ ...prevStart, name: value }));
-        const bbox = [106.491, 10.348, 107.020, 11.160]; // Bounding box for Ho Chi Minh City
-        const suggestions = await MapBoxService.fetchSuggestions(value, bbox);
-        setStartSuggestions(suggestions);
-    };
-
-    const handleEndChange = async (value) => {
-        setEnd((prevEnd) => ({ ...prevEnd, name: value }));
-        const bbox = [106.491, 10.348, 107.020, 11.160]; // Bounding box for Ho Chi Minh City
-        const suggestions = await MapBoxService.fetchSuggestions(value, bbox);
-        setEndSuggestions(suggestions);
-    };
-
-    const handleStartSuggestionClick = (suggestion) => {
-        setStart(suggestion);
-        setStartSuggestions([]);
-    };
-
-    const handleEndSuggestionClick = (suggestion) => {
-        setEnd(suggestion);
-        setEndSuggestions([]);
     };
 
     const handleSwap = () => {
@@ -82,18 +84,16 @@ const useNavigationViewModel = () => {
     return {
         path,
         error,
-        findPath,
         start,
         end,
         startSuggestions,
         endSuggestions,
-        handleStartChange,
-        handleEndChange,
-        handleStartSuggestionClick,
-        handleEndSuggestionClick,
+        findPath,
+        handleStartChange: (value) => handleChange(value, setStart, setStartSuggestions),
+        handleEndChange: (value) => handleChange(value, setEnd, setEndSuggestions),
+        handleStartSuggestionClick: (suggestion) => handleSuggestionClick(suggestion, setStart, setStartSuggestions),
+        handleEndSuggestionClick: (suggestion) => handleSuggestionClick(suggestion, setEnd, setEndSuggestions),
         handleSwap,
-        setStart,
-        setEnd,
     };
 };
 

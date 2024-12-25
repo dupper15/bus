@@ -55,9 +55,9 @@ const NavigationTab = ({ onFindPath, busStops, onInputFocus, startCoordinates, e
                     />
                     {startSuggestions.length > 0 && (
                         <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto">
-                            {startSuggestions.map((suggestion) => (
+                            {startSuggestions.map((suggestion, index) => (
                                 <li
-                                    key={suggestion.id}
+                                    key={index}
                                     className="p-2 hover:bg-gray-200 cursor-pointer"
                                     onClick={() => handleStartSuggestionClick(suggestion)}
                                 >
@@ -79,9 +79,9 @@ const NavigationTab = ({ onFindPath, busStops, onInputFocus, startCoordinates, e
                     />
                     {endSuggestions.length > 0 && (
                         <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto">
-                            {endSuggestions.map((suggestion) => (
+                            {endSuggestions.map((suggestion, index) => (
                                 <li
-                                    key={suggestion.id}
+                                    key={index}
                                     className="p-2 hover:bg-gray-200 cursor-pointer"
                                     onClick={() => handleEndSuggestionClick(suggestion)}
                                 >
