@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Search from "@/components/ui/search";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -20,47 +20,19 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useSearchParams } from "react-router-dom";
-
-const items = [
-  {
-    tId: "T001",
-    name: "John Smith",
-    effectiveDate: "20-10-2024",
-    expirationDate: "20-11-2024",
-    status: "Expired",
-  },
-  {
-    tId: "T002",
-    name: "John Smith",
-    effectiveDate: "20-12-2024",
-    expirationDate: "20-1-2025",
-    status: "Valid",
-  },
-  {
-    tId: "T003",
-    name: "John Smith",
-    effectiveDate: "20-10-2024",
-    expirationDate: "20-11-2024",
-    status: "Expired",
-  },
-  {
-    tId: "T004",
-    name: "John Smith",
-    effectiveDate: "20-10-2024",
-    expirationDate: "20-11-2024",
-    status: "Expired",
-  },
-];
+import { useMutation } from "react-query";
+import * as Ticket from "../../../services/ticketService"
 
 const TicketPage = () => {
   const ITEMS_PER_PAGE = 10;
+  const [items, setItems] = useState([]);
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
 
   const currentItems = items
-    .filter((item) => item.tId.toLowerCase().includes(searchWord.toLowerCase()))
+    .filter((item) => item.id.toLowerCase().includes(searchWord.toLowerCase()))
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const handlePageChange = (page) => {
@@ -68,6 +40,22 @@ const TicketPage = () => {
       setSearchParams({ page: page });
     }
   };
+
+  const mutationGetAll = useMutation({
+    mutationFn: () => {
+      return Ticket.getAllTicket();
+    },
+    onSuccess: (data) => {
+      setItems(data.data)
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+
+  useEffect(() => {
+    mutationGetAll.mutate();
+  }, [])
 
   const handleSearchChanged = (e) => {
     setSearchWord(e.target.value);
@@ -111,16 +99,16 @@ const TicketPage = () => {
                 {currentItems.map((item, index) => (
                   <TableRow key={index}>
                     <TableCell className="text-center py-3 px-4">
-                      {item.tId}
+                      {item.id}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {item.name}
+                      {item.customer.name}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {item.effectiveDate}
+                      {new Date(item.effective_date).toLocaleDateString("en-GB")}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {item.expirationDate}
+                      {new Date(item.expiration_date).toLocaleDateString("en-GB")}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
                       <span

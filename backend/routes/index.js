@@ -10,6 +10,7 @@ const ScheduleRouter = require('./ScheduleRouter')
 const DayOffRouter = require('./DayOffRouter')
 const Reward_PunishmentRouter = require('./Reward_PunishmentRouter')
 const ImageRouter = require('./ImageRouter')
+const TicketRouter = require('./TicketRouter')
 
 const routes = (app) => {
     app.use('/api/manager', (ManagerRouter))
@@ -24,6 +25,7 @@ const routes = (app) => {
     app.use('/api/dayOff', (DayOffRouter))
     app.use('/api/reward_punishment', (Reward_PunishmentRouter))
     app.use('/api/image', (ImageRouter))
+    app.use('/api/ticket', (TicketRouter))
 }
 
 module.exports = routes
