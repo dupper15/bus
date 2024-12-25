@@ -19,7 +19,7 @@ import OpinionPage from "./pages/Manager/OpinionPage/OpinionPage";
 import SchedulePage from "./pages/Manager/SchedulePage/SchedulePage";
 import BusPage from "./pages/Manager/BusPage/BusPage";
 import StopPage from "./pages/Manager/StopPage/StopPage";
-import ManageManagerPage from "./pages/Manager/ManageManagerPage/ManageManagerPage";
+import ManageManagerPage from "./pages/Admin/ManageManagerPage/ManageManagerPage";
 import LinePage from "./pages/Manager/LinePage/LinePage";
 import TicketPage from "./pages/Manager/TicketPage/TicketPage";
 import MaintenancePage from "./pages/Manager/MaintenancePage/MaintenancePage";
@@ -29,6 +29,8 @@ import DetailEmployeePage from "./pages/Manager/EmployeePage/DetailEmployeePage"
 import ProfilePage from "./pages/Manager/ProfilePage/ProfilePage";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Layout from "./pages/Employee/Layout/Layout";
+import AdminLayout from "./pages/Admin/AdminLayout/AdminLayout";
 const queryClient = new QueryClient();
 
 axios.interceptors.request.use(
@@ -49,35 +51,42 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          <Route path='/' element={<WelcomePage />} />
-          <Route path='/login' element={<SignInPage />} />
-          <Route path='/signup' element={<SignUpPage />} />
-          <Route path='/home/*' element={<MainPage />} />
-          <Route path='/payment/*' element={<MainBuyPage />} />
-          <Route path='*' element={<Page404 />} />
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/login" element={<SignInPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/home/*" element={<MainPage />} />
+          <Route path="/payment/*" element={<MainBuyPage />} />
+          <Route path="*" element={<Page404 />} />
 
-          <Route path='/manage' element={<DashboardLayout />}>
-            <Route index element={<Navigate to='dashboard' replace />} />
-            <Route path='dashboard' element={<DashboardPage />} />
-            <Route path='manage-manager' element={<ManageManagerPage />} />
-            <Route path='employee' element={<EmployeePage />} />
-            <Route path='employee/add-employee' element={<AddEmployeePage />} />
+          <Route path="/manage" element={<DashboardLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="employee" element={<EmployeePage />} />
+            <Route path="employee/add-employee" element={<AddEmployeePage />} />
             <Route
-              path='employee/:id/detail-employee'
+              path="employee/:id/detail-employee"
               element={<DetailEmployeePage />}
             />
             {/* <Route path="edit/:id" element={<EditEmployee />} />
             <Route path="details/:id" element={<EmployeeDetails />} /> */}
-            <Route path='profile' element={<ProfilePage />} />
-            <Route path='customer' element={<CustomerPage />} />
-            <Route path='opinion' element={<OpinionPage />} />
-            <Route path='schedule' element={<SchedulePage />} />
-            <Route path='bus' element={<BusPage />} />
-            <Route path='bus-stop' element={<StopPage />} />
-            <Route path='line' element={<LinePage />} />
-            <Route path='ticket' element={<TicketPage />} />
-            <Route path='maintenance' element={<MaintenancePage />} />
-            <Route path='incentives' element={<IncentivesPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="customer" element={<CustomerPage />} />
+            <Route path="opinion" element={<OpinionPage />} />
+            <Route path="schedule" element={<SchedulePage />} />
+            <Route path="bus" element={<BusPage />} />
+            <Route path="bus-stop" element={<StopPage />} />
+            <Route path="line" element={<LinePage />} />
+            <Route path="ticket" element={<TicketPage />} />
+            <Route path="maintenance" element={<MaintenancePage />} />
+            <Route path="incentives" element={<IncentivesPage />} />
+          </Route>
+
+          <Route path="/employee" element={<Layout />}>
+            <Route path="profile" element={<ProfilePage />} />
+          </Route>
+
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="" element={<ManageManagerPage />} />
           </Route>
         </Routes>
       </Router>
