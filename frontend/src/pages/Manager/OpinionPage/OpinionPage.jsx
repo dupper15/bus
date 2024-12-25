@@ -159,64 +159,64 @@ const OpinionPage = () => {
   
 
   return (
-    <div className='flex flex-row justify-center min-h-screen w-full p-6 bg-gray-100 space-x-6 py-4'>
-      <div className='w-2/3 space-y-6 flex flex-col bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
-        <div className='flex flex-wrap justify-between items-center gap-4'>
-          <div className='flex items-center gap-2 basis-1/5'>
-            <label className='text-gray-700'>Status:</label>
+    <div className="flex flex-row justify-center min-h-screen w-full p-6 bg-gray-100 space-x-6 py-4">
+      <div className="w-2/3 space-y-6 flex flex-col bg-white shadow-lg rounded-xl p-6 border border-gray-300">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <div className="flex items-center gap-2 basis-1/5">
+            <label className="text-gray-700">Status:</label>
             <select
               onChange={(e) => setSelectedStatus(e.target.value)}
               value={selectedStatus}
-              className='border border-gray-300 rounded-lg px-3 py-2 text-gray-700'>
-              <option value=''>All</option>
-              <option value='Pending'>Pending</option>
-              <option value='Resolved'>Resolved</option>
+              className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700">
+              <option value="">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Resolved">Resolved</option>
             </select>
           </div>
-          <div className='basis-2/5'>
+          <div className="basis-2/5">
             <Search
-              className=' border border-gray-300 rounded-lg p-2'
+              className=" border border-gray-300 rounded-lg p-2"
               onChange={handleSearchChanged}
-              text='Type title...'
+              text="Type title..."
             />
           </div>
-          <div className='flex items-center gap-2 basis-1/5'>
-            <label className='text-gray-700'>Time:</label>
+          <div className="flex items-center gap-2 basis-1/5">
+            <label className="text-gray-700">Time:</label>
             <select
               onChange={(e) => setSelectedTime(e.target.value)}
               value={selectedTime}
-              className='border border-gray-300 rounded-lg px-3 py-2 text-gray-700'>
-              <option value='All'>All Time</option>
-              <option value='Today'>Today</option>
-              <option value='This Week'>This Week</option>
-              <option value='This Month'>This Month</option>
-              <option value='This Year'>This Year</option>
+              className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700">
+              <option value="All">All Time</option>
+              <option value="Today">Today</option>
+              <option value="This Week">This Week</option>
+              <option value="This Month">This Month</option>
+              <option value="This Year">This Year</option>
             </select>
           </div>
         </div>
-        <div className='overflow-x-auto bg-white rounded-lg shadow-md border border-gray-300'>
+        <div className="overflow-x-auto bg-white rounded-lg shadow-md border border-gray-300">
           <Table>
-            <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
+            <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
               <TableRow>
-                <TableHead className=' text-base text-center text-white'>
+                <TableHead className=" text-base text-center text-white">
                   Opinion ID
                 </TableHead>
-                <TableHead className=' text-base text-center text-white py-3 px-4'>
+                <TableHead className=" text-base text-center text-white py-3 px-4">
                   Title
                 </TableHead>
-                <TableHead className='text-base text-center text-white py-3 px-4'>
+                <TableHead className="text-base text-center text-white py-3 px-4">
                   Customer ID
                 </TableHead>
-                <TableHead className=' text-base text-center text-white py-3 px-4'>
+                <TableHead className=" text-base text-center text-white py-3 px-4">
                   Customer Name
                 </TableHead>
-                <TableHead className='text-base text-center text-white py-3 px-4'>
+                <TableHead className="text-base text-center text-white py-3 px-4">
                   Receive Date
                 </TableHead>
-                <TableHead className='text-base text-center text-white py-3 px-4'>
+                <TableHead className="text-base text-center text-white py-3 px-4">
                   Status
                 </TableHead>
-                <TableHead className='text-base text-center text-white py-3 px-4'>
+                <TableHead className="text-base text-center text-white py-3 px-4">
                   Receiver
                 </TableHead>
               </TableRow>
@@ -225,7 +225,7 @@ const OpinionPage = () => {
               {currentItems.map((item, index) => (
                 <TableRow
                   key={index}
-                  className='hover:bg-gray-50'
+                  className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => {
                     setShowForm(true);
                     setCurrentContent(item.content);
@@ -234,7 +234,7 @@ const OpinionPage = () => {
                   <TableCell className='text-center' py-3 px-4>
                     {item.id}
                   </TableCell>
-                  <TableCell className='font-medium text-center py-3 px-4'>
+                  <TableCell className="font-medium text-center py-3 px-4">
                     {item.title}
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
@@ -248,7 +248,7 @@ const OpinionPage = () => {
                       item.receive_date
                     ).toLocaleDateString("en-GB")}
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${
                         item.status === "Pending"
@@ -258,7 +258,7 @@ const OpinionPage = () => {
                       {item.status}
                     </span>
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     {item.receiver}
                   </TableCell>
                 </TableRow>
@@ -266,20 +266,20 @@ const OpinionPage = () => {
             </TableBody>
           </Table>
         </div>
-        <Pagination className='flex justify-center items-center gap-4'>
-          <PaginationContent className='flex gap-2'>
+        <Pagination className="flex justify-center items-center gap-4">
+          <PaginationContent className="flex gap-2">
             <PaginationItem>
               <PaginationPrevious
-                href='#'
+                href="#"
                 onClick={() => handlePageChange(currentPage - 1)}
-                className='text-green-500 hover:text-green-700'>
+                className="text-green-500 hover:text-green-700">
                 Previous
               </PaginationPrevious>
             </PaginationItem>
             {[...Array(totalPages)].map((_, index) => (
               <PaginationItem key={index}>
                 <PaginationLink
-                  href='#'
+                  href="#"
                   onClick={() => handlePageChange(index + 1)}
                   className={`px-4 py-2 rounded-full transition ${
                     index + 1 === currentPage
@@ -292,18 +292,18 @@ const OpinionPage = () => {
             ))}
             <PaginationItem>
               <PaginationNext
-                href='#'
+                href="#"
                 onClick={() => handlePageChange(currentPage + 1)}
-                className='text-green-500 hover:text-green-700'>
+                className="text-green-500 hover:text-green-700">
                 Next
               </PaginationNext>
             </PaginationItem>
           </PaginationContent>
         </Pagination>
       </div>
-      <div className='hidden w-1/3 md:flex flex-col gap-6'>
-        <div className='bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
-          <div className='text-lg font-semibold text-gray-700 mb-4'>
+      <div className="hidden w-1/3 md:flex flex-col gap-6">
+        <div className="bg-white shadow-lg rounded-xl p-6 border border-gray-300">
+          <div className="text-lg font-semibold text-gray-700 mb-4">
             Status Overview
           </div>
           <div className='grid grid-cols-2 gap-4'>
@@ -317,8 +317,8 @@ const OpinionPage = () => {
             </div>
           </div>
         </div>
-        <div className='bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
-          <div className='text-lg font-semibold text-gray-700 mb-4'>
+        <div className="bg-white shadow-lg rounded-xl p-6 border border-gray-300">
+          <div className="text-lg font-semibold text-gray-700 mb-4">
             Summary
           </div>
           <div className='flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-700 text-white rounded-lg py-6 shadow-md'>
@@ -328,7 +328,7 @@ const OpinionPage = () => {
         </div>
       </div>
       {showForm && (
-        <div className='fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform'>
+        <div className="fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform">
           <Feedback
             handleClose={handleClose}
             content={currentContent}
