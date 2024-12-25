@@ -1,4 +1,3 @@
-// frontend/src/pages/MapPage/MapPage.jsx
 import { useState } from "react";
 import MapView from "@/pages/MapPage/MapView/MapView.jsx";
 import useBusLinesViewModel from "@/pages/MapPage/ViewModel/BusLinesViewModel/BusLinesViewModel.js";
@@ -21,13 +20,36 @@ const MapPage = () => {
         handleSearch
     } = useBusLinesViewModel();
 
+    const [path, setPath] = useState([]);
+    const [error, setError] = useState(null);
+    const [focusedInput, setFocusedInput] = useState(null);
+    const [startCoordinates, setStartCoordinates] = useState("");
+    const [endCoordinates, setEndCoordinates] = useState("");
+
+    const handleFindPath = (newPath, newError) => {
+        setPath(newPath); // Update path to display on the map
+        setError(newError); // Display error if necessary
+    };
+
+    const handleInputFocus = (inputName) => {
+        setFocusedInput(inputName);
+    };
+
+    const handleMapClick = (coordinates) => {
+        if (focusedInput === "start") {
+            setStartCoordinates(coordinates.join(", "));
+        } else if (focusedInput === "end") {
+            setEndCoordinates(coordinates.join(", "));
+        }
+    };
+
     const [viewMode, setViewMode] = useState("outbound");
 
     return (
         <div className="flex flex-col h-screen bg-gray-100">
             <Header />
             <div className="flex flex-1">
-                {!selectedLine && <Sidebar lines={lines} onSelectLine={handleLineSelect} onSearch={handleSearch} />}
+                {!selectedLine && <Sidebar lines={lines} onSelectLine={handleLineSelect} onSearch={handleSearch} onFindPath={handleFindPath} busStops={stops} onInputFocus={handleInputFocus} startCoordinates={startCoordinates} endCoordinates={endCoordinates} />}
                 {selectedLine && (
                     <LineDetailSideBar
                         line={selectedLine}
@@ -43,6 +65,9 @@ const MapPage = () => {
                         busLines={busLines}
                         selectedStopCoordinates={selectedStopCoordinates}
                         mode={viewMode} // Pass the viewMode to MapView
+                        path={path}
+                        error={error}
+                        onMapClick={handleMapClick}
                     />
                 </div>
             </div>

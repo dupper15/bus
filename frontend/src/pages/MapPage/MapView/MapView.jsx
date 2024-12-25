@@ -6,7 +6,7 @@ import { stopPropTypes, linePropTypes } from "@/utils/PropTypes.js";
 
 mapboxgl.accessToken = "pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg";
 
-const MapView = ({ mapData, busLines, stops, selectedStopCoordinates, mode }) => {
+const MapView = ({ mapData, busLines, stops, selectedStopCoordinates, mode, path, error, onMapClick }) => {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
 
@@ -23,6 +23,12 @@ const MapView = ({ mapData, busLines, stops, selectedStopCoordinates, mode }) =>
 
         // Add navigation controls
         mapRef.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+        // Add click event listener
+        mapRef.current.on("click", (e) => {
+            const coordinates = [e.lngLat.lng, e.lngLat.lat];
+            onMapClick(coordinates);
+        });
 
         return () => {
             if (mapRef.current) {
@@ -130,14 +136,61 @@ const MapView = ({ mapData, busLines, stops, selectedStopCoordinates, mode }) =>
         }
     }, [selectedStopCoordinates]);
 
+    useEffect(() => {
+        if (mapRef.current) {
+            const map = mapRef.current;
+
+            // Remove any existing path
+            if (map.getLayer("path")) {
+                map.removeLayer("path");
+                map.removeSource("path");
+            }
+
+            // Add new path
+            if (path.length > 0) {
+                map.addSource("path", {
+                    type: "geojson",
+                    data: {
+                        type: "Feature",
+                        geometry: {
+                            type: "LineString",
+                            coordinates: path,
+                        },
+                    },
+                });
+
+                map.addLayer({
+                    id: "path",
+                    type: "line",
+                    source: "path",
+                    layout: {
+                        "line-join": "round",
+                        "line-cap": "round",
+                    },
+                    paint: {
+                        "line-color": "#007cbf",
+                        "line-width": 4,
+                    },
+                });
+            }
+        }
+    }, [path]);
+
     return (
-        <div
-            ref={mapContainerRef}
-            style={{
-                width: "100%",
-                height: "100%",
-            }}
-        />
+        <>
+            <div
+                ref={mapContainerRef}
+                style={{
+                    width: "100%",
+                    height: "100%",
+                }}
+            />
+            {error && (
+                <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-center py-2">
+                    {error}
+                </div>
+            )}
+        </>
     );
 };
 
@@ -147,6 +200,9 @@ MapView.propTypes = {
     stops: PropTypes.arrayOf(stopPropTypes),
     selectedStopCoordinates: PropTypes.arrayOf(PropTypes.number),
     mode: PropTypes.oneOf(["outbound", "inbound"]).isRequired,
+    path: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.number)).isRequired,
+    error: PropTypes.string,
+    onMapClick: PropTypes.func.isRequired,
 };
 
 export default MapView;

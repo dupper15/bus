@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import LineService from "@/services/LineService";
 import StopService from "@/services/StopService";
-import { fetchBusLineRoute } from "@/services/MapboxService.js";
+import MapBoxService from "@/services/MapboxService.js";
 import { transformLine, transformStop } from "@/utils/Transformer.js";
 
 const useBusLinesViewModel = () => {
@@ -16,7 +16,10 @@ const useBusLinesViewModel = () => {
     const fetchLines = useCallback(async () => {
         try {
             const response = await LineService.getLines();
+            console.log("response", response)
             const rawLines = response.data;
+            console.log("rawlines", rawLines);
+            console.log("first line", rawLines[0]._id);
             const transformedLines = rawLines.map(transformLine);
             setLines(transformedLines);
         } catch (error) {
@@ -38,7 +41,7 @@ const useBusLinesViewModel = () => {
     const fetchBusLine = async (line) => {
         try {
             const stops = [line.start_place, ...line.arr_stop, line.end_place];
-            const route = await fetchBusLineRoute(stops);
+            const route = await MapBoxService.fetchBusLineRoute(stops);
             setBusLines([{ ...line, route }]); // Clear previous lines and set the new one
         } catch (error) {
             console.error(error.message);
