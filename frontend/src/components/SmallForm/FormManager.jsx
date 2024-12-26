@@ -28,7 +28,6 @@ const formSchema = z.object({
 
 const FormManager = ({
   getAll,
-  isAdd,
   handleClose,
   id = "",
   name = "",
@@ -72,8 +71,7 @@ const FormManager = ({
     const values = form.getValues();
     values.username = values.id_card;
     values.password = values.id_card;
-
-    if (isAdd) mutationAdd.mutate({ data: values });
+    mutationAdd.mutate({ data: values });
   };
 
   return (
@@ -81,33 +79,14 @@ const FormManager = ({
       <Form {...form}>
         <form
           onSubmit={(e) => {
-            onCreate(isAdd);
+            onCreate();
             e.preventDefault();
           }}
           className='w-full max-w-2xl bg-white shadow-lg border rounded-lg p-6 space-y-6'>
           <h1 className='text-2xl font-bold text-green-500 text-center'>
-            {isAdd === "true" ? "Add New Manager" : "Edit Manager"}
+            Add New Manager
           </h1>
-
-          {isAdd === "false" && (
-            <div className='flex justify-center mb-4'>
-              <Avatar className='w-24 h-24 border-4 border-green-500 shadow-lg'>
-                <AvatarImage src={image || "default-avatar.jpg"} />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
-            </div>
-          )}
-
           <div className='grid grid-cols-1 gap-6'>
-            {isAdd === "false" && (
-              <div className='flex flex-col space-y-2'>
-                <FormLabel>ID:</FormLabel>
-                <div className='text-gray-700 bg-gray-100 p-2 rounded border'>
-                  {id}
-                </div>
-              </div>
-            )}
-
             <FormField
               control={form.control}
               name='name'
@@ -168,22 +147,6 @@ const FormManager = ({
               )}
             />
           </div>
-          {/* <FormField
-              control={form.control}
-              name='status'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <FormControl>
-                    <select className='border rounded-lg p-2 w-full' {...field}>
-                      <option value='able'>Able</option>
-                      <option value='disable'>Disable</option>
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
           <div className='flex justify-end gap-4 mt-4'>
             <button
               onClick={handleClose}
