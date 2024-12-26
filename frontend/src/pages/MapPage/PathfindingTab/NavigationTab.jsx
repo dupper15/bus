@@ -1,13 +1,19 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import {FaMapMarkerAlt, FaRegArrowAltCircleDown} from "react-icons/fa";
-import {FiMapPin} from "react-icons/fi";
+import { FaMapMarkerAlt, FaRegArrowAltCircleDown } from "react-icons/fa";
+import { FiMapPin } from "react-icons/fi";
 import useNavigationViewModel from "./NavigationViewModel";
 
-const NavigationTab = ({onFindPath, busStops, onInputFocus, startCoordinates, endCoordinates, lines}) => {
+const NavigationTab = ({
+                           onFindPath,
+                           busStops,
+                           onInputFocus,
+                           startCoordinates,
+                           endCoordinates,
+                           lines,
+                       }) => {
     const {
         findPath,
-        path,
         error,
         start,
         end,
@@ -18,7 +24,7 @@ const NavigationTab = ({onFindPath, busStops, onInputFocus, startCoordinates, en
         handleEndSuggestionClick,
         handleStartSuggestionClick,
         handleSwap,
-        setError
+        setError,
     } = useNavigationViewModel();
 
     const [startClicked, setStartClicked] = useState(false);
@@ -45,101 +51,76 @@ const NavigationTab = ({onFindPath, busStops, onInputFocus, startCoordinates, en
         setEndClicked(false);
         handleEndChange(value);
     };
+
     useEffect(() => {
         if (error) {
-            const timer = setTimeout(() => {
-                setError(null);
-            }, 3000);
+            const timer = setTimeout(() => setError(null), 3000);
             return () => clearTimeout(timer);
         }
     }, [error]);
 
     const handleFindPath = async () => {
-        if (!start || !end) {
-            return;
-        }
+        if (!start || !end) return;
         const [startLat, startLng] = start.coordinates.map(Number);
         const [endLat, endLng] = end.coordinates.map(Number);
-        await findPath([startLng, startLat], [endLng, endLat], busStops, lines).then((path) => {
-            console.log("NavigationTab path", path);
-            onFindPath(path, error); // Send path and error to MapP
-        });
+        const path = await findPath(
+            [startLng, startLat],
+            [endLng, endLat],
+            busStops,
+            lines
+        );
+        onFindPath(path, error);
     };
 
     return (
-        <div className="p-4 bg-white rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Pathfinding</h3>
-            <div className="flex flex-col gap-4">
-                <div className="relative">
-                    <FiMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500"/>
+        <div className="p-4 bg-white border border-gray-300 rounded-lg">
+            <div className="flex items-start gap-4">
+                {/* Icon Column */}
+                <div className="flex flex-col items-center pt-2">
+                    <FiMapPin className="text-green-500 mb-4" />
+                    <div className="h-6 border-l-2 border-gray-300"></div>
+                    <FaMapMarkerAlt className="text-red-500 mt-4" />
+                </div>
+
+                {/* Input Fields */}
+                <div className="flex-grow">
                     <input
                         type="text"
-                        placeholder="Choose starting point"
+                        placeholder="Choose starting point, or click on the map..."
                         value={start.name || ""}
                         onChange={(e) => handleStartInputChange(e.target.value)}
                         onFocus={() => onInputFocus("start")}
-                        className="w-full pl-10 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-full mb-4 p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition"
                     />
-                    {!startClicked && startSuggestions.length > 0 && (
-                        <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto">
-                            {startSuggestions.map((suggestion, index) => (
-                                <li
-                                    key={index}
-                                    className="p-2 hover:bg-gray-200 cursor-pointer"
-                                    onClick={() => {
-                                        handleStartSuggestionClick(suggestion);
-                                        setStartClicked(true);
-                                    }}
-                                >
-                                    {suggestion.name}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-                <div className="relative">
-                    <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500"/>
                     <input
                         type="text"
-                        placeholder="Choose destination"
+                        placeholder="Choose destination..."
                         value={end.name || ""}
                         onChange={(e) => handleEndInputChange(e.target.value)}
                         onFocus={() => onInputFocus("end")}
-                        className="w-full pl-10 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+                        className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 transition"
                     />
-                    {!endClicked && endSuggestions.length > 0 && (
-                        <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto">
-                            {endSuggestions.map((suggestion, index) => (
-                                <li
-                                    key={index}
-                                    className="p-2 hover:bg-gray-200 cursor-pointer"
-                                    onClick={() => {
-                                        handleEndSuggestionClick(suggestion);
-                                        setEndClicked(true);
-                                    }}
-                                >
-                                    {suggestion.name}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
                 </div>
+
+                {/* Swap Button */}
                 <button
                     onClick={handleSwap}
-                    className="p-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 focus:outline-none"
+                    className="p-3 bg-gray-200 rounded-full hover:bg-gray-300 focus:outline-none transition self-center"
                 >
-                    <FaRegArrowAltCircleDown/>
-                </button>
-                {error && (<p className="text-red-500 text-center py-2">
-                    {error}
-                </p>)}
-                <button
-                    onClick={handleFindPath}
-                    className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                    Find Path
+                    <FaRegArrowAltCircleDown className="text-gray-700" />
                 </button>
             </div>
+            {error && (
+                <p className="text-center text-red-500 bg-red-100 p-3 rounded-lg mt-4">
+                    {error}
+                </p>
+            )}
+            <button
+                onClick={handleFindPath}
+                className="w-full mt-4 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition"
+            >
+                Find Path
+            </button>
         </div>
     );
 };
