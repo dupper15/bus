@@ -182,7 +182,7 @@ export function AppSidebar() {
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-semibold">{account.username}</span>
+            <span className="font-semibold">{account.name}</span>
             <span className="text-sm text-gray-500">Manager</span>
           </div>
         </div>

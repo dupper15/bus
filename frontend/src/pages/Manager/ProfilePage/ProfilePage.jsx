@@ -1,5 +1,4 @@
 import profileIcon from "../../../assets/default-profile-icon.png";
-import { FaGoogle, FaFacebook } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as Message from "../../../components/ui/alert";
@@ -7,6 +6,7 @@ import { updateAccount } from "@/redux/accountSlide";
 import { useMutation } from "react-query";
 import * as ManagerService from "../../../services/managerService";
 import ChangePassword from "@/components/ChangePassword/ChangePassword";
+import { Button } from "@/components/ui/button";
 
 const ProfilePage = () => {
   const account = useSelector((state) => state.account);
@@ -152,8 +152,8 @@ const ProfilePage = () => {
 
   useEffect(() => {
     setImage(account?.image || profileIcon);
-    setUserName(account?.username);
-    setInitialUserName(account?.username);
+    setUserName(account?.name);
+    setInitialUserName(account?.name);
     setIdCard(account?.id_card);
   }, [account]);
 
@@ -274,13 +274,7 @@ const ProfilePage = () => {
                   Password
                 </span>
               </div>
-              <button
-                className="w-[auto] h-[40px] font-semibold rounded-lg shadow-sm flex justify-center items-center px-3 py-2 hover:bg-slate-400 ${
-                  bg-white text-black
-                "
-                onClick={handleChangePassword}>
-                Change Password
-              </button>{" "}
+              <Button onClick={handleChangePassword}>Change password</Button>
               {isChangePassword && (
                 <div className="fixed top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%]">
                   <ChangePassword closeForm={() => setChangePassword(false)} />

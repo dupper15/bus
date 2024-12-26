@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit'
 const initialState = {
    _id: '',
    id: '',
+   name: '',
    username: '',
    password: '',
    id_card: '',
@@ -15,9 +16,10 @@ export const accountSlice = createSlice({
     initialState,
     reducers: {
         updateAccount: (state, action) => {
-            const { _id = '', id= ' ', username = '', password='', id_card='', image='',access_token='' } = action.payload
+            const { _id = '', id= ' ', name='', username = '', password='', id_card='', image='',access_token='' } = action.payload
             state._id = _id;
             state.id = id;
+            state.name = name;
             state.username = username;
             state.password = password;
             state.image = image;
@@ -27,6 +29,7 @@ export const accountSlice = createSlice({
         resetAccount: (state) => {
             state._id = '';
             state.id = '';
+            state.name = '';
             state.username = '';
             state.password = '';
             state.image = '';

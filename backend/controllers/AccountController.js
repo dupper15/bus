@@ -73,9 +73,25 @@ const refreshTokenJwt = async (req, res) => {
     }
 };
 
+const changePassword = async (req, res) => {
+    try {
+      const data = req.body;
+      const response = await AccountService.changePassword(data);
+      return res.status(200).json(response);
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({
+        status: "ERROR",
+        message: "An error occurred while changing the password.",
+        error: e,
+      });
+    }
+};
+
 module.exports = {
     loginAccount,
     getDetailAccount,
     logoutAccount,
-    refreshTokenJwt
+    refreshTokenJwt,
+    changePassword
 }

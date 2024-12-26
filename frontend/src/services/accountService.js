@@ -58,3 +58,14 @@ export const logoutAccount = async () => {
   }
 };
 
+export const changePassword = async (data) => {
+  try {
+    const response = await axios.put(
+      `${API_KEY}/account/change-password`, data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get detail", error);
+    throw error;
+  }
+};
