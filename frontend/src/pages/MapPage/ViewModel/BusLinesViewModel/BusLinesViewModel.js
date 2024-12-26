@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect } from "react";
+import {useState, useCallback, useEffect} from "react";
 import LineService from "@/services/LineService";
 import StopService from "@/services/StopService";
 import MapBoxService from "@/services/MapboxService.js";
-import { transformLine, transformStop } from "@/utils/Transformer.js";
+import {transformLine, transformStop} from "@/utils/Transformer.js";
 
 const useBusLinesViewModel = () => {
     // State variables
@@ -20,6 +20,10 @@ const useBusLinesViewModel = () => {
     const [endCoordinates, setEndCoordinates] = useState("");
     const [viewMode, setViewMode] = useState("outbound");
 
+    useEffect(() => {
+        console.log("checker", path);
+    }, [path]);
+    
     // Fetch lines
     const fetchLines = useCallback(async () => {
         try {
@@ -45,16 +49,18 @@ const useBusLinesViewModel = () => {
     // Fetch bus line route
     const fetchBusLine = async (line) => {
         try {
-            const stopsSequence =
-                viewMode === "outbound"
-                    ? [line.end_place, ...line.arr_stop.slice().reverse(), line.start_place]
-                    : [line.start_place, ...line.arr_stop, line.end_place];
+            const stopsSequence = viewMode === "outbound" ? [line.end_place, ...line.arr_stop.slice().reverse(), line.start_place] : [line.start_place, ...line.arr_stop, line.end_place];
             const route = await MapBoxService.fetchBusLineRoute(stopsSequence);
-            setBusLines([{ ...line, route }]);
+            setBusLines([{...line, route}]);
         } catch (error) {
             console.error("Error fetching bus line route:", error);
         }
     };
+    useEffect(() => {
+        if (busLines.length > 0) {
+            console.log("Bus lines", busLines);
+        }
+    }, [busLines]);
 
     // Handle search
     const handleSearch = (query) => setSearchQuery(query);
@@ -85,8 +91,12 @@ const useBusLinesViewModel = () => {
 
     // Handle path finding
     const handleFindPath = (newPath, newError) => {
-        setPath(newPath);
-        setError(newError);
+        if (newPath) {
+            setPath(newPath);
+
+        } else {
+            setError(newError);
+        }
     };
 
     // Handle input focus
@@ -115,9 +125,7 @@ const useBusLinesViewModel = () => {
     }, [selectedLine, viewMode]);
 
     // Filter lines based on search query
-    const filteredLines = lines.filter((line) =>
-        line.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredLines = lines.filter((line) => line.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return {
         lines: filteredLines,

@@ -52,7 +52,7 @@ const Sidebar = ({ lines, onSelectLine, onSearch, onFindPath, busStops, onInputF
             {activeTab === "pathfinding" && (
                 <div className="flex-1 overflow-y-auto">
                     <NavigationTab onFindPath={onFindPath} busStops={busStops} onInputFocus={onInputFocus}
-                                   startCoordinates={startCoordinates} endCoordinates={endCoordinates}/>
+                                   startCoordinates={startCoordinates} endCoordinates={endCoordinates} lines={lines}/>
                 </div>
             )}
         </aside>
@@ -68,6 +68,7 @@ Sidebar.propTypes = {
     onInputFocus: PropTypes.func.isRequired,
     startCoordinates: PropTypes.string,
     endCoordinates: PropTypes.string,
+    busLines: PropTypes.array.isRequired,
 };
 
 export default Sidebar;

@@ -34,7 +34,7 @@ const MapPage = () => {
             {!selectedLine && <Sidebar
                 lines={lines} onSelectLine={(line) => handleLineSelect(line)} onSearch={handleSearch}
                 onFindPath={handleFindPath} busStops={stops} onInputFocus={handleInputFocus}
-                startCoordinates={startCoordinates} endCoordinates={endCoordinates}/>}
+                startCoordinates={startCoordinates} endCoordinates={endCoordinates} busLines={busLines}/>}
             {selectedLine && (<LineDetailSideBar
                 line={selectedLine}
                 onBack={handleBack}
