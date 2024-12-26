@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Search from "@/components/ui/search";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -37,52 +37,57 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import FormIncentives from "@/components/SmallForm/FormIncentives";
+import * as IncentivesService from "@/services/incentivesService";
+import * as Message from "@/components/ui/alert";
+import { useMutation } from "react-query";
 
-const items = [
-  {
-    id: "I001",
-    name: "John Smith",
-    type: "Reward",
-    content: "Tet holidays",
-    date: "20-10-2024",
-    price: "1.000.000",
-  },
-  {
-    id: "I002",
-    name: "Uchihaha",
-    type: "Punishment",
-    content: "Late arrival",
-    date: "20-10-2024",
-    price: "1.000.000",
-  },
-  {
-    id: "I003",
-    name: "Saccuke",
-    type: "Punishment",
-    content: "Absence without permission",
-    date: "20-10-2024",
-    price: "1.000.000",
-  },
-  {
-    id: "I004",
-    name: "Naruto",
-    type: "Reward",
-    content: "Performance bonus",
-    date: "20-10-2024",
-    price: "1.000.000",
-  },
-];
 
 const IncentivesPage = () => {
   const ITEMS_PER_PAGE = 10;
+  const [items, setItems] = useState([]);
+  const [refresh, setRefresh] = useState(false);
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
+  const [selected, setSelected] = useState("");
+
+  const mutationGetAll = useMutation({
+    mutationFn: async () => {
+      return await IncentivesService.getAllIncentives();
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      setItems(data.data)
+    },
+  });
+
+  const mutationDelete = useMutation({
+    mutationFn: async (data) =>  {
+      return await IncentivesService.deleteIncentives(data);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      if (data.status === "ERROR") {
+        Message.error(data.message); // Hiển thị lỗi từ API
+      } else if (data.status === "OK") {
+        Message.success(data.message); // Hiển thị thông báo thành công
+        setRefresh(!refresh);
+      }
+    },
+  });
+
+  useEffect(() => {
+    mutationGetAll.mutate();
+  }, [refresh])
 
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const currentItems = items
     .filter((item) =>
-      item.name.toLowerCase().includes(searchWord.toLowerCase())
+      item.employee.name.toLowerCase().includes(searchWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -121,6 +126,12 @@ const IncentivesPage = () => {
   const handleClose = () => {
     setShowForm(false);
     setShowDialog(false);
+    setRefresh(!refresh);
+  };
+
+  const handleDelete = (incentives) => {
+    mutationDelete.mutate({ data: incentives });
+    handleClose();
   };
 
   const [id, setId] = useState("");
@@ -149,7 +160,7 @@ const IncentivesPage = () => {
               <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
                 <TableRow>
                   {[
-                    "Id",
+                    "ID",
                     "Name",
                     "Type",
                     "Content",
@@ -167,12 +178,12 @@ const IncentivesPage = () => {
               </TableHeader>
               <TableBody>
                 {currentItems.map((item, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={index} onClick={() => setSelected(item)}>
                     <TableCell className="text-center py-3 px-4">
                       {item.id}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {item.name}
+                      {item.employee.name}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
                       <span
@@ -188,7 +199,7 @@ const IncentivesPage = () => {
                       {item.content}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {item.date}
+                      {new Date(item.date).toLocaleDateString("en-GB")}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
                       {item.price}
@@ -202,7 +213,7 @@ const IncentivesPage = () => {
                           <DropdownMenuItem
                             onClick={() => {
                               setId(item.id);
-                              setName(item.name);
+                              setName(item.employee.name);
                               setType(item.type);
                               setContent(item.content);
                               setDate(item.date);
@@ -295,7 +306,7 @@ const IncentivesPage = () => {
                       onClick={handleClose}>
                       Cancel
                     </Button>
-                    <Button className="w-[120px]" onClick={handleClose}>
+                    <Button variant="destructive" className="w-[120px]" onClick={() => handleDelete(selected)}>
                       Confirm
                     </Button>
                   </div>

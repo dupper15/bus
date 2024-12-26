@@ -108,7 +108,7 @@ const loginManager = (ManagerLogin) => {
 
 const updateManager = async (data) => {
     try {
-        const checkManager = await Manager.findOne({ id: data.id_card });
+        const checkManager = await Manager.findOne({ id_card: data.id_card });
         if (!checkManager) {
             return {
                 status: "ERROR",

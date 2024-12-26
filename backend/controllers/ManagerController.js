@@ -39,14 +39,7 @@ const loginManager = async (req, res) => {
 
 const updateManager = async (req, res) => {
     try {
-        const managerId = req.params.id
         const data = req.body
-        if (!managerId) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Manager ID is required.'
-            })
-        }
         const response = await ManagerService.updateManager(data)
         return res.status(200).json(response)
     } catch (e) {

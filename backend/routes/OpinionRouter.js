@@ -6,6 +6,6 @@ router.post('/create' , opinionController.createOpinion);
 router.get('/get-all' , opinionController.getAllOpinion);
 router.get('/get-status', opinionController.getAllStatus);
 router.get('/get-detail/:id' , opinionController.getDetailOpinion);
-router.put('/resolve/:id' , opinionController.resolveOpinion);
+router.put('/resolve' , opinionController.resolveOpinion);
 
 module.exports = router
