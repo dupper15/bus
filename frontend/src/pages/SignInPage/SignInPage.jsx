@@ -40,9 +40,9 @@ const SignInPage = () => {
           navigate('/employee');
         } else if (data.userType === "Manager"){
           navigate('/manage')
-        } else {
+        } else if (data.userType === "Admin") {
           navigate('/admin')
-        }
+        } 
     },
     onError: (error) => {
       console.log(error)

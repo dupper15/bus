@@ -25,9 +25,9 @@ export const getAllStatus = async () => {
 };
 
 // Lấy ý kiến đã được giải quyết
-export const resolvedOpinion = async () => {
+export const resolvedOpinion = async (data) => {
   try {
-    const response = await axios.get(`${API_KEY}/opinion/get-resolved`);
+    const response = await axios.put(`${API_KEY}/opinion/resolve`, data);
     return response.data;
   } catch (error) {
     console.error("Failed to get resolved opinions", error);
