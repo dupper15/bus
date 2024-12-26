@@ -12,12 +12,25 @@ export const getAllManager = async () => {
     throw error;
   }
 };
-
+export const addManager = async (data) => {
+  try {
+    console.log(data);
+    const response = await axios.post(
+      `${API_KEY}/manager/create`,
+      data // Gửi dữ liệu trong body của request
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to create manager", error);
+    throw error;
+  }
+};
 // Xóa quản lý
 export const deleteManager = async (data) => {
   try {
-    const response = await axios.delete(`${API_KEY}/manager/delete`, 
-      data, // Gửi dữ liệu trong body của request
+    const response = await axios.delete(
+      `${API_KEY}/manager/delete`,
+      data // Gửi dữ liệu trong body của request
     );
     return response.data;
   } catch (error) {
@@ -28,8 +41,9 @@ export const deleteManager = async (data) => {
 
 export const updateManager = async (data) => {
   try {
-    const response = await axios.put(`${API_KEY}/manager/edit`,
-      data, // Gửi dữ liệu trong body của request
+    const response = await axios.put(
+      `${API_KEY}/manager/edit`,
+      data // Gửi dữ liệu trong body của request
     );
     return response.data;
   } catch (error) {
