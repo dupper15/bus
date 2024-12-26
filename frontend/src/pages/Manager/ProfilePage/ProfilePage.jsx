@@ -1,10 +1,18 @@
 import profileIcon from "../../../assets/default-profile-icon.png";
 import { FaGoogle, FaFacebook } from "react-icons/fa6";
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import * as Message from "../../../components/ui/alert"
+import { updateAccount } from "@/redux/accountSlide";
+import { useMutation } from "react-query";
+import * as ManagerService from "../../../services/managerService";
 
 const ProfilePage = () => {
+  const account = useSelector((state) => state.account)
+  const dispatch = useDispatch();
   const [isEditingUserName, setIsEditingUserName] = useState(false);
   const [userName, setUserName] = useState("");
+  const [idCard, setIdCard] = useState("")
   const [initialUserName, setInitialUserName] = useState("");
 
   const [isChangePassword, setChangePassword] = useState(false);
@@ -30,6 +38,25 @@ const ProfilePage = () => {
     setIsEditingUserName(false);
   };
 
+  const handleUpdateUserName = () => {
+    try {
+      const values = {
+        id_card: account?.id_card,
+        username: userName
+      }
+      mutaion.mutate ({ data: values});
+      dispatch(updateAccount({
+        ...account,
+        username: userName,
+      }))
+      setIsEditingUserName(false)
+      Message.success("Change user name successfully!")
+    } catch (error) {
+      Message.error("Failed to change user name !")
+      console.error(error)
+    }
+  }
+
   const handleViewImage = () => {
     setViewImage(!isViewImage);
   };
@@ -37,6 +64,89 @@ const ProfilePage = () => {
   const closeModal = () => {
     setViewImage(false);
   };
+
+  const handleOnChangeImage = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      handleUploadImage(file);
+    }
+  };
+  
+  const handleUploadImage = async (file) => {
+    try {
+      setIsUploading(true);
+      const uploadPreset = "afh5sfc";
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
+
+      const response = await fetch("https://api.cloudinary.com/v1_1/ddcjjegzf/image/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      setImage(result.secure_url); 
+      dispatch(updateAccount({
+        ...account,
+        image: result.secure_url,
+      }))
+      const values = {
+        id_card: account?.id_card,
+        image: result.secure_url,
+      };
+      mutaion.mutate({data: values});
+      Message.success("Change image successfully")
+    } catch (error) {
+      Message.error("Failed to upload image. Please try again.");
+      console.error(error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (image === profileIcon) {
+      Message.error("You cannot remove the default profile image.");
+      return; 
+    }
+    try {
+      setImage(profileIcon);  
+      dispatch(updateAccount({  
+        ...account,
+        image: profileIcon,
+      }));
+      const values = {
+        id_card: account?.id_card,
+        image: profileIcon,
+      };
+      mutaion.mutate({data: values});
+      Message.success("Remove image successfully!")
+    } catch (error) {
+      Message.error("Failed to remove image. Please try again.");
+      console.error(error);
+    } 
+  };
+
+  const mutaion = useMutation({
+    mutationFn: async ({data}) => {
+      return await ManagerService.updateManager(data);
+    },
+    onSuccess: (data) => {
+      console.log(data);
+    },
+    onError: (error) => {
+      console.log(error);
+    }
+  })
+ 
+  useEffect(() => {
+    setImage(account?.image || profileIcon);
+    setUserName(account?.username);
+    setInitialUserName(account?.username);
+    setIdCard(account?.id_card);
+  }, [account])
+
 
   return (
     <div
@@ -72,6 +182,7 @@ const ProfilePage = () => {
                 <input
                   type='file'
                   id='image'
+                  onChange={handleOnChangeImage}
                   className='hidden'
                   accept='image/jpeg, image/png, image/jpg'></input>
                 {isUploading && (
@@ -82,7 +193,7 @@ const ProfilePage = () => {
                   className='md:text-m hover:text-[#4335DE] cursor-pointer'>
                   View image
                 </span>
-                <span className='md:text-m hover:text-[#4335DE] cursor-pointer'>
+                <span onClick={handleRemoveImage} className='md:text-m hover:text-[#4335DE] cursor-pointer'>
                   Remove photo
                 </span>
               </div>
@@ -129,7 +240,9 @@ const ProfilePage = () => {
                       onClick={handleCancelClick}>
                       Cancel
                     </button>
-                    <button className='w-[80px] h-[40px] font-semibold rounded-lg shadow-sm flex justify-center items-center p-2 bg-green-500 text-white hover:bg-green-600'>
+                    <button
+                      onClick={handleUpdateUserName}
+                      className='w-[80px] h-[40px] font-semibold rounded-lg shadow-sm flex justify-center items-center p-2 bg-green-500 text-white hover:bg-green-600'>
                       Save
                     </button>
                   </>
@@ -142,15 +255,6 @@ const ProfilePage = () => {
                   </button>
                 )}
               </div>
-            </div>
-            <div className='w-full h-[1px] bg-gray-400 my-4'></div>
-            <div className='flex flex-col justify-between w-full space-y-2'>
-              <span className='font-semibold text-xl pointer-events-none'>
-                Email
-              </span>
-              <span className='font-thin text-s md:text-m pointer-events-none'>
-                hello
-              </span>
             </div>
             <div className='w-full h-[1px] bg-gray-400 my-4'></div>
             <div className='flex items-center justify-between w-full'>
@@ -168,57 +272,15 @@ const ProfilePage = () => {
               </button>
             </div>
             <div className='w-full h-[1px] bg-gray-400 my-4'></div>
-            <div className='flex flex-col space-y-2'>
-              <span className='font-semibold text-xl pointer-events-none'>
-                Social Media
-              </span>
-              <span className='font-thin text-s pointer-events-none'>
-                Services you have used
-              </span>
-            </div>
-            <div
-              className='flex flex-row items-center w-max md:w-full h-[auto] border-2 rounded-lg my-2 py-3 px-2 ${
-                border-white
-              '>
-              <div className='flex flex-row items-center'>
-                <FaGoogle className='h-[40px] w-[40px]' />
-                <div className='flex flex-col px-4'>
-                  <span className='font-semibold text-xl pointer-events-none'>
-                    Google
-                  </span>
-                  <span className='font-thin text-s pointer-events-none'>
-                    heloo@gmail.com
-                  </span>
-                </div>
+            <div className='flex items-center justify-between w-full'>
+              <div className='flex flex-col space-y-2'>
+                <span className='font-semibold text-xl pointer-events-none'>
+                  National ID
+                </span>
+                <span className='font-thin text-s md:text-m'>{idCard}</span>
               </div>
-              <button
-                className='w-[auto] h-[40px] ml-auto font-semibold rounded-lg shadow-sm flex justify-center items-center px-3 py-2 hover:bg-slate-400 ${
-                  bg-white text-black
-                '>
-                Connect
-              </button>
             </div>
-            <div
-              className='flex flex-row items-center w-max md:w-full h-[auto] border-2 rounded-lg my-2 py-3 px-2 ${
-                border-black'>
-              <div className='flex flex-row items-center'>
-                <FaFacebook className='h-[40px] w-[40px]' />
-                <div className='flex flex-col px-4'>
-                  <span className='font-semibold text-xl pointer-events-none'>
-                    Facebook
-                  </span>
-                  <span className='font-thin text-s pointer-events-none'>
-                    caoduonglam@gmail.com
-                  </span>
-                </div>
-              </div>
-              <button
-                className='w-[auto] h-[40px] ml-auto font-semibold rounded-lg shadow-sm flex justify-center items-center px-3 py-2 hover:bg-slate-400 ${
-                 bg-white text-black
-                '>
-                Disconnect
-              </button>
-            </div>
+            <div className='w-full h-[1px] bg-gray-400 my-4'></div> 
           </div>
         </div>
       </div>
