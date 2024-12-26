@@ -1,6 +1,10 @@
 const Account = require("../models/AccountModel")
+const Customer = require("../models/CustomerModel")
+const Employee = require("../models/EmployeeModel")
+const Manager = require("../models/ManagerModel")
 const bcrypt = require("bcrypt");
 const { generalAccessToken, generalRefreshToken } = require("./jwtService");
+
 
 const loginAccount = async (data) => {
     try {
@@ -13,9 +17,24 @@ const loginAccount = async (data) => {
                 message: "No account found."
             })
         }
+
+        const type = checkAccount.userType
+        let account = null;
+        if(type === "Customer"){
+            account = await Customer.findOne({
+                id_card: data.username
+            })
+        } else if (type === "Employee"){
+            account = await Employee.findOne({
+                id_card: data.username
+            })
+        } else if (type === "Manager"){
+            account = await Manager.findOne({
+                id_card: data.username
+            })
+        }
        
         const comparePassword = bcrypt.compareSync(data.password, checkAccount.password)
-        console.log("comparePassword", comparePassword)
         if (!comparePassword){
             return({
                 status: "ERROR",
@@ -30,21 +49,19 @@ const loginAccount = async (data) => {
         }
   
         const access_token =  await generalAccessToken({
-            id: checkAccount.id,
+            id: account.id,
         })
         const refresh_token = await generalRefreshToken({
-            id: checkAccount.id,
+            id: account.id,
         })
 
         return {
             status: "OK",
             message: "Login successfully.",
-            data: {
-                access_token,
-                refresh_token,
-                status: checkAccount.status,
-                userType: checkAccount.userType
-            }
+            access_token,
+            refresh_token,
+            status: checkAccount.status,
+            userType: checkAccount.userType
         };
 
     } catch (e) {
@@ -56,36 +73,26 @@ const loginAccount = async (data) => {
     }
 };
 
-const logoutAccount = async (data) => {
+const getDetailAccount = async (id) => {    
     try {
-        // Kiểm tra xe buýt với biển số đã tồn tại
-        const checkBus = await Bus.findOne({ license_plate: data.license_plate });
-        if (!checkBus) {
-            return {
-                status: "ERROR",
-                message: "No bus found with the provided license plate."
-            };
-        }
-
-        // Cập nhật thông tin xe buýt
-        const updatedBus = await Bus.findByIdAndUpdate(checkBus._id, data, { new: true });
-        if (!updatedBus) {
-            return {
-                status: "ERROR",
-                message: "Failed to update the bus or bus not found."
-            };
-        }
-
+        let account = null;
+        const userType = id.charAt(0); 
+        if (userType === "C") {
+            account = await Customer.findOne({ id: id });
+        } else if (userType === "E") {
+            account = await Employee.findOne({ id: id });
+        } else if (userType === "M") {
+            account = await Manager.findOne({ id: id });
+        } 
         return {
             status: "OK",
-            message: "Bus updated successfully.",
-            data: updatedBus
+            message: "Get detail account successfully.",
+            data: account,
         };
-
     } catch (e) {
         return {
             status: "ERROR",
-            message: "An error occurred while updating the bus.",
+            message: `Account with id ${id} not found.`,
             error: e
         };
     }
@@ -93,5 +100,5 @@ const logoutAccount = async (data) => {
 
 module.exports = {
     loginAccount,
-    logoutAccount,
+    getDetailAccount,
 }

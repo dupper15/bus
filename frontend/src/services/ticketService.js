@@ -1,23 +1,25 @@
 import axios from "axios";
+
+const API_KEY = import.meta.env.VITE_API_KEY; // Sử dụng biến môi trường
+
+// Lấy tất cả vé
 export const getAllTicket = async () => {
   try {
-    const response = await axios.get(
-      "http://localhost:3001/api/ticket/get-all"
-    );
+    const response = await axios.get(`${API_KEY}/ticket/get-all`);
     return response.data;
   } catch (error) {
-    console.error("Failed to get detail", error);
+    console.error("Failed to get all tickets", error);
     throw error;
   }
 };
+
+// Tạo vé mới
 export const createTicket = async (data) => {
-    try {
-      const response = await axios.get(
-        "http://localhost:3001/api/ticket/create",data
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Failed to get detail", error);
-      throw error;
-    }
-  };
+  try {
+    const response = await axios.post(`${API_KEY}/ticket/create`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to create ticket", error);
+    throw error;
+  }
+};

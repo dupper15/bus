@@ -1,41 +1,48 @@
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { set } from "date-fns";
 import { useState } from "react";
 import { useMutation } from "react-query";
 import { jwtDecode } from 'jwt-decode';
 import * as Account from "../../services/accountService";
 import * as Message from "../../components/ui/alert";
-import { da } from 'date-fns/locale';
+import { updateAccount } from '@/redux/accountSlide';
+
 
 const SignInPage = () => {
   
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleGetDetailAccount = async (id, token) => {
+    const res = await Account.getDetailAccount(id, token)
+    dispatch(updateAccount({...res?.data, access_token: token}))
+  }
 
   const mutationLogin = useMutation({
-    mutationFn: ({data}) => Account.loginAccount(data),
+    mutationFn: async ({data}) => {
+      return await Account.loginAccount(data)
+    },
     onSuccess: (data) => {
       console.log(data) 
-      if (data.status === "OK") {
         Message.success(data.message)
-        localStorage.setItem('access_token',  JSON.stringify(data.data?.access_token))
-        // if(data.data?.access_token) {
-        //   const decoded = jwtDecode(data.data?.access_token)
-        
-        // }
-        if (data.data.userType === "Customer"){
+        localStorage.setItem('access_token', JSON.stringify(data?.access_token))
+        if(data?.access_token) {
+          const decoded = jwtDecode(data?.access_token)
+          if (decoded?.id){
+            handleGetDetailAccount(decoded?.id, data?.access_token)
+          }
+        }
+        if (data.userType === "Customer"){
           navigate('/home');
-        } else if (data.data.userType === "Employee"){
+        } else if (data.userType === "Employee"){
           navigate('/employee');
-        } else if (data.data.userType === "Manager"){
+        } else if (data.userType === "Manager"){
           navigate('/manage')
         } else {
           navigate('/admin')
         }
-      } else {
-        Message.error(data.message)
-      }
     },
     onError: (error) => {
       console.log(error)
@@ -48,7 +55,6 @@ const SignInPage = () => {
       username: username,
       password: password
     }
-    console.log("values", values)
     mutationLogin.mutate({data: values})
   }
   
