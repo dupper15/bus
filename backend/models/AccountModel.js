@@ -5,7 +5,7 @@ const accountSchema = new mongoose.Schema(
         userType: {
             type: String,
             required: true,
-            enum: ['Employee', 'Customer', "Manager"] // Chỉ được phép là 'Employee' hoặc 'Customer'
+            enum: ['Employee', 'Customer', "Manager", "Admin"] 
         },
         username: {type: String, require: true},
         password: {type: String, require: true},

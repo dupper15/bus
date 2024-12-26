@@ -11,6 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import {
   Activity,
@@ -24,9 +25,15 @@ import {
   User,
   Users,
   Wrench,
+  UserPen,
+  LogOut,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import icon from "../assets/default-profile-icon.png";
+import { useDispatch, useSelector } from "react-redux";
+import * as AccountService from "../services/accountService";
+import { resetAccount } from "@/redux/accountSlide";
+import * as Message from "../components/ui/alert";
 
 // Menu item
 const items = [
@@ -90,9 +97,19 @@ const items = [
 export function AppSidebar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   useEffect(() => {
     console.log(isMenuOpen);
   });
+
+  const handleLogoutAccount = async () => {
+    await AccountService.logoutAccount();
+    localStorage.removeItem("access_token");
+    dispatch(resetAccount());
+    Message.success("Logout successfully");
+    navigate("/login");
+  };
   // Đóng menu khi click ra ngoài
   // useEffect(() => {
   //   const handleClickOutside = (event) => {
@@ -106,6 +123,8 @@ export function AppSidebar() {
   //     document.removeEventListener("click", handleClickOutside);
   //   };
   // }, []);
+
+  const account = useSelector((state) => state.account);
 
   return (
     <Sidebar>
@@ -138,12 +157,16 @@ export function AppSidebar() {
           ref={menuRef}
           className="absolute left-2 bottom-16 bg-white shadow-lg border rounded-lg p-3 w-48 z-50 transition-transform transform scale-95 hover:scale-100 origin-top">
           <ul className="text-sm text-gray-700">
-            <Link to="profile">
-              <li className="hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200">
+            <Link to="profile" onClick={() => setIsMenuOpen((prev) => !prev)}>
+              <li className="flex items-center hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200">
+                <UserPen className="mr-2 w-4 h-4" />
                 Profile
               </li>
             </Link>
-            <li className="hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200">
+            <li
+              onClick={handleLogoutAccount}
+              className="flex items-center hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200">
+              <LogOut className="mr-2 w-4 h-4" />
               Logout
             </li>
           </ul>
@@ -154,17 +177,14 @@ export function AppSidebar() {
         <div
           onClick={() => setIsMenuOpen((prev) => !prev)}
           className="flex items-center space-x-4 justify-start h-500 cursor-pointer relative">
-          <img
-            src={icon}
-            alt="Profile Icon"
-            className="w-10 h-10 rounded-full border border-gray-200"
-          />
+          <Avatar>
+            <AvatarImage src={account.image} />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
           <div className="flex flex-col">
-            <span className="font-semibold">Dương Lâm</span>
+            <span className="font-semibold">{account.name}</span>
             <span className="text-sm text-gray-500">Manager</span>
           </div>
-
-          {/* Menu */}
         </div>
       </SidebarFooter>
     </Sidebar>

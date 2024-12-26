@@ -4,11 +4,13 @@ import { IoIosArrowBack } from "react-icons/io";
 import { useMutation } from "react-query";
 import * as OpinionService from "../../services/opinionService";
 import * as Message from "../../components/ui/alert";
+import { useSelector } from "react-redux";
 
-const Feedback = ({ handleClose, content, feedback = "" }) => {
+const Feedback = ({ handleClose, content, feedback, opinion}) => {
 
+  const account = useSelector((state) => state.account)
   const mutationResolved = useMutation({
-    mutationFn: (data) => {
+    mutationFn: ({data}) => {
       return OpinionService.resolvedOpinion(data);
     },
     onError: (error) => {
@@ -25,10 +27,16 @@ const Feedback = ({ handleClose, content, feedback = "" }) => {
   })
 
   const onCreate = () => {
-    mutationResolved.mutate({ data: feedbackValue });
+    const values = {
+      _id: opinion._id,
+      manager: account._id,
+      feedback: feedbackValue,
+    };
+    mutationResolved.mutate({ data: values });
   };
   
   const [feedbackValue, setFeedbackValue] = useState(feedback);
+  console.log("feedbackValue", feedbackValue)
 
   return (
     <div className="absolute inset-0 bg-black bg-opacity-50 w-screen h-screen backdrop-blur-sm flex justify-center items-center">
@@ -58,7 +66,8 @@ const Feedback = ({ handleClose, content, feedback = "" }) => {
           )}
         </div>
 
-        <div className="space-y-4">
+        { opinion.status === "Pending" && (
+          <div className="space-y-4">
           <Input
             type='text'
             value={feedbackValue}
@@ -72,6 +81,7 @@ const Feedback = ({ handleClose, content, feedback = "" }) => {
             Submit
           </button>
         </div>
+        )}
       </div>
     </div>
   );

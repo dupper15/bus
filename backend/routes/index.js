@@ -8,10 +8,10 @@ const StopRouter = require('./StopRouter')
 const LineRouter = require('./LineRouter')
 const ScheduleRouter = require('./ScheduleRouter')
 const DayOffRouter = require('./DayOffRouter')
-const Reward_PunishmentRouter = require('./Reward_PunishmentRouter')
+const IncentivesRouter = require('./IncentivesRouter')
 const ImageRouter = require('./ImageRouter')
 const TicketRouter = require('./TicketRouter')
-
+const AccountRouter = require('./AccountRouter')
 const routes = (app) => {
     app.use('/api/manager', (ManagerRouter))
     app.use('/api/customer', (CustomerRouter))
@@ -23,9 +23,10 @@ const routes = (app) => {
     app.use('/api/line', (LineRouter))
     app.use('/api/schedule', (ScheduleRouter))
     app.use('/api/dayOff', (DayOffRouter))
-    app.use('/api/reward_punishment', (Reward_PunishmentRouter))
+    app.use('/api/incentives', (IncentivesRouter))
     app.use('/api/image', (ImageRouter))
     app.use('/api/ticket', (TicketRouter))
+    app.use('/api/account', (AccountRouter))
 }
 
 module.exports = routes

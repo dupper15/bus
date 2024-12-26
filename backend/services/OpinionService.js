@@ -1,4 +1,5 @@
 const Opinion = require("../models/OpinionModel")
+const Manager = require("../models/ManagerModel")
 
 const createOpinion = async (data) => {
     try {
@@ -47,7 +48,7 @@ const createOpinion = async (data) => {
 
 const getAllOpinion = async () => {
     try {
-        const allOpinion = await Opinion.find().populate("sender").populate("receiver");
+        const allOpinion = await Opinion.find().populate("sender").populate("receiver", "name");
         return {
             status: "OK",
             message: "Opinions retrieved successfully.",
@@ -117,26 +118,21 @@ const getDetailOpinion = (OpinionId) => {
     })
 }
 
-const resolveOpinion = async (managerId, data) => {
+const resolveOpinion = async (data) => {
     try {
-        const updatedOpinion = await Opinion.findByIdAndUpdate(
-            data._id,
+        const manager = await Manager.findById(data.manager);
+        const opinion = await Opinion.findById(data._id);
+        
+        updatedOpinion = await Opinion.findByIdAndUpdate(
+            opinion._id,
             {
-                feedback: data.feedback,
-                receiver: managerId,
                 status: "Resolved",
+                receiver: manager,
+                feedback: data.feedback,
                 resolve_date: new Date()
             },
             { new: true }
         );
-
-        if (!updatedOpinion) {
-            return {
-                status: 'ERROR',
-                message: 'Opinion not found.'
-            };
-        }
-
         return {
             status: "OK",
             message: "Opinion resolved successfully.",
