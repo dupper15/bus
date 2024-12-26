@@ -1,80 +1,32 @@
 import { Button, Input } from "antd";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import RequestForm from "@/components/SmallForm/RequestForm";
+import { useMutation } from "react-query";
+import * as RequestService from "@/services/requestService";
+import { useSelector } from "react-redux";
+import { set } from "date-fns";
 
 const RequestPage = () => {
   const [showRequest, setShowRequest] = useState(false);
+  const [items, setItems] = useState([]);
+  const [refresh, setRefresh] = useState(false);
+  const account = useSelector((state) => state.account)
 
-  const items = [
-    {
-      id: "L001",
-      title: "Salary Increase",
-      content: "I would like to request a salary increase.",
-      sender: "John",
-      receiver: "HR Department",
-      status: "pending",
-      feedback: "",
+  const mutateGetAll = useMutation({
+    mutationFn: async (id) => {
+      return await RequestService.getDetailRequest(id);
     },
-    {
-      id: "L002",
-      title: "Work Schedule Adjustment",
-      content: "Can I adjust my work hours to 9 AM - 6 PM?",
-      sender: "Emily",
-      receiver: "Manager",
-      status: "approved",
-      feedback: "Approved, effective next month.",
+    onSuccess: (data) => {
+      setItems(data.data); 
     },
-    {
-      id: "L003",
-      title: "Request for Leave",
-      content: "I need leave from 10th to 15th due to personal reasons.",
-      sender: "Michael",
-      receiver: "Admin",
-      status: "rejected",
-      feedback: "Rejected due to project deadlines.",
+    onError: (error) => {
+      console.log(error);
     },
-    {
-      id: "L004",
-      title: "Training Program Suggestion",
-      content: "Can we have a workshop on React.js for the team?",
-      sender: "Sophia",
-      receiver: "Team Lead",
-      status: "pending",
-      feedback: "",
-    },
-    {
-      id: "L005",
-      title: "Office Equipment Request",
-      content: "I need a new chair for better ergonomics.",
-      sender: "David",
-      receiver: "Office Admin",
-      status: "approved",
-      feedback: "Chair will be delivered by next week.",
-    },
-    {
-      id: "L006",
-      title: "IT Support Needed",
-      content: "My laptop is running slow; can IT check it?",
-      sender: "Linda",
-      receiver: "IT Department",
-      status: "resolved",
-      feedback: "Issue resolved. Laptop upgraded with new SSD.",
-    },
-    {
-      id: "L007",
-      title: "Team Outing Proposal",
-      content: "Can we plan a team outing for this quarter?",
-      sender: "Chris",
-      receiver: "Team Manager",
-      status: "pending",
-      feedback: "",
-    },
-  ];
+  })
 
-  const onCreate = () => {
-    console.log("Feedback submitted:", feedbackValue);
-    setFeedbackValue("");
-  };
+  useEffect(() => {
+    mutateGetAll.mutate(account?._id)
+  }, [refresh])
 
   return (
     <div className='p-8 bg-gray-50 min-h-screen'>
@@ -90,7 +42,7 @@ const RequestPage = () => {
       </div>
 
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
-        {items.map((item, index) => (
+        {items.slice().reverse().map((item, index) => (
           <div
             key={item.id}
             className={`p-4 rounded-lg shadow-lg ${
@@ -104,15 +56,15 @@ const RequestPage = () => {
               {item.title}
             </h2>
             <p className='text-gray-600 mt-2'>{item.content}</p>
-            <div className='mt-4'>
+            <div className='relative mt-4'>
               <p className='text-sm text-gray-500'>
-                <strong>Sent:</strong> Hôm qua
+                <strong>Sent: {new Date(item.date_requested).toLocaleDateString("en-GB")}</strong> 
               </p>
               <p
                 className={`text-sm font-semibold mt-2 ${
-                  item.status === "approved"
+                  item.status === "Resolved"
                     ? "text-green-600"
-                    : item.status === "rejected"
+                    : item.status === "Rejected"
                     ? "text-red-600"
                     : "text-yellow-600"
                 }`}>
@@ -125,13 +77,12 @@ const RequestPage = () => {
                 <p className='text-gray-700'>
                   {item.feedback || "No feedback provided."}
                 </p>
-
                 <div className='mt-2 text-sm text-gray-500'>
                   <p className='text-sm text-gray-500'>
-                    <strong>Receiver:</strong> {item.receiver}
+                    <strong>Receiver:</strong> {item?.manager?.name}
                   </p>
                   <p>
-                    <strong>Feedback Received:</strong> Hồi nãy
+                    <strong>Feedback Received: {item.date_resolved}</strong> 
                   </p>
                 </div>
               </div>
@@ -150,8 +101,9 @@ const RequestPage = () => {
             <RequestForm
               childCloseFormRequest={() => {
                 setShowRequest(false);
+                setRefresh(!refresh)
               }}
-            />
+            />  
           </div>
         </>
       )}

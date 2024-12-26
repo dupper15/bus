@@ -2,15 +2,8 @@ const DayOffService = require('../services/DayOffService')
 require("../services/OpinionService");
 const createDayOff =  async (req, res) => {
     try {
-        const { employee, solver, content, status, date_requested} = req.body
-        if (!employee || !solver || !content || !status || !date_requested) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'All fields are required.'
-            })
-        }
-
-        const response = await DayOffService.createDayOff(req.body)
+        const data = req.body;
+        const response = await DayOffService.createDayOff(data)
         return res.status(201).json(response)
     } catch (e) {
         console.error(e)
@@ -24,14 +17,8 @@ const createDayOff =  async (req, res) => {
 
 const getDetailDayOff =  async (req, res) => {
     try {
-        const DayOffId = req.params.id
-        if (!DayOffId){
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'DayOff ID is required.'
-            })
-        }
-        const response = await DayOffService.getDetailDayOff(DayOffId)
+        const id = req.params.id
+        const response = await DayOffService.getDetailDayOff(id)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -45,15 +32,8 @@ const getDetailDayOff =  async (req, res) => {
 
 const updateDayOff = async (req, res) => {
     try {
-        const DayOffId = req.params.id
         const data = req.body
-        if (!DayOffId) {
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'DayOff ID is required.'
-            })
-        }
-        const response = await DayOffService.updateDayOff(DayOffId, data)
+        const response = await DayOffService.updateDayOff(data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
