@@ -83,9 +83,11 @@ export function EmployeeSideBar() {
                 Profile
               </li>
             </Link>
-            <li className="hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200">
-              Logout
-            </li>
+            <Link to="login">
+              <li className="hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200">
+                Logout
+              </li>
+            </Link>
           </ul>
         </div>
       )}
