@@ -37,6 +37,7 @@ import { useMutation } from "react-query";
 import { useNavigate } from "react-router-dom";
 import * as Message from "../../components/ui/alert";
 import * as CustomerService from "../../services/customerService";
+import img from "../../assets/bus.jpeg";
 
 const formSchema = z
   .object({
@@ -119,7 +120,13 @@ const SignUpPage = () => {
 
   return (
     <div className="bg-white h-screen w-screen flex">
-      <div className="relative bg-green-500 basis-1/3 h-screen flex justify-center items-center px-10">
+      <div
+        className="relative bg-green-500 basis-1/3 h-screen flex justify-center items-center px-10"
+        style={{
+          backgroundImage: `url(${img})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}>
         <div className="text-white font-bold text-5xl text-center leading-snug -mt-40">
           <p>Your journey,</p>
           <p>simplified</p>
@@ -131,7 +138,7 @@ const SignUpPage = () => {
             className="w-full">
             <path
               fill="#ffffff"
-              fillOpacity="1"
+              fillOpacity="0.5"
               d="M0,160L30,149.3C60,139,120,117,180,133.3C240,149,300,203,360,197.3C420,192,480,128,540,128C600,128,660,192,720,186.7C780,181,840,107,900,90.7C960,75,1020,117,1080,154.7C1140,192,1200,224,1260,213.3C1320,203,1380,149,1410,122.7L1440,96L1440,320L1410,320C1380,320,1320,320,1260,320C1200,320,1140,320,1080,320C1020,320,960,320,900,320C840,320,780,320,720,320C660,320,600,320,540,320C480,320,420,320,360,320C300,320,240,320,180,320C120,320,60,320,30,320L0,320Z"></path>
           </svg>
         </div>
@@ -140,7 +147,7 @@ const SignUpPage = () => {
       <div className="bg-gray-100 basis-2/3 h-full py-10 px-40 justify-center items-center">
         <Card className="shadow-lg rounded-lg">
           <CardHeader className="flex justify-center items-center">
-            <CardTitle className="font-semibold text-5xl">
+            <CardTitle className="font-semibold text-5xl text-transparent bg-gradient-to-r from-green-400 to-green-600 bg-clip-text">
               Create a new account
             </CardTitle>
           </CardHeader>
@@ -266,7 +273,7 @@ const SignUpPage = () => {
                   <Button
                     // onClick={onCreate}
                     type="submit"
-                    className="bg-green-500 text-white hover:bg-green-600 px-6 py-3">
+                    className="bg-green-500 text-white hover:bg-green-600 px-10 py-3">
                     Register
                   </Button>
                 </div>
