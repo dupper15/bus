@@ -29,8 +29,7 @@ const useBusLinesViewModel = () => {
         try {
             const response = await LineService.getLines();
             const rawLines = response.data;
-            const sortedLines = rawLines.map(transformLine).sort((a, b) => a.name.localeCompare(b.name));
-            setLines(sortedLines);
+            setLines(rawLines.map(transformLine));
         } catch (error) {
             console.error("Error fetching lines:", error);
         }
