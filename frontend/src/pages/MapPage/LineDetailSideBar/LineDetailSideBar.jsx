@@ -40,7 +40,7 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
                 )}
                 {activeTab === "outbound" && (
                     <div>
-                        <h3 className="text-xl font-medium text-gray-800 mt-4 mb-3">Outbound Stops:</h3>
+                        <h3 className="text-xl font-medium text-gray-800 mb-3">Outbound Stops:</h3>
                         <StopList
                             stops={line.arr_stop.map(stop => stop.name)}
                             selectedStop={selectedStop}
@@ -50,7 +50,7 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
                 )}
                 {activeTab === "inbound" && (
                     <div>
-                        <h3 className="text-xl font-medium text-gray-800 mt-4 mb-3">Inbound Stops:</h3>
+                        <h3 className="text-xl font-medium text-gray-800 mb-3">Inbound Stops:</h3>
                         <StopList
                             stops={line.arr_stop.map(stop => stop.name).reverse()}
                             selectedStop={selectedStop}
