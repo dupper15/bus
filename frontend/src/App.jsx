@@ -129,6 +129,7 @@ export default function App() {
           </Route>
 
           <Route path='/employee' element={<Layout />}>
+            <Route index element={<Navigate to='task' replace />} />
             <Route path='profile' element={<ProfilePage />} />
             <Route path='request' element={<RequestPage />} />
             <Route path='task' element={<TaskPage />} />

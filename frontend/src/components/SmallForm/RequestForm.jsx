@@ -1,11 +1,40 @@
 import React, { useState } from "react";
+import { useMutation } from "react-query";
+import * as RequestService from "@/services/requestService";
+import * as Message from "@/components/ui/alert"
+import { useSelector } from "react-redux";
 
 const RequestForm = ({ childCloseFormRequest }) => {
   const [request, setRequest] = useState("");
   const [title, setTitle] = useState("");
+
+  const account = useSelector((state) => state.account)
+
+  const mutaionCreate = useMutation({
+    mutationFn: async ({data}) => {
+      return await RequestService.createRequest(data)
+    },
+    onSuccess: (data) => {
+      if (data.status === "OK"){
+        Message.success(data.message);
+        childCloseFormRequest();
+      } else {
+        Message.error(data.message);
+      }
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  })
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle feedback submission logic here
+    const values = {
+      _id: account?._id,
+      title: title,
+      content: request
+    }
+    mutaionCreate.mutate({data: values})
   };
 
   return (

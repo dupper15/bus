@@ -22,7 +22,7 @@ const routes = (app) => {
     app.use('/api/stop', (StopRouter))
     app.use('/api/line', (LineRouter))
     app.use('/api/schedule', (ScheduleRouter))
-    app.use('/api/dayOff', (DayOffRouter))
+    app.use('/api/request', (DayOffRouter))
     app.use('/api/incentives', (IncentivesRouter))
     app.use('/api/image', (ImageRouter))
     app.use('/api/ticket', (TicketRouter))

@@ -1,106 +1,122 @@
 const DayOff = require("../models/DayOffModel")
 
-const createDayOff = (newDayOff) => {
-    return new Promise(async (resolve, reject) => {
-        const {employee, solver, content, status, date_requested} = newDayOff
-        try {
-            const checkDayOff = await DayOff.findOne({
-                employee: employee, solver: solver, content: content, date_requested: date_requested
-            })
-            if (checkDayOff !== null) {
-                resolve({
-                    status: "ERROR", message: "A dayOff with this information already exists."
-                })
-                return;
-            }
+const createDayOff = async (data) => {
+    try {
+        const dayOffs = await DayOff.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
+        const ids = dayOffs.map((dayOff) => parseInt(dayOff.id.replace('R', ''), 10));
 
-            const createdDayOff = await DayOff.create({
-                employee: employee, solver: solver, content: content, date_requested: date_requested, status: status
-            })
-            if (createdDayOff) {
-                resolve({
-                    status: "OK", message: "DayOff created successfully.", data: createdDayOff
-                })
+        let newIdNumber = 1;
+        for (const id of ids) {
+            if (id === newIdNumber) {   
+                newIdNumber++;
+            } else {
+                break;
             }
-        } catch (e) {
-            reject({
-                status: "ERROR", message: "An error occurred while creating the dayOff.", error: e
-            })
         }
-    })
-}
+        const newId = `R${String(newIdNumber).padStart(3, '0')}`;
 
-const getAllDayOff = () => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const allDayOff = await DayOff.find();
-            resolve({
-                status: "OK", message: "DayOffs retrieved successfully.", data: allDayOff
-            })
+        const createdDayOff = await DayOff.create({
+            id: newId,
+            employee: data._id,
+            title: data.title,
+            content: data.content,
+            date_requested: new Date(),
+        });
 
-        } catch (e) {
-            reject({
-                status: "ERROR", message: "An error occurred while retrieving the dayOffs.", error: e
-            })
+        return {
+            status: "OK",
+            message: "Request leave created successfully.",
+            data: createdDayOff,
+        };
+    } catch (error) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while creating the DayOff.",
+            error,
+        };
+    }
+};
+
+const getAllDayOff = async () => {
+    try {
+        const allDayOff = await DayOff.find().populate("employee").populate("solver");
+        return {
+            status: "OK",
+            message: "DayOffs retrieved successfully.",
+            data: allDayOff,
+        };
+    } catch (error) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while retrieving the DayOffs.",
+            error,
+        };
+    }
+};
+
+const updateDayOff = async (data) => {
+    try {
+        const checkDayOff = await DayOff.findOne({ id: data.id });
+        if (checkDayOff === null) {
+            return {
+                status: "ERROR",
+                message: "No request leave found with the provided ID.",
+            };
         }
-    })
-}
-
-const updateDayOff = (DayOffId, data) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const checkDayOff = await DayOff.findOne({_id: DayOffId});
-            if (checkDayOff === null) {
-                resolve({
-                    status: "ERROR", message: "No dayOff found with the provided ID."
-                })
-                return;
-            }
-
-            const updatedDayOff = await DayOff.findByIdAndUpdate(DayOffId, data, {new: true});
-
-            if (!updatedDayOff) {
-                resolve({
-                    status: "ERROR", message: "Failed to update the dayOff or dayOff not found."
-                });
-                return;
-            }
-
-            resolve({
-                status: "OK", message: "DayOff updated successfully.", data: updatedDayOff
-            })
-
-        } catch (e) {
-            reject({
-                status: "ERROR", message: "An error occurred while updating the dayOff.", error: e
-            })
+        const updatedDayOff = await DayOff.findByIdAndUpdate(
+            checkDayOff._id,
+            {
+                manager: data._id,
+                status: data.status,
+                date_solved: new Date(),
+            },
+            { new: true }
+        );
+        if (!updatedDayOff) {
+            return {
+                status: "ERROR",
+                message: "Failed to update the DayOff or DayOff not found.",
+            };
         }
-    })
-}
+        return {
+            status: "OK",
+            message: "Resolved request leave successfully.",
+            data: updatedDayOff,
+        };
+    } catch (error) {
+        // Xử lý lỗi và trả về phản hồi lỗi
+        return {
+            status: "ERROR",
+            message: "An error occurred while updating the DayOff.",
+            error,
+        };
+    }
+};
 
-const getDetailDayOff = (DayOffId) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const dayOff = await DayOff.findOne({
-                _id: DayOffId
-            })
-            if (dayOff === null) {
-                resolve({
-                    status: 'ERROR', message: 'No dayOff found with the provided ID.'
-                })
-                return;
-            }
-            resolve({
-                status: "OK", message: "DayOff details retrieved successfully.", data: dayOff
-            })
-
-        } catch (e) {
-            reject({
-                status: "ERROR", message: "An error occurred while retrieving the dayOff details.", error: e
-            })
+const getDetailDayOff = async (id) => {
+    try {
+        const checkDayOff = await DayOff.find({
+            employee: id
+        }).populate("manager");
+        if (!checkDayOff) {
+            return {
+                status: 'ERROR',
+                message: 'No dayOff found for the provided employee ID.'
+            };
         }
-    })
-}
+        return {
+            status: "OK",
+            message: "DayOff details retrieved successfully.",
+            data: checkDayOff
+        };
+    } catch (error) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while retrieving the DayOff details.",
+            error
+        };
+    }
+};
 
 const deleteDayOff = (DayOffId) => {
     return new Promise(async (resolve, reject) => {
@@ -129,5 +145,9 @@ const deleteDayOff = (DayOffId) => {
 }
 
 module.exports = {
-    createDayOff, getAllDayOff, updateDayOff, getDetailDayOff, deleteDayOff
+    createDayOff, 
+    getAllDayOff, 
+    updateDayOff, 
+    getDetailDayOff, 
+    deleteDayOff
 }
