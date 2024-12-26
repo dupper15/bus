@@ -74,24 +74,25 @@ const ManageManagerPage = () => {
     onError: (error) => {
       console.log(error);
     },
-  })
+  });
 
   const mutaionDelete = useMutation({
-    mutationFn: ({data}) => deleteManager(data),
+    mutationFn: ({ data }) => deleteManager(data),
     onSuccess: (data) => {
       setItems(data.data);
     },
     onError: (error) => {
       console.log(error);
     },
-  })
-
+  });
 
   useEffect(() => {
-    mutationGetAll.mutate()
-  }, [])
+    getAll();
+  }, []);
 
-
+  const getAll = () => {
+    mutationGetAll.mutate();
+  };
   const [showForm, setShowForm] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [dialogType, setDialogType] = useState("");
@@ -256,7 +257,11 @@ const ManageManagerPage = () => {
         </Pagination>
         {showForm && dialogType == "add" && (
           <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormManager handleClose={handleClose} isAdd='true' />
+            <FormManager
+              handleClose={handleClose}
+              isAdd='true'
+              getAll={getAll}
+            />
           </div>
         )}
         {showForm && dialogType == "edit" && (
@@ -292,7 +297,10 @@ const ManageManagerPage = () => {
                     onClick={handleClose}>
                     Cancel
                   </Button>
-                  <Button variant='destructive' className='w-[120px]' onClick={handleClose}>
+                  <Button
+                    variant='destructive'
+                    className='w-[120px]'
+                    onClick={handleClose}>
                     Confirm
                   </Button>
                 </div>
