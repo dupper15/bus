@@ -1,28 +1,35 @@
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useMutation } from "react-query";
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode } from "jwt-decode";
 import * as Account from "../../services/accountService";
 import * as Message from "../../components/ui/alert";
-import { updateAccount } from '@/redux/accountSlide';
-
+import { updateAccount } from "@/redux/accountSlide";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import img from "../../assets/bus.jpeg";
 
 const SignInPage = () => {
-  
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleGetDetailAccount = async (id, token) => {
-    const res = await Account.getDetailAccount(id, token)
-    dispatch(updateAccount({...res?.data, access_token: token}))
-  }
+    const res = await Account.getDetailAccount(id, token);
+    dispatch(updateAccount({ ...res?.data, access_token: token }));
+  };
 
   const mutationLogin = useMutation({
-    mutationFn: async ({data}) => {
-      return await Account.loginAccount(data)
+    mutationFn: async ({ data }) => {
+      return await Account.loginAccount(data);
     },
     onSuccess: (data) => {
       console.log(data) 
@@ -45,69 +52,85 @@ const SignInPage = () => {
         } 
     },
     onError: (error) => {
-      console.log(error)
-    }
-  })
+      console.log(error);
+    },
+  });
 
   const onLogin = (e) => {
     e.preventDefault();
     const values = {
       username: username,
-      password: password
-    }
-    mutationLogin.mutate({data: values})
-  }
-  
+      password: password,
+    };
+    mutationLogin.mutate({ data: values });
+  };
+
   return (
     <div className="bg-white h-screen w-screen flex">
-      <div className="bg-[#4CAF50] basis-1/3 h-full flex justify-center pt-40">
-        <div className="text-white font-bold text-4xl text-center">
-          <p className="mb-4">Your journey,</p>
+      <div
+        className="relative bg-green-500 basis-1/3 h-screen flex justify-center items-center px-10"
+        style={{
+          backgroundImage: `url(${img})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}>
+        <div className="text-white font-bold text-5xl text-center leading-snug -mt-40">
+          <p>Your journey,</p>
           <p>simplified</p>
+        </div>
+        <div className="absolute bottom-0 w-full">
+          <svg
+            viewBox="0 0 1440 320"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full">
+            <path
+              fill="#ffffff"
+              fillOpacity="0.5"
+              d="M0,160L30,149.3C60,139,120,117,180,133.3C240,149,300,203,360,197.3C420,192,480,128,540,128C600,128,660,192,720,186.7C780,181,840,107,900,90.7C960,75,1020,117,1080,154.7C1140,192,1200,224,1260,213.3C1320,203,1380,149,1410,122.7L1440,96L1440,320L1410,320C1380,320,1320,320,1260,320C1200,320,1140,320,1080,320C1020,320,960,320,900,320C840,320,780,320,720,320C660,320,600,320,540,320C480,320,420,320,360,320C300,320,240,320,180,320C120,320,60,320,30,320L0,320Z"></path>
+          </svg>
         </div>
       </div>
 
-      <div className="bg-white basis-2/3 h-full flex flex-col justify-center items-center gap-4">
-        <form className="w-[50%] flex flex-col gap-6" onSubmit={onLogin}>
-          <div className="text-black font-bold text-4xl text-center">
-            Sign in
-          </div>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full rounded-md border-2 border-slate-300 focus:border-[#4CAF50] outline-none p-2"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value) }
-            className="w-full rounded-md border-2 border-slate-300 focus:border-[#4CAF50] outline-none p-2"
-          />
-          <div className="text-sm text-gray-600">
-            I forgot my password. Click{" "}
-            <a className="text-[#0A74DA] font-semibold hover:cursor-pointer">
-              here
-            </a>{" "}
-            to reset
-          </div>
-          <button
-            type="submit"
-            className="bg-[#4CAF50] h-10 w-full rounded-md hover:bg-[#8ce58f] text-white font-bold text-sm">
-            Log in
-          </button>
-        </form>
-        <div className="w-[50%] h-[1px] bg-slate-400"></div>
-        <button
-          type="button"
-          onClick={() => {
-            navigate("/signup");
-          }}
-          className="bg-[#0A74DA] h-10 w-[50%] rounded-md hover:bg-[#5dacf7] text-white font-bold text-sm">
-          Sign up
-        </button>
+      <div className="bg-gray-100 basis-2/3 h-full justify-center items-center place-items-center pt-36">
+        <Card className="shadow-lg rounded-lg w-[400px] bg-white">
+          <CardHeader className="flex justify-center items-center">
+            <CardTitle className="font-semibold p-3 text-5xl text-transparent bg-gradient-to-r from-green-400 to-green-600 bg-clip-text">
+              Log in
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center px-6">
+            <form className="w-full flex flex-col gap-4" onSubmit={onLogin}>
+              <input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full rounded-md border-2 border-slate-300 focus:border-[#4CAF50] outline-none p-3"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-md border-2 border-slate-300 focus:border-[#4CAF50] outline-none p-3"
+              />
+              <button
+                type="submit"
+                className="bg-[#4CAF50] h-10 w-full rounded-md hover:bg-[#8ce58f] text-white font-bold text-sm">
+                Log in
+              </button>
+            </form>
+            <div className="w-full h-[1px] bg-slate-300 my-4"></div>
+            <div className="text-sm text-gray-600">
+              Don&apos;t have an account?{" "}
+              <a
+                className="text-[#0A74DA] font-semibold hover:cursor-pointer hover:underline"
+                href="/signup">
+                Sign up
+              </a>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
