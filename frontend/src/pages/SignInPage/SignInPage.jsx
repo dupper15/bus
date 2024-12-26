@@ -14,13 +14,41 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import img from "../../assets/bus.jpeg";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const formSchema = z
+  .object({
+    id_card: z
+      .string()
+      .length(12, { message: "National ID must be exactly 12 digits." })
+      .regex(/^\d{12}$/, { message: "National ID must contain only digits." }),
+  });
 
 const SignInPage = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const form = useForm({
+      resolver: zodResolver(formSchema),
+      defaultValues: {
+        id_card: "",
+        password: "",
+      },
+    });
 
   const handleGetDetailAccount = async (id, token) => {
     const res = await Account.getDetailAccount(id, token);
@@ -32,7 +60,7 @@ const SignInPage = () => {
       return await Account.loginAccount(data);
     },
     onSuccess: (data) => {
-      console.log(data) 
+      if(data.status === "OK" || data.message === "Login successfully."){
         Message.success(data.message)
         localStorage.setItem('access_token', JSON.stringify(data?.access_token))
         if(data?.access_token) {
@@ -50,18 +78,23 @@ const SignInPage = () => {
         } else if (data.userType === "Admin") {
           navigate('/admin')
         } 
+      } else {
+        Message.error(data.message)
+      }
     },
     onError: (error) => {
       console.log(error);
     },
   });
 
-  const onLogin = (e) => {
-    e.preventDefault();
-    const values = {
-      username: username,
-      password: password,
-    };
+  const onLogin = async () => {
+    const isValid = await form.trigger();
+
+    if (!isValid) {
+      console.log("Validation errors:", form.formState.errors); // Log lỗi nếu có
+      return; // Dừng lại nếu form có lỗi
+    }
+    const values = form.getValues();
     mutationLogin.mutate({ data: values });
   };
 
@@ -99,27 +132,46 @@ const SignInPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center px-6">
-            <form className="w-full flex flex-col gap-4" onSubmit={onLogin}>
-              <input
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full rounded-md border-2 border-slate-300 focus:border-[#4CAF50] outline-none p-3"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md border-2 border-slate-300 focus:border-[#4CAF50] outline-none p-3"
-              />
-              <button
-                type="submit"
-                className="bg-[#4CAF50] h-10 w-full rounded-md hover:bg-[#8ce58f] text-white font-bold text-sm">
-                Log in
-              </button>
-            </form>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onLogin)}
+                className="space-y-6 w-full">
+                            <FormField
+                              control={form.control}
+                              name="id_card"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormLabel>National ID</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="National ID" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="password"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormLabel>Password</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" placeholder="Password" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                        />
+                    <div className="flex justify-center col-span-2 pt-5">
+                      <Button
+                        // onClick={onCreate}
+                        type="submit"
+                        className="bg-green-500 text-white hover:bg-green-600 px-10 py-3">
+                        Login
+                      </Button>
+                    </div>            
+                    </form>
+                </Form>
             <div className="w-full h-[1px] bg-slate-300 my-4"></div>
             <div className="text-sm text-gray-600">
               Don&apos;t have an account?{" "}
