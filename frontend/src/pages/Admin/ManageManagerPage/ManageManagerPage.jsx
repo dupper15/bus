@@ -39,8 +39,12 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useMutation } from "react-query";
-import { getAllManager, deleteManager } from "../../../services/managerService";
-import { de } from "date-fns/locale";
+import {
+  getAllManager,
+  deleteManager,
+  disableManager,
+} from "../../../services/managerService";
+import * as Message from "../../../components/ui/alert";
 
 const ManageManagerPage = () => {
   const ITEMS_PER_PAGE = 10;
@@ -77,15 +81,31 @@ const ManageManagerPage = () => {
   });
 
   const mutaionDelete = useMutation({
-    mutationFn: ({ data }) => deleteManager(data),
+    mutationFn: ({ _id }) => deleteManager(_id),
     onSuccess: (data) => {
-      setItems(data.data);
+      getAll();
+      handleClose();
+      Message.success(data.message);
     },
     onError: (error) => {
-      console.log(error);
+      const errorMessage =
+        error.response?.data?.message || "An unexpected error occurred.";
+      Message.error(errorMessage);
     },
   });
-
+  const mutaionEdit = useMutation({
+    mutationFn: ({ _id }) => disableManager(_id),
+    onSuccess: (data) => {
+      getAll();
+      handleClose();
+      Message.success(data.message);
+    },
+    onError: (error) => {
+      const errorMessage =
+        error.response?.data?.message || "An unexpected error occurred.";
+      Message.error(errorMessage);
+    },
+  });
   useEffect(() => {
     getAll();
   }, []);
@@ -102,11 +122,6 @@ const ManageManagerPage = () => {
     setShowForm(true);
     setShowDialog(false);
   };
-  const handleEditClick = () => {
-    setDialogType("edit");
-    setShowForm(true);
-    setShowDialog(false);
-  };
 
   const handleDialogOpen = (type) => {
     setDialogType(type);
@@ -114,10 +129,11 @@ const ManageManagerPage = () => {
     setShowForm(false);
   };
 
-  const handleClose = (manager) => {
+  const handleClose = () => {
     setShowForm(false);
     setShowDialog(false);
   };
+  const [_id, set_Id] = useState("");
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -182,10 +198,8 @@ const ManageManagerPage = () => {
                   <TableCell className='text-center py-3 px-4'>
                     <span
                       className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
-                        item.status === "Inactive"
+                        item.status === "Disable"
                           ? "bg-slate-200 text-gray-800"
-                          : item.status === "Maintenance"
-                          ? "bg-yellow-100 text-orange-600"
                           : "bg-green-100 text-green-600"
                       }`}>
                       {item.status}
@@ -199,18 +213,16 @@ const ManageManagerPage = () => {
                       <DropdownMenuContent>
                         <DropdownMenuItem
                           onClick={() => {
-                            setId(item.id);
-                            setName(item.name);
-                            setPhone(item.phone);
-                            setImage(item.image);
-                            setIdCard(item.id_card);
-                            setStatus(item.status);
-                            handleEditClick();
+                            set_Id(item._id);
+                            handleDialogOpen("edit");
                           }}>
-                          Edit
+                          {item.status === "Disable" ? "Enable" : "Disable"}
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDialogOpen("delete")}>
+                          onClick={() => {
+                            set_Id(item._id);
+                            handleDialogOpen("delete");
+                          }}>
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -257,26 +269,39 @@ const ManageManagerPage = () => {
         </Pagination>
         {showForm && dialogType == "add" && (
           <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormManager
-              handleClose={handleClose}
-              isAdd='true'
-              getAll={getAll}
-            />
+            <FormManager handleClose={handleClose} getAll={getAll} />
           </div>
         )}
-        {showForm && dialogType == "edit" && (
-          <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-            <FormManager
-              handleClose={handleClose}
-              isAdd='false'
-              id={id}
-              name={name}
-              phone={phone}
-              image={image}
-              id_card={idCard}
-              status={status}
-            />
-          </div>
+        {showDialog && dialogType == "edit" && (
+          <Dialog open={showDialog} onOpenChange={handleClose}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className='text-center'>
+                  Are you sure you want to change status of this account?
+                </DialogTitle>
+                <DialogDescription className='text-center'>
+                  Do you want to change status of this this account?
+                </DialogDescription>
+                <div className='flex items-center justify-center gap-2 pt-4'>
+                  <Button
+                    variant='outline'
+                    className='w-[120px]'
+                    onClick={handleClose}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    className='w-[120px]'
+                    onClick={() => {
+                      mutaionEdit.mutate({ _id });
+                    }}>
+                    Confirm
+                  </Button>
+                  ;
+                </div>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
         )}
         {/* Hiển thị Dialog khi showDialog là true */}
         {showDialog && dialogType == "delete" && (
@@ -286,7 +311,7 @@ const ManageManagerPage = () => {
                 <DialogTitle className='text-center'>
                   Are you sure you want to delete?
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className='text-center'>
                   This action cannot be undone. This will permanently delete the
                   schedule.
                 </DialogDescription>
@@ -300,9 +325,12 @@ const ManageManagerPage = () => {
                   <Button
                     variant='destructive'
                     className='w-[120px]'
-                    onClick={handleClose}>
+                    onClick={() => {
+                      mutaionDelete.mutate({ _id });
+                    }}>
                     Confirm
                   </Button>
+                  ;
                 </div>
               </DialogHeader>
             </DialogContent>

@@ -26,11 +26,11 @@ export const addManager = async (data) => {
   }
 };
 // Xóa quản lý
-export const deleteManager = async (data) => {
+export const deleteManager = async (id) => {
   try {
+    console.log(id);
     const response = await axios.delete(
-      `${API_KEY}/manager/delete`,
-      data // Gửi dữ liệu trong body của request
+      `${API_KEY}/manager/delete/${id}` // Sử dụng biến môi trường
     );
     return response.data;
   } catch (error) {
@@ -38,7 +38,16 @@ export const deleteManager = async (data) => {
     throw error;
   }
 };
-
+export const disableManager = async (id) => {
+  try {
+    console.log(id);
+    const response = await axios.put(`${API_KEY}/manager/change-status/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to delete manager", error);
+    throw error;
+  }
+};
 export const updateManager = async (data) => {
   try {
     const response = await axios.put(
