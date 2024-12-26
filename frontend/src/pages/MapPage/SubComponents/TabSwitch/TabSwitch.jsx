@@ -15,7 +15,7 @@ const TabSwitch = ({ tabs, onTabSelect }) => {
                 <button
                     key={tab.key}
                     onClick={() => handleTabClick(tab.key)}
-                    className={`p-4 focus:outline-none ${activeTab === tab.key ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+                    className={`pr-4 pl-4 pb-4 focus:outline-none ${activeTab === tab.key ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
                 >
                     {tab.label}
                 </button>
