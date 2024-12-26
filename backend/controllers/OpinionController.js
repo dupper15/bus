@@ -65,15 +65,8 @@ const getDetailOpinion =  async (req, res) => {
 
 const resolveOpinion =  async (req, res) => {
     try {
-        const {managerId, data} = req.body
-        if (!opinionId){
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Opinion ID is required.'
-            })
-        }
-
-        const response = await OpinionService.resolveOpinion(managerId, data)
+        const data = req.body 
+        const response = await OpinionService.resolveOpinion(data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)

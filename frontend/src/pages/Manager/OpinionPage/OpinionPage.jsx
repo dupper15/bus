@@ -29,6 +29,7 @@ const OpinionPage = () => {
   const ITEMS_PER_PAGE = 10;
   const [items, setItems] = useState([]);
   const [refresh, setRefresh]= useState(0);
+  const [selected, setSelected] = useState("");
   const [countPending, setCountPending] = useState("");
   const [countResolved, setCountResolved] = useState("");
   const [opinionPending, setOpinionPending] = useState([]);
@@ -69,49 +70,57 @@ const OpinionPage = () => {
   );
 
   const handleSearchStatus = () => {
-    if (selectedStatus === "Pending") {
-      setCurrentItems(
-        items.filter((item) => item.status.toLowerCase() === "pending")
-      );
-    } else if (selectedStatus === "Resolved") {
-      setCurrentItems(
-        items.filter((item) => item.status.toLowerCase() === "resolved")
-      );
-    } else {
-      setCurrentItems(
-        items.filter((item) =>
-          item.sender.name.toLowerCase().includes(searchWord.toLowerCase())
-        )
-      );
-    }
-  };  
+    const filteredItems = items.filter((item) => {
+      const matchesStatus = (() => {
+        switch (selectedStatus) {
+          case "Pending":
+            return item?.status === "Pending";
+          case "Resolved":
+            return item?.status === "Resolved";
+          default:
+            return true; // Không lọc theo status
+        }
+      })();
+  
+      const matchesTitle = item?.title?.toLowerCase().includes(searchWord.toLowerCase());
+  
+      return matchesStatus && matchesTitle; // Phải khớp cả status và title
+    });
+  
+    setCurrentItems(filteredItems);
+  };
   
   const handleSearchTime = () => {
     const currentDate = new Date();
   
     const filteredItems = items.filter((item) => {
-      const itemDate = new Date(item.receive_date); // Đảm bảo `item.date` là chuỗi ngày hợp lệ
-  
-      switch (selectedTime) {
-        case "Today":
-          return itemDate.toDateString() === currentDate.toDateString();
-        case "This Week": {
-          const startOfWeek = new Date(currentDate);
-          startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); // Bắt đầu tuần (Chủ nhật)
-          const endOfWeek = new Date(startOfWeek);
-          endOfWeek.setDate(startOfWeek.getDate() + 6); // Kết thúc tuần (Thứ bảy)
-          return itemDate >= startOfWeek && itemDate <= endOfWeek;
+      const itemDate = new Date(item.receive_date); // Đảm bảo `item.receive_date` là chuỗi ngày hợp lệ
+      const matchesTime = (() => {
+        switch (selectedTime) {
+          case "Today":
+            return itemDate.toDateString() === currentDate.toDateString();
+          case "This Week": {
+            const startOfWeek = new Date(currentDate);
+            startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); // Bắt đầu tuần (Chủ nhật)
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6); // Kết thúc tuần (Thứ bảy)
+            return itemDate >= startOfWeek && itemDate <= endOfWeek;
+          }
+          case "This Month":
+            return (
+              itemDate.getFullYear() === currentDate.getFullYear() &&
+              itemDate.getMonth() === currentDate.getMonth()
+            );
+          case "This Year":
+            return itemDate.getFullYear() === currentDate.getFullYear();
+          default: // "All"
+            return true;
         }
-        case "This Month":
-          return (
-            itemDate.getFullYear() === currentDate.getFullYear() &&
-            itemDate.getMonth() === currentDate.getMonth()
-          );
-        case "This Year":
-          return itemDate.getFullYear() === currentDate.getFullYear();
-        default: // "All"
-          return true;
-      }
+      })();
+  
+      const matchesTitle = item?.title?.toLowerCase().includes(searchWord.toLowerCase());
+  
+      return matchesTime && matchesTitle; // Phải khớp cả thời gian và title
     });
   
     setCurrentItems(filteredItems);
@@ -119,8 +128,11 @@ const OpinionPage = () => {
   
   useEffect(() => {
     handleSearchStatus();
+  }, [selectedStatus, searchWord, items]);
+
+  useEffect(() => {
     handleSearchTime();
-  }, [selectedStatus, selectedTime, searchWord, items]);
+  }, [selectedTime, searchWord, items]);
 
   const mutationGetAll = useMutation({
     mutationFn: () => {
@@ -156,8 +168,6 @@ const OpinionPage = () => {
     mutationGetStatus.mutate();
   }, [])
   
-  
-
   return (
     <div className="flex flex-row justify-center min-h-screen w-full p-6 bg-gray-100 space-x-6 py-4">
       <div className="w-2/3 space-y-6 flex flex-col bg-white shadow-lg rounded-xl p-6 border border-gray-300">
@@ -208,7 +218,7 @@ const OpinionPage = () => {
                   Customer ID
                 </TableHead>
                 <TableHead className=" text-base text-center text-white py-3 px-4">
-                  Customer Name
+                  Sender
                 </TableHead>
                 <TableHead className="text-base text-center text-white py-3 px-4">
                   Receive Date
@@ -217,7 +227,7 @@ const OpinionPage = () => {
                   Status
                 </TableHead>
                 <TableHead className="text-base text-center text-white py-3 px-4">
-                  Receiver
+                  Resolver
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -230,6 +240,7 @@ const OpinionPage = () => {
                     setShowForm(true);
                     setCurrentContent(item.content);
                     setCurrentFeedback(item.feedback);
+                    setSelected(item);
                   }}>
                   <TableCell className='text-center' py-3 px-4>
                     {item.id}
@@ -238,10 +249,10 @@ const OpinionPage = () => {
                     {item.title}
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
-                    {item.sender.id}
+                    {item?.sender?.id}
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
-                    {item.sender.name}
+                    {item?.sender?.name}
                   </TableCell>
                   <TableCell className='text-center py-3 px-4'>
                     {new Date(
@@ -259,7 +270,7 @@ const OpinionPage = () => {
                     </span>
                   </TableCell>
                   <TableCell className="text-center py-3 px-4">
-                    {item.receiver}
+                    {item?.receiver?.name}
                   </TableCell>
                 </TableRow>
               ))}
@@ -333,6 +344,7 @@ const OpinionPage = () => {
             handleClose={handleClose}
             content={currentContent}
             feedback={currentFeedback}
+            opinion={selected}
           />
         </div>
       )}

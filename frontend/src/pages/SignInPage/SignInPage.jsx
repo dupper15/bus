@@ -32,24 +32,24 @@ const SignInPage = () => {
       return await Account.loginAccount(data);
     },
     onSuccess: (data) => {
-      console.log(data);
-      Message.success(data.message);
-      localStorage.setItem("access_token", JSON.stringify(data?.access_token));
-      if (data?.access_token) {
-        const decoded = jwtDecode(data?.access_token);
-        if (decoded?.id) {
-          handleGetDetailAccount(decoded?.id, data?.access_token);
+      console.log(data) 
+        Message.success(data.message)
+        localStorage.setItem('access_token', JSON.stringify(data?.access_token))
+        if(data?.access_token) {
+          const decoded = jwtDecode(data?.access_token)
+          if (decoded?.id){
+            handleGetDetailAccount(decoded?.id, data?.access_token)
+          }
         }
-      }
-      if (data.userType === "Customer") {
-        navigate("/home");
-      } else if (data.userType === "Employee") {
-        navigate("/employee");
-      } else if (data.userType === "Manager") {
-        navigate("/manage");
-      } else {
-        navigate("/admin");
-      }
+        if (data.userType === "Customer"){
+          navigate('/home');
+        } else if (data.userType === "Employee"){
+          navigate('/employee');
+        } else if (data.userType === "Manager"){
+          navigate('/manage')
+        } else if (data.userType === "Admin") {
+          navigate('/admin')
+        } 
     },
     onError: (error) => {
       console.log(error);
