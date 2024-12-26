@@ -65,7 +65,7 @@ const Sidebar = ({
                             <li key={line.id}>
                                 <button
                                     onClick={() => onSelectLine(line)}
-                                    className="w-full text-left p-4 bg-gray-50 hover:bg-blue-100 rounded-lg transition-all shadow-md"
+                                    className="h-24 w-full text-left p-4 bg-gray-50 hover:bg-blue-100 rounded-lg transition-all shadow-md"
                                 >
                                     <div className="font-semibold text-lg text-gray-800">
                                         {line.name}
