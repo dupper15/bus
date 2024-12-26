@@ -23,12 +23,27 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useMutation } from "react-query";
-import * as Opinion from "../../../services/opinionService"
+import * as Opinion from "../../../services/opinionService";
+import { TrendingUp } from "lucide-react";
+import { Label, Pie, PieChart } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 const OpinionPage = () => {
   const ITEMS_PER_PAGE = 10;
   const [items, setItems] = useState([]);
-  const [refresh, setRefresh]= useState(0);
+  const [refresh, setRefresh] = useState(0);
   const [selected, setSelected] = useState("");
   const [countPending, setCountPending] = useState("");
   const [countResolved, setCountResolved] = useState("");
@@ -41,18 +56,17 @@ const OpinionPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
-  
+
   const [currentFeedback, setCurrentFeedback] = useState("");
   const [showForm, setShowForm] = useState(false);
 
   const [currentItems, setCurrentItems] = useState([]);
   const [currentContent, setCurrentContent] = useState("");
-  
+
   const handleClose = () => {
     setShowForm(false);
   };
 
-  
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setSearchParams({ page: page });
@@ -81,18 +95,20 @@ const OpinionPage = () => {
             return true; // Không lọc theo status
         }
       })();
-  
-      const matchesTitle = item?.title?.toLowerCase().includes(searchWord.toLowerCase());
-  
+
+      const matchesTitle = item?.title
+        ?.toLowerCase()
+        .includes(searchWord.toLowerCase());
+
       return matchesStatus && matchesTitle; // Phải khớp cả status và title
     });
-  
+
     setCurrentItems(filteredItems);
   };
-  
+
   const handleSearchTime = () => {
     const currentDate = new Date();
-  
+
     const filteredItems = items.filter((item) => {
       const itemDate = new Date(item.receive_date); // Đảm bảo `item.receive_date` là chuỗi ngày hợp lệ
       const matchesTime = (() => {
@@ -117,15 +133,17 @@ const OpinionPage = () => {
             return true;
         }
       })();
-  
-      const matchesTitle = item?.title?.toLowerCase().includes(searchWord.toLowerCase());
-  
+
+      const matchesTitle = item?.title
+        ?.toLowerCase()
+        .includes(searchWord.toLowerCase());
+
       return matchesTime && matchesTitle; // Phải khớp cả thời gian và title
     });
-  
+
     setCurrentItems(filteredItems);
   };
-  
+
   useEffect(() => {
     handleSearchStatus();
   }, [selectedStatus, searchWord, items]);
@@ -139,7 +157,7 @@ const OpinionPage = () => {
       return Opinion.getAllOpinion();
     },
     onSuccess: (data) => {
-      setItems(data.data)
+      setItems(data.data);
     },
     onError: (error) => {
       console.log(error);
@@ -156,7 +174,7 @@ const OpinionPage = () => {
       setOpinionPending(data.data.opinionPending);
       setOpinionResolved(data.data.opinionResolved);
 
-      setRefresh(!refresh)
+      setRefresh(!refresh);
     },
     onError: (error) => {
       console.log(error);
@@ -166,8 +184,31 @@ const OpinionPage = () => {
   useEffect(() => {
     mutationGetAll.mutate();
     mutationGetStatus.mutate();
-  }, [])
-  
+  }, []);
+
+  const chartData = [
+    { status: "pending", number: countPending, fill: "var(--color-pending)" },
+    {
+      status: "resolved",
+      number: countResolved,
+      fill: "var(--color-resolved)",
+    },
+  ];
+
+  const chartConfig = {
+    visitors: {
+      label: "Visitors",
+    },
+    pending: {
+      label: "Pending",
+      color: "#dc2626",
+    },
+    resolved: {
+      label: "Resolved",
+      color: "#0ca811",
+    },
+  };
+
   return (
     <div className="flex flex-row justify-center min-h-screen w-full p-6 bg-gray-100 space-x-6 py-4">
       <div className="w-2/3 space-y-6 flex flex-col bg-white shadow-lg rounded-xl p-6 border border-gray-300">
@@ -242,22 +283,20 @@ const OpinionPage = () => {
                     setCurrentFeedback(item.feedback);
                     setSelected(item);
                   }}>
-                  <TableCell className='text-center' py-3 px-4>
+                  <TableCell className="text-center" py-3 px-4>
                     {item.id}
                   </TableCell>
                   <TableCell className="font-medium text-center py-3 px-4">
                     {item.title}
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     {item?.sender?.id}
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
+                  <TableCell className="text-center py-3 px-4">
                     {item?.sender?.name}
                   </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {new Date(
-                      item.receive_date
-                    ).toLocaleDateString("en-GB")}
+                  <TableCell className="text-center py-3 px-4">
+                    {new Date(item.receive_date).toLocaleDateString("en-GB")}
                   </TableCell>
                   <TableCell className="text-center py-3 px-4">
                     <span
@@ -312,19 +351,19 @@ const OpinionPage = () => {
           </PaginationContent>
         </Pagination>
       </div>
-      <div className="hidden w-1/3 md:flex flex-col gap-6">
+      {/* <div className="hidden w-1/3 md:flex flex-col gap-6">
         <div className="bg-white shadow-lg rounded-xl p-6 border border-gray-300">
           <div className="text-lg font-semibold text-gray-700 mb-4">
             Status Overview
           </div>
-          <div className='grid grid-cols-2 gap-4'>
-            <div className='flex flex-col items-center justify-center bg-gradient-to-r from-red-400 to-red-500 text-white rounded-lg py-6 shadow-md'>
-              <div className='text-xl font-semibold'>Pending</div>
-              <div className='text-lg font-normal'>{countPending}</div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col items-center justify-center bg-gradient-to-r from-red-400 to-red-500 text-white rounded-lg py-6 shadow-md">
+              <div className="text-xl font-semibold">Pending</div>
+              <div className="text-lg font-normal">{countPending}</div>
             </div>
-            <div className='flex flex-col items-center justify-center bg-gradient-to-r from-green-400 to-green-600 text-white rounded-lg py-6 shadow-md'>
-              <div className='text-xl font-semibold'>Resolved</div>
-              <div className='text-lg font-normal'>{countResolved}</div>
+            <div className="flex flex-col items-center justify-center bg-gradient-to-r from-green-400 to-green-600 text-white rounded-lg py-6 shadow-md">
+              <div className="text-xl font-semibold">Resolved</div>
+              <div className="text-lg font-normal">{countResolved}</div>
             </div>
           </div>
         </div>
@@ -332,10 +371,88 @@ const OpinionPage = () => {
           <div className="text-lg font-semibold text-gray-700 mb-4">
             Summary
           </div>
-          <div className='flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-700 text-white rounded-lg py-6 shadow-md'>
-            <div className='text-xl font-semibold'>Sum of Opinions</div>
-            <div className='text-lg font-normal'>{countPending+countResolved}</div>
+          <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-700 text-white rounded-lg py-6 shadow-md">
+            <div className="text-xl font-semibold">Sum of Opinions</div>
+            <div className="text-lg font-normal">
+              {countPending + countResolved}
+            </div>
           </div>
+        </div>
+      </div> */}
+      <div className="hidden w-1/3 md:flex flex-col gap-6">
+        <Card className="flex flex-col">
+          <CardHeader className="items-center pb-0">
+            <CardTitle>Status chart</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 pb-0">
+            <ChartContainer
+              config={chartConfig}
+              className="mx-auto aspect-square max-h-[250px]">
+              <PieChart>
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideLabel />}
+                />
+                <Pie
+                  data={chartData}
+                  dataKey="number"
+                  nameKey="status"
+                  innerRadius={60}
+                  strokeWidth={5}>
+                  <Label
+                    content={({ viewBox }) => {
+                      if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                        return (
+                          <text
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            textAnchor="middle"
+                            dominantBaseline="middle">
+                            <tspan
+                              x={viewBox.cx}
+                              y={viewBox.cy}
+                              className="fill-foreground text-3xl font-bold">
+                              {countPending + countResolved}
+                            </tspan>
+                            <tspan
+                              x={viewBox.cx}
+                              y={(viewBox.cy || 0) + 24}
+                              className="fill-muted-foreground">
+                              Opinions
+                            </tspan>
+                          </text>
+                        );
+                      }
+                    }}
+                  />
+                </Pie>
+              </PieChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+        <div className="bg-white shadow-lg rounded-xl p-6 border border-gray-300">
+          <div className="text-lg font-semibold text-gray-700 mb-4">
+            Summary
+          </div>
+          <div className="grid grid-cols-2 w-96 space-y-2">
+            <div className="text-xl font-semibold pt-2 text-red-600">
+              Pending Opinions:
+            </div>
+            <div className="text-xl font-semibold text-red-600">
+              {countPending}
+            </div>{" "}
+            <div className="text-xl font-semibold text-green-600">
+              Resolved Opinions:
+            </div>
+            <div className="text-xl font-semibold text-green-600">
+              {countResolved}
+            </div>
+            <div className="text-xl font-semibold">Sum of Opinions:</div>
+            <div className="text-xl font-semibold">
+              {countPending + countResolved}
+            </div>
+          </div>
+          <div className="text-lg font-normal"></div>
         </div>
       </div>
       {showForm && (
