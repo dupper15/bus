@@ -52,7 +52,7 @@ export function AdminSideBar() {
       </SidebarContent>
       <SidebarFooter>
         <div className="flex justify-center">
-          <Link className="font-semibold text-center" to={"/"}>
+          <Link className="font-semibold text-center" to={"/login"}>
             Log out
           </Link>
         </div>
