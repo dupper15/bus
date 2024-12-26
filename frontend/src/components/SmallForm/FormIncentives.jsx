@@ -1,4 +1,4 @@
-import { date, z } from "zod";
+import {  z } from "zod";
 import {
   Form,
   FormControl,
@@ -7,18 +7,50 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { format } from "date-fns";
+import { useMutation } from "react-query";
+import * as IncentiveService from "@/services/incentivesService";
+import * as Message from "@/components/ui/alert";
 
-const formSchema = z.object({
-  name: z.string().nonempty({ message: "Name is required." }),
-  type: z.enum(["Reward", "Punishment"], { message: "Invalid type." }),
-  content: z.string().nonempty({ message: "Content is required." }),
-  date: z.string().nonempty({ message: "Time start is required." }),
-  price: z.string().refine((value) => /^\d+$/.test(value), {
-    message: "Price must be a valid number.",
-  }),
+const formSchema = z
+  .object({
+    id: z
+      .string()
+      .nonempty({ message: "ID is required." }),
+    content: z
+      .string()
+      .nonempty({ message: "Content is required." })
+      .regex(/^[a-zA-Z0-9 ]*$/, { message: "Content must contain only alphanumeric characters." }),
+    price: z
+      .string()
+      .refine((value) => /^\d+$/.test(value), { message: "Price must be a valid number." }),
+    type: z
+      .enum(["Reward", "Punishment"], { message: "Invalid type. Please select either 'Reward' or 'Punishment'." }),
+    date: z
+      .preprocess(
+        (value) => (typeof value === "string" ? new Date(value) : value), // Chuyển chuỗi thành `Date`
+        z.date().refine((date) => date <= new Date(), {
+          message: "Date must be a valid date and cannot be in the future.",
+        })
+      ),
 });
 
 const FormIncentives = ({
@@ -34,6 +66,7 @@ const FormIncentives = ({
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      id,
       name,
       type,
       content,
@@ -42,17 +75,64 @@ const FormIncentives = ({
     },
   });
 
-  const onCreate = (e) => {
-    e.preventDefault();
+  const onSubmit = async () => {
+    const isValid = await form.trigger();
+
+    if (!isValid) {
+      console.log("Validation errors:", form.formState.errors); // Log lỗi nếu có
+      return; // Dừng lại nếu form có lỗi
+    }
     const values = form.getValues();
-    console.log("Form submitted successfully:", values);
+    if (isAdd === "true"){
+      mutationCreate.mutate({ data: values });
+    } else {
+      mutationEdit.mutate({ data: values });
+    }
   };
+
+  const mutationCreate = useMutation({
+    mutationFn: async ({ data }) => {
+      return await IncentiveService.createIncentives(data);
+    },
+    onError: (error) => {
+      const errorMessage =
+        error.response?.data?.message || "An unexpected error occurred.";
+      Message.error(errorMessage); // Hiển thị lỗi
+    },
+    onSuccess: (data) => {
+      if (data.status === "ERROR") {
+        Message.error(data.message); // Hiển thị lỗi từ API
+      } else if (data.status === "OK") {
+        Message.success(data.message); // Hiển thị thông báo thành công
+        handleClose();
+      }
+    },
+  });
+
+  const mutationEdit = useMutation({
+    mutationFn: async ({ data }) => {
+      return await IncentiveService.editIncentives(data);
+    },
+    onError: (error) => {
+      const errorMessage =
+      error.response?.data?.message || "An unexpected error occurred.";
+      Message.error(errorMessage); // Hiển thị lỗi
+    },
+    onSuccess: (data) => {
+      if (data.status === "ERROR") {
+        Message.error(data.message); // Hiển thị lỗi từ API
+      } else if (data.status === "OK") {
+        Message.success(data.message); // Hiển thị thông báo thành công
+        handleClose();
+      }
+    },
+  });
 
   return (
     <div className="absolute inset-0 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center">
       <Form {...form}>
         <form
-          onSubmit={onCreate}
+          onSubmit={form.handleSubmit(onSubmit)}
           className="w-full max-w-2xl bg-white shadow-lg border rounded-lg p-6 space-y-6">
           <h1 className="text-2xl font-bold text-green-500 text-center">
             {isAdd === "true" ? "Add New Incentive" : "Edit Incentive"}
@@ -60,45 +140,63 @@ const FormIncentives = ({
 
           {/* Form Fields */}
           <div className="grid grid-cols-1 gap-6">
-            {isAdd === "false" && (
-              <div className="flex flex-col space-y-2">
-                <FormLabel>Incentive ID:</FormLabel>
-                <div className="text-gray-700 bg-gray-100 p-2 rounded border">
-                  {id}
-                </div>
-              </div>
+          <FormField
+            control={form.control}
+            name="id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ID</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Enter ID of employee" 
+                    {...field} 
+                    readOnly={isAdd !== "true"} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
+          />
 
-            <FormField
+          {isAdd === "false" && (
+              <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter Employee Name" {...field} />
+                    <Input placeholder="Enter employee name" {...field} readOnly/>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            )}
 
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter Type(Reward/Punishment)..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                  control={form.control}
+                  name='type'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select a type' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='Reward'>Reward</SelectItem>
+                          <SelectItem value='Punishment'>Punishment</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />    
 
             <FormField
               control={form.control}
@@ -107,7 +205,7 @@ const FormIncentives = ({
                 <FormItem>
                   <FormLabel>Content</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter Content..." {...field} />
+                    <Input placeholder="Enter content" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,18 +213,36 @@ const FormIncentives = ({
             />
 
             <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Date</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter Date..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  control={form.control}
+                  name='date'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant='outline'
+                            className='w-full text-left font-normal'>
+                            {field.value
+                              ? format(new Date(field.value), "PPP")
+                              : "Pick a date"}
+                            <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-auto p-0' align='start'>
+                          <Calendar
+                            mode='single'
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={(date) => {
+                              field.onChange(date || new Date()); // Luôn cập nhật kiểu `Date`
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+              />    
 
             <FormField
               control={form.control}
