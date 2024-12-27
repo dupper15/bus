@@ -64,101 +64,113 @@ const useNavigationViewModel = () => {
             const endStop = findNearestBusStop(endCoords, busStops);
 
             if (!startStop || !endStop) {
-                console.error("No nearby stops found.");
-                setPath([]);
-                setError("No nearby stops found.");
+                handleError("No nearby stops found.");
                 return;
             }
 
-            // BFS setup to find the bus route
-            const queue = [{ stop: startStop, path: [startStop], lines: [], transfers: 0 }];
-            const visited = new Set();
-            let shortestPath = null;
-
-            while (queue.length > 0) {
-                const { stop, path, lines, transfers } = queue.shift();
-
-                // Check if we've reached the destination
-                if (stop.id === endStop.id) {
-                    if (!shortestPath || path.length < shortestPath.length) {
-                        shortestPath = { path, lines, transfers };
-                    }
-                    continue;
-                }
-
-                // Mark as visited
-                const visitedKey = `${stop.id}-${transfers}`;
-                if (visited.has(visitedKey)) continue;
-                visited.add(visitedKey);
-
-                // Explore neighbors
-                busLines.forEach((line) => {
-                    const stopIndex = line.arr_stop.findIndex((s) => s.id === stop.id);
-                    if (stopIndex === -1) return; // Current stop not on this line
-
-                    // Get all subsequent stops in the line
-                    const subsequentStops = line.arr_stop.slice(stopIndex + 1);
-
-                    subsequentStops.forEach((nextStop, i) => {
-                        const newLines = lines.includes(line) ? lines : [...lines, line];
-                        const newTransfers = newLines.length - lines.length;
-
-                        if (newTransfers > 3) return; // Skip paths with excessive transfers
-
-                        queue.push({
-                            stop: nextStop,
-                            path: [...path, ...subsequentStops.slice(0, i + 1)],
-                            lines: newLines,
-                            transfers: transfers + newTransfers,
-                        });
-                    });
-                });
-            }
+            const shortestPath = findShortestPath(startStop, endStop, busLines);
 
             if (shortestPath) {
-                const busRouteStops = shortestPath.path;
-
-                // Walking paths
-                const walkingPathToStartStop = [startCoords, [startStop.pointY, startStop.pointX]];
-                const walkingPathFromEndStop = [[endStop.pointY, endStop.pointX], endCoords];
-
-                // Compress bus paths
-                const compressedBusPaths = compressBusPaths(busRouteStops);
-
-                // Format path data
-                const formattedPath = [
-                    { type: "walking", coords: walkingPathToStartStop },
-                    ...compressedBusPaths,
-                    { type: "walking", coords: walkingPathFromEndStop },
-                ];
-                console.log("formattedPath", formattedPath);
+                const formattedPath = formatPath(shortestPath, startCoords, endCoords, startStop, endStop);
                 setPath(formattedPath);
                 setError(null);
                 return formattedPath;
             } else {
-                setPath([]);
-                setError("No path found within 3 transfers.");
+                handleError("No path found within 3 transfers.");
             }
         } catch (err) {
-            setPath([]);
-            setError(err.message || "An error occurred.");
+            handleError(err.message || "An error occurred.");
         }
     };
 
+// Handles finding the shortest path with BFS
+    const findShortestPath = (startStop, endStop, busLines) => {
+        const queue = [{stop: startStop, path: [startStop], lines: [], transfers: 0}];
+        const visited = new Map();
+        let shortestPath = null;
+
+        while (queue.length > 0) {
+            const {stop, path, lines, transfers} = queue.shift();
+
+            if (stop.id === endStop.id) {
+                if (!shortestPath || transfers < shortestPath.transfers) {
+                    shortestPath = {path, lines, transfers};
+                }
+                continue;
+            }
+
+            const visitedKey = `${stop.id}-${transfers}`;
+            if (visited.has(visitedKey) && visited.get(visitedKey) <= transfers) {
+                continue;
+            }
+            visited.set(visitedKey, transfers);
+
+            exploreBusLines(busLines, stop, path, lines, transfers, queue, visited);
+        }
+
+        return shortestPath;
+    };
+
+// Explores all bus lines passing through a stop
+    const exploreBusLines = (busLines, currentStop, currentPath, currentLines, currentTransfers, queue, visited) => {
+        busLines.forEach((line) => {
+            if (!line.arr_stop.some(s => s.id === currentStop.id)) return;
+
+            const directions = [line.arr_stop, [...line.arr_stop].reverse()];
+            directions.forEach((stops) => {
+                const stopIndex = stops.findIndex((s) => s.id === currentStop.id);
+                if (stopIndex === -1) return;
+
+                for (let i = stopIndex + 1; i < stops.length; i++) {
+                    const nextStop = stops[i];
+                    const visitedKey = `${nextStop.id}-${currentTransfers}`;
+                    if (!visited.has(visitedKey)) {
+                        visited.set(visitedKey, currentTransfers);
+
+                        const newLines = currentLines.includes(line) ? currentLines : [...currentLines, line];
+                        const newTransfers = currentLines.length === newLines.length ? currentTransfers : currentTransfers + 1;
+                        const updatedPath = [...currentPath, ...stops.slice(stopIndex + 1, i + 1)];
+
+                        queue.push({
+                            stop: nextStop, path: updatedPath, lines: newLines, transfers: newTransfers,
+                        });
+                    }
+                }
+            });
+        });
+    };
+
+// Formats the final path data for output
+    const formatPath = (shortestPath, startCoords, endCoords, startStop, endStop) => {
+        const walkingPathToStartStop = [startCoords, [startStop.pointY, startStop.pointX]];
+        const walkingPathFromEndStop = [[endStop.pointY, endStop.pointX], endCoords];
+
+        const compressedBusPaths = compressBusPaths(shortestPath.path);
+
+        return [{type: "walking", coords: walkingPathToStartStop}, ...compressedBusPaths, {
+            type: "walking", coords: walkingPathFromEndStop
+        },];
+    };
+
+// Handles errors by setting the path and error messages
+    const handleError = (message) => {
+        console.error(message);
+        setPath([]);
+        setError(message);
+    };
+
+
     const compressBusPaths = (busRouteStops) => {
         const compressedPaths = [];
-        let currentPath = { type: "bus", coords: [] };
+        let currentPath = {type: "bus", coords: []};
 
         busRouteStops.forEach((stop, index) => {
             currentPath.coords.push([stop.pointY, stop.pointX]);
 
             // Start a new path for the next segment
-            if (
-                index < busRouteStops.length - 1 &&
-                stop.lineId !== busRouteStops[index + 1].lineId
-            ) {
+            if (index < busRouteStops.length - 1 && stop.lineId !== busRouteStops[index + 1].lineId) {
                 compressedPaths.push(currentPath);
-                currentPath = { type: "bus", coords: [] };
+                currentPath = {type: "bus", coords: []};
             }
         });
 
