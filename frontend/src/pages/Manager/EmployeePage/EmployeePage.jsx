@@ -45,21 +45,8 @@ import {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import * as EmployeeService from "../../../services/employeeService";
 import * as Message from "../../../components/ui/alert";
+import SolveRequestForm from "@/components/SmallForm/SolveRequestForm";
 
-const requests = [
-  {
-    id: "001",
-    name: "John Doe",
-    request: "Leave Application",
-    dateSent: "2024-12-21",
-  },
-  {
-    id: "002",
-    name: "Jane Smith",
-    request: "Salary Adjustment",
-    dateSent: "2024-12-20",
-  },
-];
 const ITEMS_PER_PAGE = 10;
 
 const EmployeePage = () => {
@@ -560,23 +547,7 @@ const EmployeePage = () => {
               <p className='text-gray-500 text-center'>Select an employee</p>
             )}
           </div>
-          <div className='w-full h-max bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
-            <h2 className='text-xl font-semibold text-green-500 mb-4 text-center'>
-              Request Details
-            </h2>
-            <div className='space-y-4'>
-              {requests.map((request, index) => (
-                <div key={index} className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>
-                    {request.name}
-                  </span>
-                  <span className='text-gray-800'>
-                    {request.request} ({request.dateSent})
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <SolveRequestForm />
         </div>
       </div>
     </div>
