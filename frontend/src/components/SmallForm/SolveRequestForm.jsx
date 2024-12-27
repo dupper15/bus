@@ -80,8 +80,8 @@ const SolveRequestForm = () => {
     <div
       ref={containerRef}
       className='w-full bg-white shadow-lg rounded-xl p-8 border border-gray-300'>
-      <h2 className='text-2xl font-bold text-green-500 mb-8 text-center uppercase tracking-wide'>
-        Request Details
+      <h2 className='text-xl font-bold text-green-500 mb-8 text-center uppercase tracking-wide'>
+        Pending Requests
       </h2>
       {containerWidth > 0 && (
         <Swiper

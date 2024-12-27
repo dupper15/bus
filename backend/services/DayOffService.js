@@ -1,5 +1,24 @@
 const DayOff = require("../models/DayOffModel");
 
+const getNoCondition = async () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const allDayOff = await DayOff.find();
+      resolve({
+        status: "OK",
+        message: "DayOffs retrieved successfully.",
+        data: allDayOff,
+      });
+    } catch (e) {
+      reject({
+        status: "ERROR",
+        message: "An error occurred while retrieving the dayOffs.",
+        error: e,
+      });
+    }
+  });
+};
+
 const createDayOff = async (data) => {
   try {
     const dayOffs = await DayOff.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
@@ -157,5 +176,6 @@ module.exports = {
   getAllDayOff,
   updateDayOff,
   getDetailDayOff,
+  getNoCondition,
   deleteDayOff,
 };

@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MdOutlineRequestPage } from "react-icons/md";
 
 import {
   Activity,
@@ -46,6 +47,11 @@ const items = [
     title: "Employee",
     url: "/manage/employee",
     icon: Users,
+  },
+  {
+    title: "Employee Request",
+    url: "/manage/request",
+    icon: MdOutlineRequestPage,
   },
   {
     title: "Customer",
@@ -129,8 +135,8 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="text-xl font-bold items-center justify-center">
-          <span className="font-extrabold text-2xl text-[#4CAF50]">Busty</span>
+        <div className='text-xl font-bold items-center justify-center'>
+          <span className='font-extrabold text-2xl text-[#4CAF50]'>Busty</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -140,7 +146,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="hover:bg-green-200">
+                  <SidebarMenuButton asChild className='hover:bg-green-200'>
                     <Link to={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -155,18 +161,18 @@ export function AppSidebar() {
       {isMenuOpen && (
         <div
           ref={menuRef}
-          className="absolute left-2 bottom-16 bg-white shadow-lg border rounded-lg p-3 w-48 z-50 transition-transform transform scale-95 hover:scale-100 origin-top">
-          <ul className="text-sm text-gray-700">
-            <Link to="profile" onClick={() => setIsMenuOpen((prev) => !prev)}>
-              <li className="flex items-center hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200">
-                <UserPen className="mr-2 w-4 h-4" />
+          className='absolute left-2 bottom-16 bg-white shadow-lg border rounded-lg p-3 w-48 z-50 transition-transform transform scale-95 hover:scale-100 origin-top'>
+          <ul className='text-sm text-gray-700'>
+            <Link to='profile' onClick={() => setIsMenuOpen((prev) => !prev)}>
+              <li className='flex items-center hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200'>
+                <UserPen className='mr-2 w-4 h-4' />
                 Profile
               </li>
             </Link>
             <li
               onClick={handleLogoutAccount}
-              className="flex items-center hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200">
-              <LogOut className="mr-2 w-4 h-4" />
+              className='flex items-center hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200'>
+              <LogOut className='mr-2 w-4 h-4' />
               Logout
             </li>
           </ul>
@@ -176,14 +182,14 @@ export function AppSidebar() {
       <SidebarFooter>
         <div
           onClick={() => setIsMenuOpen((prev) => !prev)}
-          className="flex items-center space-x-4 justify-start h-500 cursor-pointer relative">
+          className='flex items-center space-x-4 justify-start h-500 cursor-pointer relative'>
           <Avatar>
             <AvatarImage src={account.image} />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="font-semibold">{account.name}</span>
-            <span className="text-sm text-gray-500">Manager</span>
+          <div className='flex flex-col'>
+            <span className='font-semibold'>{account.name}</span>
+            <span className='text-sm text-gray-500'>Manager</span>
           </div>
         </div>
       </SidebarFooter>

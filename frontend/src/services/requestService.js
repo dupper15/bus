@@ -11,7 +11,16 @@ export const getAllRequest = async () => {
     throw error;
   }
 };
-
+export const getRequestNoCondition = async () => {
+  try {
+    const response = await axios.get(`${API_KEY}/request/get-no-condition`);
+    console.log("4", response);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get all requestes", error);
+    throw error;
+  }
+};
 export const getDetailRequest = async (id) => {
   try {
     const response = await axios.get(`${API_KEY}/request/get-detail/${id}`);
@@ -35,6 +44,15 @@ export const createRequest = async (data) => {
 export const resolvedRequest = async (data) => {
   try {
     const response = await axios.put(`${API_KEY}/request/resolve`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get resolved requestes", error);
+    throw error;
+  }
+};
+export const deleteRequest = async (id) => {
+  try {
+    const response = await axios.delete(`${API_KEY}/request/delete/${id}`);
     return response.data;
   } catch (error) {
     console.error("Failed to get resolved requestes", error);
