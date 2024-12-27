@@ -1,11 +1,11 @@
-import {useState, useCallback, useEffect} from "react";
+import { useState, useCallback, useEffect } from "react";
 import GeoapifyService from "@/services/GeoapifyService";
 
 const useNavigationViewModel = () => {
     const [path, setPath] = useState([]);
     const [error, setError] = useState(null);
-    const [start, setStart] = useState({name: "", coordinates: []});
-    const [end, setEnd] = useState({name: "", coordinates: []});
+    const [start, setStart] = useState({ name: "", coordinates: [] });
+    const [end, setEnd] = useState({ name: "", coordinates: [] });
     const [startSuggestions, setStartSuggestions] = useState([]);
     const [endSuggestions, setEndSuggestions] = useState([]);
 
@@ -29,7 +29,7 @@ const useNavigationViewModel = () => {
     const debouncedFetchSuggestions = useCallback(debounce(fetchSuggestions, 300), []);
 
     const handleChange = (value, setField, setSuggestions) => {
-        setField((prev) => ({...prev, name: value}));
+        setField((prev) => ({ ...prev, name: value }));
         debouncedFetchSuggestions(value, setSuggestions);
     };
 
@@ -45,8 +45,6 @@ const useNavigationViewModel = () => {
 
         busStops.forEach((stop) => {
             const distance = Math.sqrt(Math.pow(stop.pointX - coords[1], 2) + Math.pow(stop.pointY - coords[0], 2));
-
-            // Convert distance from degrees to kilometers (approximation)
             const distanceInKm = distance * 111; // 1 degree is approximately 111 km
 
             if (distanceInKm < minDistance && distanceInKm <= maxDistance) {
@@ -62,6 +60,8 @@ const useNavigationViewModel = () => {
         try {
             const startStop = findNearestBusStop(startCoords, busStops);
             const endStop = findNearestBusStop(endCoords, busStops);
+            console.log("Start stop", startStop);
+            console.log("End stop", endStop);
 
             if (!startStop || !endStop) {
                 handleError("No nearby stops found.");
@@ -83,18 +83,17 @@ const useNavigationViewModel = () => {
         }
     };
 
-// Handles finding the shortest path with BFS
     const findShortestPath = (startStop, endStop, busLines) => {
-        const queue = [{stop: startStop, path: [startStop], lines: [], transfers: 0}];
+        const queue = [{ stop: startStop, path: [startStop], lines: [], transfers: 0 }];
         const visited = new Map();
         let shortestPath = null;
 
         while (queue.length > 0) {
-            const {stop, path, lines, transfers} = queue.shift();
+            const { stop, path, lines, transfers } = queue.shift();
 
             if (stop.id === endStop.id) {
                 if (!shortestPath || transfers < shortestPath.transfers) {
-                    shortestPath = {path, lines, transfers};
+                    shortestPath = { path, lines, transfers };
                 }
                 continue;
             }
@@ -105,13 +104,14 @@ const useNavigationViewModel = () => {
             }
             visited.set(visitedKey, transfers);
 
+            console.log("Exploring stop", stop.name, "with", lines.length, "lines", "and", transfers, "transfers");
+
             exploreBusLines(busLines, stop, path, lines, transfers, queue, visited);
         }
 
         return shortestPath;
     };
 
-// Explores all bus lines passing through a stop
     const exploreBusLines = (busLines, currentStop, currentPath, currentLines, currentTransfers, queue, visited) => {
         busLines.forEach((line) => {
             if (!line.arr_stop.some(s => s.id === currentStop.id)) return;
@@ -140,37 +140,27 @@ const useNavigationViewModel = () => {
         });
     };
 
-// Formats the final path data for output
     const formatPath = (shortestPath, startCoords, endCoords, startStop, endStop) => {
         const walkingPathToStartStop = [startCoords, [startStop.pointY, startStop.pointX]];
         const walkingPathFromEndStop = [[endStop.pointY, endStop.pointX], endCoords];
 
         const compressedBusPaths = compressBusPaths(shortestPath.path);
 
-        return [{type: "walking", coords: walkingPathToStartStop}, ...compressedBusPaths, {
+        return [{ type: "walking", coords: walkingPathToStartStop }, ...compressedBusPaths, {
             type: "walking", coords: walkingPathFromEndStop
-        },];
+        }];
     };
-
-// Handles errors by setting the path and error messages
-    const handleError = (message) => {
-        console.error(message);
-        setPath([]);
-        setError(message);
-    };
-
 
     const compressBusPaths = (busRouteStops) => {
         const compressedPaths = [];
-        let currentPath = {type: "bus", coords: []};
+        let currentPath = { type: "bus", coords: [] };
 
         busRouteStops.forEach((stop, index) => {
             currentPath.coords.push([stop.pointY, stop.pointX]);
 
-            // Start a new path for the next segment
             if (index < busRouteStops.length - 1 && stop.lineId !== busRouteStops[index + 1].lineId) {
                 compressedPaths.push(currentPath);
-                currentPath = {type: "bus", coords: []};
+                currentPath = { type: "bus", coords: [] };
             }
         });
 
@@ -181,6 +171,17 @@ const useNavigationViewModel = () => {
         return compressedPaths;
     };
 
+    const handleError = (message) => {
+        console.error(message);
+        setPath([]);
+        setError(message);
+    };
+
+    const handleSwap = () => {
+        const temp = start;
+        setStart(end);
+        setEnd(temp);
+    };
 
     useEffect(() => {
         if (error) {
@@ -191,13 +192,6 @@ const useNavigationViewModel = () => {
             return () => clearTimeout(timer);
         }
     }, [error]);
-
-
-    const handleSwap = () => {
-        const temp = start;
-        setStart(end);
-        setEnd(temp);
-    };
 
     return {
         path,
