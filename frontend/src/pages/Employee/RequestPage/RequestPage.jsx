@@ -31,7 +31,7 @@ const RequestPage = () => {
   return (
     <div className='p-8 bg-gray-50 min-h-screen'>
       <div className='flex justify-between items-center mb-8'>
-        <h1 className='text-2xl font-bold text-gray-700'>Your Request</h1>
+        <h1 className='text-3xl font-bold text-gray-800'>Your Maintenance</h1>
         <Button
           type='primary'
           size='large'
@@ -50,10 +50,10 @@ const RequestPage = () => {
               key={item.id}
               className={`p-4 rounded-lg flex flex-col justify-between shadow-lg ${
                 item.status === "Approved"
-                  ? "bg-green-50 border-l-4 border-green-500"
+                  ? "bg-green-100 border-l-4 border-green-500"
                   : item.status === "Rejected"
-                  ? "bg-red-50 border-l-4 border-red-500"
-                  : "bg-yellow-50 border-l-4 border-yellow-500"
+                  ? "bg-red-100 border-l-4 border-red-500"
+                  : "bg-yellow-100 border-l-4 border-yellow-500"
               }`}>
               <div>
                 <h2 className='text-lg font-semibold text-gray-800'>
@@ -64,12 +64,11 @@ const RequestPage = () => {
               <div>
                 <div className='relative mt-4'>
                   <p className='text-sm text-gray-500'>
-                    <strong>
-                      Sent:{" "}
-                      {new Date(item.date_requested).toLocaleDateString(
-                        "en-GB"
-                      )}
-                    </strong>
+                    <strong>ID:</strong> {item.id}
+                  </p>
+                  <p className='text-sm text-gray-500'>
+                    <strong>Sent: </strong>
+                    {new Date(item.date_requested).toLocaleDateString("en-GB")}
                   </p>
                   <p
                     className={`text-sm font-semibold mt-2 ${
@@ -84,7 +83,7 @@ const RequestPage = () => {
                 </div>
               </div>
               {item.feedback && (
-                <div className='mt-4 bg-blue-50 p-3 rounded'>
+                <div className='mt-4 bg-blue-100 p-3 rounded'>
                   <h3 className='text-blue-600 font-semibold'>Feedback</h3>
                   <p className='text-gray-700'>
                     {item.feedback || "No feedback provided."}
@@ -94,7 +93,10 @@ const RequestPage = () => {
                       <strong>Receiver:</strong> {item?.manager?.name}
                     </p>
                     <p>
-                      <strong>Feedback Received: {item.date_resolved}</strong>
+                      <p className='text-sm text-gray-500'>
+                        <strong>Feedback Received:</strong>{" "}
+                        {new Date(item.updatedAt).toLocaleDateString("en-GB")}
+                      </p>
                     </p>
                   </div>
                 </div>

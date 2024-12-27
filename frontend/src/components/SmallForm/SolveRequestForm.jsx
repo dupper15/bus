@@ -71,7 +71,7 @@ const SolveRequestForm = () => {
   const handleSubmit = (status) => {
     mutationResolvedRequest.mutate({
       id: id,
-      manager,
+      manager: manager,
       status: status,
       feedback,
     });

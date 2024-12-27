@@ -12,12 +12,19 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-import { Calendar, SquareChartGantt, Wrench, CalendarX, LogOut, UserPen } from "lucide-react";
+import {
+  Calendar,
+  SquareChartGantt,
+  Wrench,
+  CalendarX,
+  LogOut,
+  UserPen,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import icon from "../../assets/default-profile-icon.png";
 import { useDispatch, useSelector } from "react-redux";
-import * as AccountService from "@/services/accountService"
-import * as Message from "@/components/ui/alert"
+import * as AccountService from "@/services/accountService";
+import * as Message from "@/components/ui/alert";
 import { resetAccount } from "@/redux/accountSlide";
 // Menu item
 const items = [
@@ -29,17 +36,12 @@ const items = [
   {
     title: "Request",
     url: "/employee/request",
-    icon: Wrench,
-  },
-  {
-    title: "Incentives",
-    url: "#",
     icon: SquareChartGantt,
   },
   {
-    title: "Day off",
-    url: "#",
-    icon: CalendarX,
+    title: "Maintenance",
+    url: "/employee/maintenance",
+    icon: Wrench,
   },
 ];
 
@@ -92,17 +94,17 @@ export function EmployeeSideBar() {
         <div
           ref={menuRef}
           className='absolute left-2 bottom-16 bg-white shadow-lg border rounded-lg p-3 w-48 z-50 transition-transform transform scale-95 hover:scale-100 origin-top'>
-           <ul className="text-sm text-gray-700">
-            <Link to="profile" onClick={() => setIsMenuOpen((prev) => !prev)}>
-              <li className="flex items-center hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200">
-                <UserPen className="mr-2 w-4 h-4" />
+          <ul className='text-sm text-gray-700'>
+            <Link to='profile' onClick={() => setIsMenuOpen((prev) => !prev)}>
+              <li className='flex items-center hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200'>
+                <UserPen className='mr-2 w-4 h-4' />
                 Profile
               </li>
             </Link>
             <li
               onClick={handleLogoutAccount}
-              className="flex items-center hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200">
-              <LogOut className="mr-2 w-4 h-4" />
+              className='flex items-center hover:bg-green-100 p-2 cursor-pointer rounded-md transition-colors duration-200'>
+              <LogOut className='mr-2 w-4 h-4' />
               Logout
             </li>
           </ul>
