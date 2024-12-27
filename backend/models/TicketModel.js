@@ -7,6 +7,12 @@ const ticketSchema = new mongoose.Schema(
             ref: "Customer",
             require: true
         },
+        line: {
+            type: mongoose.Schema.ObjectId,
+            ref: "Line",
+            require: true
+        },
+        price: {type: Number, require: true},
         effective_date: {type: Date, require: true},
         expiration_date: {type: Date, require: true},
         status: {type: String, default: 'Valid'},

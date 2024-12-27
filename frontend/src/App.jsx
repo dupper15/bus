@@ -40,6 +40,7 @@ import * as Account from "./services/accountService";
 import { isJsonString } from "./utils/token";
 import { jwtDecode } from "jwt-decode";
 import { useEffect } from "react";
+import Test from "./pages/test";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +107,7 @@ export default function App() {
           <Route path='/home/*' element={<MainPage />} />
           <Route path='/payment/*' element={<MainBuyPage />} />
           <Route path='*' element={<Page404 />} />
+          <Route path='/test' element={<Test />} />
 
           <Route path='/manage' element={<DashboardLayout />}>
             <Route index element={<Navigate to='dashboard' replace />} />

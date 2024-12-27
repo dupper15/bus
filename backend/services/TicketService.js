@@ -1,13 +1,12 @@
+const Line = require("../models/LineModel");
 const Ticket = require("../models/TicketModel");
 
 const createTicket = async (data) => {
     try {
-        // Lấy tất cả ID hiện có và sắp xếp
         const tickets = await Ticket.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
 
         const ids = tickets.map((ticket) => parseInt(ticket.id.replace('T', ''), 10));
 
-        // Tìm ID nhỏ nhất bị thiếu
         let newIdNumber = 1;
         for (const id of ids) {
             if (id === newIdNumber) {
@@ -17,6 +16,8 @@ const createTicket = async (data) => {
             }
         }
         const newId = `T${String(newIdNumber).padStart(3, '0')}`;
+
+        const lineId = await Line.findOne({name: data.line})
 
         // Tính toán expiration_date dựa trên effective_date
         const effectiveDate = data.effective_date
@@ -32,13 +33,15 @@ const createTicket = async (data) => {
         const createdTicket = await Ticket.create({
             id: newId,
             customer: data.customer,
+            line: lineId,
+            price: data.price,
             effective_date: effectiveDate,
             expiration_date: expirationDate,
         });
 
         return {
             status: "OK",
-            message: "Ticket created successfully.",
+            message: "Buy ticket successfully.",
             data: createdTicket,
         };
     } catch (e) {
