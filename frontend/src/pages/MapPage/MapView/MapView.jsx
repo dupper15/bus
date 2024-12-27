@@ -8,7 +8,7 @@ const pathPropType = PropTypes.arrayOf(PropTypes.shape({
     type: PropTypes.oneOf(["walking", "bus"]).isRequired, coords: nestedCoordsPropType.isRequired
 }).isRequired);
 
-const MapView = ({mapData, busLines, stops, selectedStopCoordinates, mode, path, error, onMapClick}) => {
+const MapView = ({mapData, busLines, stops, selectedStopCoordinates, mode, path, onMapClick}) => {
     const {mapContainerRef} = useMapViewModel({
         mapData, busLines, stops, selectedStopCoordinates, mode, path, onMapClick
     });
