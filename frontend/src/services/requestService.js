@@ -13,14 +13,14 @@ export const getAllRequest = async () => {
 };
 
 export const getDetailRequest = async (id) => {
-    try {
-      const response = await axios.get(`${API_KEY}/request/get-detail/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error("Failed to get all requestes", error);
-      throw error;
-    }
-  };
+  try {
+    const response = await axios.get(`${API_KEY}/request/get-detail/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get all requestes", error);
+    throw error;
+  }
+};
 
 export const createRequest = async (data) => {
   try {
