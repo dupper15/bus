@@ -1,16 +1,81 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from 'react';
 import visa from "../../assets/image 8.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import usePurchasePagesViewModel from "./PurchasePagesViewModel";
+import * as TicketService from "@/services/ticketService";
+import * as Message from "@/components/ui/alert"
+import { useMutation } from 'react-query';
+import { useSelector } from 'react-redux';
+import axios from 'axios';
 
 const Purchase = ({ nextStep }) => {
-  const { purchaseData, updatePurchaseData } = usePurchasePagesViewModel();
+  
+  const navigate = useNavigate();
+  const account = useSelector((state) => state.account);
+    
+  const [selectedLine, setSelectedLine] = useState("Line 1");
+  const [content, setContent] = useState("");
+  const date = new Date().toISOString();
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    updatePurchaseData({ [name]: value });
+  const selectedLineRef = useRef(selectedLine);
+  const contentRef = useRef(date + selectedLineRef.current);
+
+  
+  const MY_BANK = "MB"; 
+  const ACCOUNT_NO = "0948041545"; 
+  const ACCOUNT_NAME = "CAO DUONG LAM";
+  const price = 10000;
+
+  useEffect(() => {
+    // Cập nhật selectedLineRef ngay lập tức
+    selectedLineRef.current = selectedLine;
+    contentRef.current = date + selectedLineRef.current;
+    
+  }, [selectedLine]);
+  useEffect(() => {
+    // Cập nhật content mỗi khi selectedLine thay đổi
+    setContent(date.replace(/[-:.\s]/g, "") + selectedLine.replace(/\s/g, ""));
+  }, [selectedLine]);
+  const checkPaid = async () => {
+    try {
+      const response = await axios.get("https://script.googleusercontent.com/macros/echo?user_content_key=1arkNjhD8BvBTKwRWk2wAxMXZeihNMn6ZszcG8obyaYSTG3t8vprpDUO6YgFznOq0v2ILdbwI34laxHjt9LtzNGkTSW3OOJEm5_BxDlH2jW0nuo2oDemN9CCS2h10ox_1xSncGQajx_ryfhECjZEnG8wA_srPnc6MBl2lEpm0VdZ3CX-sQi0hZ90X1RW5jikAGB2oH9IU6b9wxAeSFEnTgO9bqOAr_UnVt9qHG2oIwX1w6oFCY34T9z9Jw9Md8uu&lib=M-t7YJKp6uv0DvKyaUi6SixfZynQPYsQn")
+      const data = await response.data.data;
+
+      const lastPaid = data[data.length - 1];
+      const check = contentRef.current.replace(/[-:.\s]/g, "");
+      const lastPrice = lastPaid["Giá trị"];
+      const lastContent = lastPaid["Mô tả"];
+    
+      if (lastPrice >= price && lastContent.includes(check)) {
+        const data = await TicketService.createTicket({
+          line: selectedLineRef.current,
+          price: price,
+          customer: account._id,
+        });
+        if (data.status === "OK") {
+          Message.success(data.message);
+          nextStep();
+          navigate("/payment/thanks");
+          
+        } else {
+          Message.error(data.message);
+        }
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error("Failed to check paid", error);
+      throw error;
+    }
   };
-
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkPaid(); // Gọi hàm không truyền selectedLine, sử dụng giá trị từ ref.
+    }, 3000);
+    return () => clearInterval(interval); // Xóa interval khi component bị unmount.
+  }, []); // Chỉ chạy một lần khi component mount.
+  
   return (
       <div className='flex flex-col'>
         <div className='text-black text-4xl font-bold ml-4 mb-8'>
@@ -81,114 +146,20 @@ const Purchase = ({ nextStep }) => {
               </table>
             </div>
           </div>
-          <table className='table-auto border-0 border-transparent text-sm ml-32 mr-20 mt-8'>
-            <tbody>
-            <tr>
-              <td className='font-bold text-xl p-3  align-top whitespace-nowrap'>
-                Purchaser Information
-              </td>
-              <td className='gap-3 '>
-                <div className='space-y-4'>
-                  <div className='flex items-center gap-4'>
-                    <label className='w-1/4'>Street address</label>
-                    <input
-                        type='text'
-                        name='billingAddress'
-                        value={purchaseData.billingAddress}
-                        onChange={handleInputChange}
-                        className='h-8 w-full border border-gray-400 px-2'
-                    />
-                  </div>
-                  <div className='flex items-center gap-4'>
-                    <label className='w-1/4'>City</label>
-                    <input
-                        type='text'
-                        name='city'
-                        value={purchaseData.city}
-                        onChange={handleInputChange}
-                        className='h-8 w-full border border-gray-400  px-2'
-                    />
-                  </div>
-                  <div className='flex items-center gap-4'>
-                    <label className='w-1/4'>Postal code / ZIP</label>
-                    <input
-                        type='text'
-                        name='postalCode'
-                        value={purchaseData.postalCode}
-                        onChange={handleInputChange}
-                        className='h-8 w-full border border-gray-400  px-2'
-                    />
-                  </div>
-                  <div className='flex items-center gap-4'>
-                    <label className='w-1/4'>Country / Region</label>
-                    <span className='text-gray-700'>Vietnam</span>
-                  </div>
+          <div className="flex justify-center items-center h-screen">
+            <div className="flex items-center gap-2 basis-1/5">
+                  <label className="text-gray-700">Time:</label>
+                  <select
+                    onChange={(e) => setSelectedLine(e.target.value)}
+                    value={selectedLine}
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700">
+                    <option value="Line 1">Line 1</option>
+                    <option value="Line 2">Line 2</option>
+                    <option value="Line 3">Line 3</option>
+                  </select>
                 </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td className='font-bold text-xl p-3  align-top'>
-                Purchaser Contact
-              </td>
-              <td className='p-3 '>
-                <div className='space-y-4'>
-                  <div className='flex items-center gap-4'>
-                    <label className='w-1/4'>Email</label>
-                    <input
-                        type='email'
-                        name='email'
-                        value={purchaseData.email}
-                        onChange={handleInputChange}
-                        className='h-8 w-full border border-gray-400 px-2'
-                    />
-                  </div>
-                  <div className='flex items-center gap-4'>
-                    <label className='w-1/4'>Name</label>
-                    <div className='flex gap-2 w-full'>
-                      <input
-                          type='text'
-                          name='firstName'
-                          value={purchaseData.firstName}
-                          onChange={handleInputChange}
-                          className='h-8 flex-1 border border-gray-400 rounded px-2'
-                          placeholder='First Name'
-                      />
-                      <input
-                          type='text'
-                          name='lastName'
-                          value={purchaseData.lastName}
-                          onChange={handleInputChange}
-                          className='h-8 flex-1 border border-gray-400 rounded px-2'
-                          placeholder='Last Name'
-                      />
-                    </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td className='font-bold text-xl p-3  align-top'>
-                Payment Information
-              </td>
-              <td className='p-3 '>
-                <div className='space-y-4'>
-                  <input
-                      type='text'
-                      name='paymentInfo'
-                      value={purchaseData.paymentInfo}
-                      onChange={handleInputChange}
-                      className='h-8 w-full border border-gray-400 rounded px-2'
-                      placeholder='Card Number'
-                  />
-                  <img src={visa} alt='Visa' className='h-80 w-auto mt-2' />
-                </div>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-
+            <img key={content} src={`https://img.vietqr.io/image/${MY_BANK}-${ACCOUNT_NO}-compact2.png?amount=${price}&addInfo=${content}&accountName=${ACCOUNT_NAME}`}></img>
+          </div>
           <div className='flex items-center justify-center h-16 gap-8'>
             <button
                 onClick={() => (window.location.href = "/home")}
@@ -197,12 +168,6 @@ const Purchase = ({ nextStep }) => {
               {" "}
               Cancel
             </button>
-            <Link
-                to='/payment/review'
-                className='px-6 py-2 rounded bg-[#4CAF50] text-white hover:bg-[#6bdb6f]'
-                onClick={nextStep}>
-              Review
-            </Link>
           </div>
         </div>
       </div>

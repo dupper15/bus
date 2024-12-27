@@ -16,6 +16,7 @@ export const getAllTicket = async () => {
 // Tạo vé mới
 export const createTicket = async (data) => {
   try {
+    console.log("data", data);
     const response = await axios.post(`${API_KEY}/ticket/create`, data);
     return response.data;
   } catch (error) {
@@ -23,3 +24,5 @@ export const createTicket = async (data) => {
     throw error;
   }
 };
+
+
