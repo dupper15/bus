@@ -140,7 +140,7 @@ const ManageRequestPage = () => {
                         {item.content}
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
-                        {item.sender}
+                        {item.employee}
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
                         {item.date_requested}

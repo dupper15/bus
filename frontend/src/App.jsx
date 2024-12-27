@@ -23,6 +23,7 @@ import ManageManagerPage from "./pages/Admin/ManageManagerPage/ManageManagerPage
 import LinePage from "./pages/Manager/LinePage/LinePage";
 import TicketPage from "./pages/Manager/TicketPage/TicketPage";
 import MaintenancePage from "./pages/Manager/MaintenancePage/MaintenancePage";
+import MaintenancePage1 from "./pages/Employee/MaintenancePage/MaintenancePage";
 import IncentivesPage from "./pages/Manager/IncentivesPage/IncentivesPage";
 import ManageRequestPage from "./pages/Manager/ManageRequestPage/ManageRequestPage";
 import AddEmployeePage from "./pages/Manager/EmployeePage/AddEmployeePage";
@@ -134,6 +135,7 @@ export default function App() {
             <Route index element={<Navigate to='task' replace />} />
             <Route path='profile' element={<ProfilePage />} />
             <Route path='request' element={<RequestPage />} />
+            <Route path='maintenance' element={<MaintenancePage1 />} />
             <Route path='task' element={<TaskPage />} />
           </Route>
 
