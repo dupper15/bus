@@ -11,12 +11,12 @@ const opinionSchema = new mongoose.Schema(
         sender: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Customer',
-            required: true,
+            require: true,
         },
         receiver: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Manager',
-            required: true,
+            require: true,
         },
     },
     {

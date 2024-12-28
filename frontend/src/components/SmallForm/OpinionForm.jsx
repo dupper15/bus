@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useMutation } from "react-query";
-import * as RequestService from "@/services/requestService";
+import * as OpinionService from "@/services/opinionService";
 import * as Message from "@/components/ui/alert";
 import { useSelector } from "react-redux";
 
@@ -12,7 +12,7 @@ const OpinionForm = ({ childCloseFormRequest }) => {
 
   const mutaionCreate = useMutation({
     mutationFn: async ({ data }) => {
-      return await RequestService.createRequest(data);
+      return await OpinionService.createOpinion(data);
     },
     onSuccess: (data) => {
       if (data.status === "OK") {

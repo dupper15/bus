@@ -78,7 +78,33 @@ const getAllTicket = async (data) => {
     }
 };
 
+const getDetailTicket = async (customerId) => {
+    try {
+        const currentDate = new Date();
+
+        await Ticket.updateMany(
+            { expiration_date: { $lte: currentDate } }, // Điều kiện: hết hạn hoặc bằng ngày hiện tại
+            { $set: { status: "Expired" } }            // Cập nhật status thành "Expired"
+        );
+
+        const tickets = await Ticket.find({customer: customerId}).populate('customer', 'name');
+
+        return {
+            status: "OK",
+            message: "Tickets retrieved successfully.",
+            data: tickets ,
+        };
+    } catch (e) {
+        throw {
+            status: "ERROR",
+            message: "An error occurred while creating the ticket.",
+            error: e,
+        };
+    }
+};
+
 module.exports = {
     createTicket,
-    getAllTicket
+    getAllTicket,
+    getDetailTicket
 };

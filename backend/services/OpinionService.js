@@ -3,7 +3,7 @@ const Manager = require("../models/ManagerModel")
 
 const createOpinion = async (data) => {
     try {
-        console.log("customerId", data)
+        console.log("data", data)
         const opinions = await Opinion.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
         const ids = opinions.map((op) => parseInt(op.id.replace('O', ''), 10));
         let newIdNumber = 1;
@@ -21,7 +21,7 @@ const createOpinion = async (data) => {
             id: newId,
             title: data.title,
             content: data.content,
-            sender: data.sender,
+            sender: data._id,
             receive_date: new Date() 
         });
 
@@ -49,6 +49,22 @@ const createOpinion = async (data) => {
 const getAllOpinion = async () => {
     try {
         const allOpinion = await Opinion.find().populate("sender").populate("receiver", "name");
+        return {
+            status: "OK",
+            message: "Opinions retrieved successfully.",
+            data: allOpinion
+        };
+    } catch (e) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while retrieving the opinions.",
+            error: e
+        };
+    }
+};
+const getAllCustomer = async (id) => {
+    try {
+        const allOpinion = await Opinion.find({sender: id}).populate("sender", "name").populate("receiver", "name");
         return {
             status: "OK",
             message: "Opinions retrieved successfully.",
@@ -121,13 +137,12 @@ const getDetailOpinion = (OpinionId) => {
 const resolveOpinion = async (data) => {
     try {
         const manager = await Manager.findById(data.manager);
-        const opinion = await Opinion.findById(data._id);
         
         updatedOpinion = await Opinion.findByIdAndUpdate(
-            opinion._id,
+            data._id,
             {
                 status: "Resolved",
-                receiver: manager,
+                receiver: manager._id,
                 feedback: data.feedback,
                 resolve_date: new Date()
             },
@@ -152,5 +167,6 @@ module.exports = {
     getAllOpinion,
     getAllStatus,
     getDetailOpinion,
-    resolveOpinion
+    resolveOpinion,
+    getAllCustomer
 }

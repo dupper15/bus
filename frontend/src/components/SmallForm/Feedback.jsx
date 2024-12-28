@@ -6,7 +6,7 @@ import * as OpinionService from "../../services/opinionService";
 import * as Message from "../../components/ui/alert";
 import { useSelector } from "react-redux";
 
-const Feedback = ({ handleClose, content, feedback, opinion}) => {
+const Feedback = ({ childCloseFormRequest, opinion}) => {
 
   const account = useSelector((state) => state.account)
   const mutationResolved = useMutation({
@@ -21,7 +21,7 @@ const Feedback = ({ handleClose, content, feedback, opinion}) => {
         Message.error(data.message); // Hiển thị lỗi từ API
       } else if (data.status === "OK") {
         Message.success(data.message); // Hiển thị thông báo thành công
-        handleClose();
+        childCloseFormRequest();
       }
     },
   })
@@ -35,14 +35,13 @@ const Feedback = ({ handleClose, content, feedback, opinion}) => {
     mutationResolved.mutate({ data: values });
   };
   
-  const [feedbackValue, setFeedbackValue] = useState(feedback);
-  console.log("feedbackValue", feedbackValue)
+  const [feedbackValue, setFeedbackValue] = useState(opinion.feedback);
 
   return (
     <div className="absolute inset-0 bg-black bg-opacity-50 w-screen h-screen backdrop-blur-sm flex justify-center items-center">
       <div className="relative w-3/4 max-w-2xl bg-white shadow-lg border border-slate-500 rounded-lg p-8 space-y-6">
         <IoIosArrowBack
-          onClick={handleClose}
+          onClick={childCloseFormRequest}
           className="text-xl cursor-pointer"
         />
 
@@ -55,13 +54,13 @@ const Feedback = ({ handleClose, content, feedback, opinion}) => {
             <h3 className="text-green-600 font-semibold mb-2">
               Opinion of Customer
             </h3>
-            <p className="text-gray-700">{content || "No content provided"}</p>
+            <p className="text-gray-700">{opinion.content || "No content provided"}</p>
           </div>
 
-          {feedback && (
+          {opinion.feedback && (
             <div className='p-4 bg-blue-50 border-r-4 border-blue-500 rounded text-right'>
               <h3 className='text-blue-600 font-semibold mb-2'>Our Feedback</h3>
-              <p className='text-gray-700'>{feedback}</p>
+              <p className='text-gray-700'>{opinion.feedback}</p>
             </div>
           )}
         </div>

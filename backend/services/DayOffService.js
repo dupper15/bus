@@ -1,12 +1,11 @@
 const DayOff = require("../models/DayOffModel");
-const Manager = require("../models/ManagerModel");
-const Employee = require("../models/EmployeeModel");
 
 const getNoCondition = async () => {
   return new Promise(async (resolve, reject) => {
     try {
       // Lấy tất cả các bản ghi DayOff
       const allDayOff = await DayOff.find().populate("employee", "name").populate("manager", "name");
+
       resolve({
         status: "OK",
         message: "DayOffs retrieved successfully.",
@@ -145,33 +144,20 @@ const getDetailDayOff = async (id) => {
   }
 };
 
-const deleteDayOff = (DayOffId) => {
-  return new Promise(async (resolve, reject) => {
+const deleteDayOff = async (DayOffId) => {
     try {
-      const dayOff = await DayOff.findOne({
-        _id: DayOffId,
-      });
-      if (dayOff === null) {
-        resolve({
-          status: "ERROR",
-          message: "No dayOff found with the provided ID.",
-        });
-        return;
-      }
-
       await DayOff.findByIdAndDelete(DayOffId);
-      resolve({
-        status: "OK",
+      return({
+        status: "OK", 
         message: "DayOff deleted successfully.",
       });
     } catch (e) {
-      reject({
+      return({
         status: "ERROR",
         message: "An error occurred while deleting the dayOff.",
         error: e,
       });
     }
-  });
 };
 
 module.exports = {

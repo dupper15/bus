@@ -184,7 +184,7 @@ const OpinionPage = () => {
   useEffect(() => {
     mutationGetAll.mutate();
     mutationGetStatus.mutate();
-  }, []);
+  }, [refresh]);
 
   const chartData = [
     { status: "pending", number: countPending, fill: "var(--color-pending)" },
@@ -430,9 +430,10 @@ const OpinionPage = () => {
       {showForm && (
         <div className="fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform">
           <Feedback
-            handleClose={handleClose}
-            content={currentContent}
-            feedback={currentFeedback}
+            childCloseFormRequest={() => {
+              setShowForm(false);
+              setRefresh(!refresh);
+            }}
             opinion={selected}
           />
         </div>

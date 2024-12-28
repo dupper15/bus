@@ -12,6 +12,17 @@ export const getAllTicket = async () => {
     throw error;
   }
 };
+  
+// Lấy tất cả vé
+export const getDetailTicket = async (id) => {
+  try {
+    const response = await axios.get(`${API_KEY}/ticket/get-detail/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get all tickets", error);
+    throw error;
+  }
+};
 
 // Tạo vé mới
 export const createTicket = async (data) => {
