@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { FaMapMarkerAlt, FaRegArrowAltCircleDown } from "react-icons/fa";
 import { FiMapPin } from "react-icons/fi";
 import useNavigationViewModel from "./NavigationViewModel";
+import {FaArrowsUpDown} from "react-icons/fa6";
 
 const NavigationTab = ({
                            onFindPath,
@@ -152,7 +153,7 @@ const NavigationTab = ({
                     onClick={handleSwap}
                     className="p-3 bg-gray-200 rounded-full hover:bg-gray-300 focus:outline-none transition self-center"
                 >
-                    <FaRegArrowAltCircleDown className="text-gray-700"/>
+                    <FaArrowsUpDown className="text-gray-700" />
                 </button>
             </div>
             {error && (

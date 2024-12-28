@@ -107,15 +107,51 @@ const useMapViewModel = ({mapData, busLines, stops, selectedStopCoordinates, mod
     }, [busLines, mode]);
 
     useEffect(() => {
-        if (mapRef.current && stops.length) {
-            stops.forEach((stop) => {
-                new mapboxgl.Marker({color: "blue"})
+        if (mapRef.current) {
+            const map = mapRef.current;
+            let stopMarkers = [];
+
+            // Function to update visible stops based on zoom level
+            const updateMarkersVisibility = () => {
+                const currentZoom = Math.floor(map.getZoom()); // Use whole zoom levels for simplicity
+
+                // Calculate how many stops to display for the current zoom level
+                const maxZoom = 14; // Maximum zoom level where all stops are visible
+                const minZoom = 10; // Minimum zoom level where no stops are visible
+                const stopsToShow = Math.max(0, stops.length * (currentZoom - minZoom) / (maxZoom - minZoom));
+
+                stopMarkers.forEach((marker, index) => {
+                    if (index < stopsToShow) {
+                        marker.getElement().style.display = "block";
+                    } else {
+                        marker.getElement().style.display = "none";
+                    }
+                });
+            };
+
+            // Add all stops as markers initially
+            stopMarkers = stops.map((stop) => {
+                const marker = new mapboxgl.Marker({ color: "blue" })
                     .setLngLat([stop.pointX, stop.pointY])
                     .setPopup(new mapboxgl.Popup().setHTML(`<p>${stop.name}</p>`))
-                    .addTo(mapRef.current);
+                    .addTo(map);
+                return marker;
             });
+
+            // Update visibility whenever the zoom level changes
+            map.on("zoom", updateMarkersVisibility);
+
+            // Initial visibility update
+            updateMarkersVisibility();
+
+            return () => {
+                // Cleanup markers and event listeners
+                stopMarkers.forEach((marker) => marker.remove());
+                map.off("zoom", updateMarkersVisibility);
+            };
         }
     }, [stops]);
+
 
     useEffect(() => {
         if (mapRef.current && selectedStopCoordinates) {
