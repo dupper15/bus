@@ -16,10 +16,7 @@ const createDayOff = async (req, res) => {
 };
 const getNoCondition = async (req, res) => {
   try {
-    console.log("All DayOff records:"); // Log tất cả dữ liệu
-
     const response = await DayOffService.getNoCondition();
-
     return res.status(200).json(response);
   } catch (e) {
     console.error(e);

@@ -44,8 +44,24 @@ const getDetailBill =  async (req, res) => {
     }
 }
 
+const editBill =  async (req, res) => {
+    try {
+        const data = req.body;
+        const response = await BillService.editBill(data)
+        return res.status(201).json(response)
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An error occurred while creating the bill.',
+            error: e
+        })
+    }
+}
+
 module.exports = {
     createBill,
     getAllBill,
     getDetailBill,
+    editBill
 }

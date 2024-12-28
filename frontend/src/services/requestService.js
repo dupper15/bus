@@ -14,7 +14,6 @@ export const getAllRequest = async () => {
 export const getRequestNoCondition = async () => {
   try {
     const response = await axios.get(`${API_KEY}/request/get-no-condition`);
-    console.log("4", response);
     return response.data;
   } catch (error) {
     console.error("Failed to get all requestes", error);

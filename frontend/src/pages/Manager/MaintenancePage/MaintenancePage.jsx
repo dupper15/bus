@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Search from "@/components/ui/search";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -21,52 +21,54 @@ import {
 } from "@/components/ui/pagination";
 import { useSearchParams } from "react-router-dom";
 import MaintenanceDetail from "@/components/SmallForm/MaintenanceDetail";
-import ex from "../../../assets/404.jpg";
 import { TiTick } from "react-icons/ti";
 import { CiCircleRemove } from "react-icons/ci";
-
-const items = [
-  {
-    id: "REQ001",
-    license_plate: "29A-12345",
-    status: "Pending",
-    title: "Oil Change",
-    start_date: "2024-12-01",
-    end_date: "2024-12-02",
-    price: "$50",
-    image: ex,
-  },
-  {
-    id: "REQ002",
-    license_plate: "30B-54321",
-    status: "Completed",
-    title: "Brake Check",
-    start_date: "2024-11-28",
-    end_date: "2024-11-29",
-    price: "$100",
-    image: ex,
-  },
-  {
-    id: "REQ003",
-    license_plate: "31C-67890",
-    status: "Pending",
-    title: "Tire Replacement",
-    start_date: "2024-12-03",
-    end_date: "2024-12-03",
-    price: "$200",
-    image: ex,
-  },
-];
+import * as BillService from "@/services/billService";
+import * as Message from "@/components/ui/alert";
+import { useMutation } from "react-query";
+import { formatToVND } from "@/utils/translateToVND"
+import { accountSlice } from "@/redux/accountSlide";
 
 const MaintenancePage = () => {
+
   const ITEMS_PER_PAGE = 10;
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
+  const [items, setItems] = useState([]);
+  const [refresh, setRefresh] = useState(false);
   const currentPage = parseInt(searchParams.get("page")) || 1;
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
-  const [currentContent, setCurrentContent] = useState("");
-  const [currentTitle, setCurrentTitle] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [selected, setSelected] = useState("");
+  
+  const mutationGetAll = useMutation({
+    mutationFn: async () => {
+      return await BillService.getAllBill();
+    },
+    onSuccess: (data) => {
+      setItems(data.data);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  })
+
+  const mutaionResolve = useMutation({
+    mutationFn: async (data) => {
+      return await BillService.editBill(data)
+    },
+    onSuccess: () => {
+      Message.success("Bill resolved successfully.");
+      setRefresh(!refresh);
+    },
+    onError: (error) => {
+      Message.error("Failed to resolve bill:", error.message || error);
+    },
+  })
+
+  useEffect(() => {
+    mutationGetAll.mutate();
+  },[refresh])
 
   const handleClose = () => {
     setShowForm(false);
@@ -74,7 +76,7 @@ const MaintenancePage = () => {
 
   const currentItems = items
     .filter((item) =>
-      item.license_plate.toLowerCase().includes(searchWord.toLowerCase())
+      item?.bus?.license_plate.toLowerCase().includes(searchWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -90,6 +92,7 @@ const MaintenancePage = () => {
   };
 
   const handleAction = (id, action) => {
+    mutaionResolve.mutate({id: id, status: action});
     console.log(`${action} request with ID: ${id}`);
   };
   const [showImage, setShowImage] = useState(false);
@@ -149,42 +152,68 @@ const MaintenancePage = () => {
               </TableHeader>
               <TableBody>
                 {currentItems.map((item, index) => (
-                  <TableRow key={index} className='cursor-pointer'>
+                  <TableRow key={index} onClick={(e) => {
+                    e.preventDefault();
+                    setSelected(item);
+                    setShowForm(true);
+                  }} className='cursor-pointer'>
                     <TableCell className='text-center py-3 px-4'>
                       {item.id}
                     </TableCell>
                     <TableCell className='font-medium text-center py-3 px-4'>
-                      {item.license_plate}
+                      {item.bus.license_plate}
                     </TableCell>
                     <TableCell className='text-center py-3 px-4'>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        item.status === "Pending"
+                          ? "bg-yellow-100 text-orange-600"
+                          : item.status === "Rejected" 
+                          ? "bg-red-100 text-red-600"
+                          : "bg-green-100 text-green-600"
+                      }`}>
                       {item.status}
+                    </span>
                     </TableCell>
                     <TableCell className='text-center py-3 px-4'>
                       {item.title}
                     </TableCell>
                     <TableCell className='text-center py-3 px-4'>
-                      {item.start_date}
+                      {new Date(item.start_date).toLocaleDateString("en-GB")}
                     </TableCell>
                     <TableCell className='text-center py-3 px-4'>
-                      {item.end_date}
+                      {new Date(item.end_date).toLocaleDateString("en-GB")}
                     </TableCell>
                     <TableCell className='text-center py-3 px-4'>
-                      {item.price}
+                      {formatToVND(item.price)}
                     </TableCell>
                     <TableCell className='text-center py-3 px-4 space-x-4 flex justify-center items-center'>
                       <button
                         className='text-sm text-blue-500 hover:underline'
-                        onClick={() => handleShowImage(item.image)}>
-                        Xem ảnh
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShowImage(item.image)
+                        }}>
+                        Show image
                       </button>
-                      <CiCircleRemove
-                        className='text-4xl text-red-500 cursor-pointer hover:text-red-700 transition-colors duration-200 ease-in-out'
-                        onClick={() => handleAction(item.id, "Reject")}
-                      />
-                      <TiTick
-                        className='text-4xl text-green-500 cursor-pointer hover:text-green-700 transition-colors duration-200 ease-in-out'
-                        onClick={() => handleAction(item.id, "Approve")}
-                      />
+                      {(item.status === "Pending") && (
+                        <>
+                        <CiCircleRemove
+                          className='text-4xl text-red-500 cursor-pointer hover:text-red-700 transition-colors duration-200 ease-in-out'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAction(item.id, "Rejected")
+                          }}
+                        />
+                        <TiTick
+                          className='text-4xl text-green-500 cursor-pointer hover:text-green-700 transition-colors duration-200 ease-in-out'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAction(item.id, "Approve")
+                          }}
+                        />
+                        </>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -230,11 +259,11 @@ const MaintenancePage = () => {
           <div className='fixed -left-10 inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50'>
             <div className='bg-white p-4 rounded-lg shadow-lg max-w-lg w-full'>
               <div className='flex justify-between items-center mb-4'>
-                <h3 className='text-lg font-semibold'>Proof</h3>
+                <h3 className='text-lg font-semibold'></h3>
                 <button
                   className='text-gray-500 hover:text-black'
                   onClick={handleCloseImage}>
-                  Đóng
+                  Close
                 </button>
               </div>
               <div className='flex justify-center items-center'>
@@ -248,12 +277,11 @@ const MaintenancePage = () => {
           </div>
         )}
 
-        {showForm && (
+        {showForm &&  (
           <div className='fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform'>
             <MaintenanceDetail
               handleClose={handleClose}
-              content={currentContent}
-              title={currentTitle}
+              maintenance={selected}
             />
           </div>
         )}

@@ -6,26 +6,11 @@ const getNoCondition = async () => {
   return new Promise(async (resolve, reject) => {
     try {
       // Lấy tất cả các bản ghi DayOff
-      const allDayOff = await DayOff.find();
-
-      // Sử dụng Promise.all để xử lý đồng thời lấy dữ liệu manager và employee
-      const enrichedData = await Promise.all(
-        allDayOff.map(async (dayOff) => {
-          const manager = await Manager.findById(dayOff.manager);
-          const employee = await Employee.findById(dayOff.employee);
-
-          return {
-            ...dayOff.toObject(),
-            manager: manager ? manager.name : null,
-            employee: employee ? employee.name : null,
-          };
-        })
-      );
-
+      const allDayOff = await DayOff.find().populate("employee", "name").populate("manager", "name");
       resolve({
         status: "OK",
         message: "DayOffs retrieved successfully.",
-        data: enrichedData,
+        data: allDayOff,
       });
     } catch (e) {
       reject({

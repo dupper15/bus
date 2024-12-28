@@ -147,7 +147,7 @@ const CreateMaintenance = ({ childCloseFormRequest }) => {
       {/* Price */}
       <div className='mb-4'>
         <input
-          type='number'
+          type='text'
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           placeholder='Price...'
