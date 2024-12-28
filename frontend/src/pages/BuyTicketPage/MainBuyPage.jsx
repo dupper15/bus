@@ -11,44 +11,47 @@ const MainBuyPage = () => {
   const { step, nextStep, prevStep } = usePurchasePagesViewModel();
 
   return (
-      <div>
-        <div className='flex flex-col min-h-screen overflow-x-auto'>
-          <div className='h-10 text-center text-4xl font-bold text-[#4CAF50] m-8'>
-            BusMap
-          </div>
-          <div className='flex justify-center items-center h-20 gap-6'>
-            <Stepper
-                activeStep={step}
-                styleConfig={{
-                  activeBgColor: "#4CAF50",
-                  activeTextColor: "#ffffff",
-                  completedBgColor: "#4CAF50",
-                  completedTextColor: "#ffffff",
-                  inactiveBgColor: "#e0e0e0",
-                  inactiveTextColor: "#ffffff",
-                }}
-                connectorStyleConfig={{
-                  activeColor: "#4CAF50",
-                  completedColor: "#4CAF50",
-                  disabledColor: "#bdbdbd",
-                }}>
-              <Step label='Purchase Information' />
-              <Step label='Review' />
-              <Step label='Thank You' />
-            </Stepper>
-          </div>
-          <div className='flex-grow'>
-            <Routes>
-              <Route index element={<Purchase nextStep={nextStep} />} />
-              <Route path='review' element={<Review nextStep={nextStep} prevStep={prevStep} />} />
-              <Route path='thanks' element={<Thanks />} />
-            </Routes>
-          </div>
-          <footer className='mt-auto'>
-            <Footer />
-          </footer>
-        </div>
+    <div className='flex flex-col min-h-screen bg-white text-black'>
+      {/* Header */}
+      <div className='text-center py-4 bg-green-500 text-white'>
+        <h1 className='text-2xl font-bold'>BusMap</h1>
       </div>
+
+      {/* Stepper */}
+      <div className='flex justify-center items-center px-4'>
+        <Stepper
+          activeStep={step}
+          styleConfig={{
+            activeBgColor: "#22c55e",
+            activeTextColor: "#ffffff",
+            completedBgColor: "#22c55e",
+            completedTextColor: "#ffffff",
+            inactiveBgColor: "#e0e0e0",
+            inactiveTextColor: "#757575",
+          }}
+          connectorStyleConfig={{
+            activeColor: "#22c55e",
+            completedColor: "#22c55e",
+            disabledColor: "#bdbdbd",
+          }}>
+          <Step label='Purchase Info' />
+          <Step label='Thank You' />
+        </Stepper>
+      </div>
+
+      {/* Content */}
+      <div className='flex-grow gap-2 sm:gap-4'>
+        <Routes>
+          <Route index element={<Purchase prevStep={prevStep} />} />
+          <Route path='thanks' element={<Thanks nextStep={nextStep} />} />
+        </Routes>
+      </div>
+
+      {/* Footer */}
+      <footer className='bg-green-500 text-white text-center py-3'>
+        <Footer />
+      </footer>
+    </div>
   );
 };
 

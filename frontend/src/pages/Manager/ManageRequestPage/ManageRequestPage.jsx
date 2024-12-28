@@ -57,7 +57,6 @@ const ManageRequestPage = () => {
       item.title.toLowerCase().includes(searchWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setSearchParams({ page: page });
@@ -143,25 +142,45 @@ const ManageRequestPage = () => {
                 </TableHeader>
                 <TableBody>
                   {currentItems.map((item, index) => (
-                    <TableRow key={index} 
-                    onClick={(e) => 
-                    { e.preventDefault();
-                      setSelected(item);
-                      setShowForm(true);
-                    }}>
-                      <TableCell className='text-center font-semibold py-3 px-4'>
+                    <TableRow
+                      key={index}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSelected(item);
+
+                        setShowForm(true);
+                      }}>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center font-semibold py-3 px-4'>
                         {item.id}
                       </TableCell>
-                      <TableCell className='text-center font-semibold py-3 px-4'>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center font-semibold py-3 px-4'>
                         {item.title}
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
                         {item?.employee?.name}
                       </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
-                        {new Date(item.date_requested).toLocaleDateString("en-GB")}
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
+                        {new Date(item.date_requested).toLocaleDateString(
+                          "en-GB"
+                        )}
                       </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
                         <span
                           className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
                             item.status === "Rejected"
@@ -176,8 +195,14 @@ const ManageRequestPage = () => {
                       <TableCell className='text-center py-3 px-4'>
                         {item?.manager?.name}
                       </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
-                        {new Date(item.date_resolved).toLocaleDateString("en-GB")}
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
+                        {new Date(item.date_resolved).toLocaleDateString(
+                          "en-GB"
+                        )}
                       </TableCell>
                       <TableCell className='text-center flex justify-center items-center py-3 px-4'>
                       <Dialog>
@@ -266,12 +291,9 @@ const ManageRequestPage = () => {
           </Pagination>
         </div>
       </div>
-      {showForm && (
-        <div className="fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform">
-          <FormRequest
-            handleClose={handleClose}
-            request={selected}
-          />
+      {showForm && type === "view" && (
+        <div className='fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform'>
+          <FormRequest handleClose={handleClose} request={selected} />
         </div>
       )}
     </div>
