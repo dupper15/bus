@@ -2,52 +2,24 @@ import { Button } from "antd";
 import React, { useEffect, useState } from "react";
 import CreateMaintenance from "@/components/SmallForm/CreateMaintenance";
 import { useMutation } from "react-query";
-import * as RequestService from "@/services/requestService";
+import * as BillService from "@/services/billService";
 import { useSelector } from "react-redux";
-import ex from "../../../assets/404.jpg";
+import { formatToVND } from "@/utils/translateToVND"
 
 const RequestPage = () => {
   const [showRequest, setShowRequest] = useState(false);
-  const [items, setItems] = useState([
-    {
-      id: "REQ001",
-      license_plate: "29A-12345",
-      status: "Pending",
-      title: "Oil Change",
-      start_date: "2024-12-01",
-      end_date: "2024-12-02",
-      price: "$50",
-    },
-    {
-      id: "REQ002",
-      license_plate: "30B-54321",
-      status: "Approved",
-      title: "Brake Check",
-      start_date: "2024-11-28",
-      end_date: "2024-11-29",
-      price: "$100",
-    },
-    {
-      id: "REQ003",
-      license_plate: "31C-67890",
-      status: "Rejected",
-      title: "Tire Replacement",
-      start_date: "2024-12-03",
-      end_date: "2024-12-03",
-      price: "$200",
-      image: ex,
-    },
-  ]);
+  const [items, setItems] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const account = useSelector((state) => state.account);
   const [selectedImage, setSelectedImage] = useState(null);
 
   const mutateGetAll = useMutation({
     mutationFn: async (id) => {
-      return await RequestService.getDetailRequest(id);
+      return await BillService.getDetailBill(id);
     },
     onSuccess: (data) => {
       setItems(data.data);
+      console.log("item", items)
     },
     onError: (error) => {
       console.log(error);
@@ -55,9 +27,10 @@ const RequestPage = () => {
   });
 
   useEffect(() => {
-    // Gọi API khi cần
-    // mutateGetAll.mutate(account?._id);
+    mutateGetAll.mutate(account?._id);
   }, [refresh]);
+
+  const itemArray = Array.isArray(items) ? items : [items];
 
   return (
     <div className='p-8 bg-gray-100 min-h-screen'>
@@ -73,10 +46,10 @@ const RequestPage = () => {
       </div>
 
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8'>
-        {items
+        {itemArray
           .slice()
           .reverse()
-          .map((item) => (
+          .map((item, index) => (
             <div
               key={item.id}
               className={`p-6 rounded-lg flex flex-col justify-between shadow-lg transition-transform transform hover:scale-105 ${
@@ -90,22 +63,23 @@ const RequestPage = () => {
                 <h2 className='text-xl font-semibold text-gray-800 mb-2'>
                   {item.title}
                 </h2>
+                <p className='text-gray-600 mt-2'>{item.content}</p>
                 <p className='text-sm text-gray-500'>
                   <strong>ID:</strong> {item.id}
                 </p>
                 <p className='text-sm text-gray-500'>
-                  <strong>License Plate:</strong> {item.license_plate}
+                  <strong>License Plate:</strong> {item?.bus?.license_plate}
                 </p>
               </div>
               <div>
                 <p className='text-sm text-gray-500 mt-4'>
-                  <strong>Start Date:</strong> {item.start_date}
+                  <strong>Start Date:</strong> {new Date(item.start_date).toLocaleDateString("en-GB")}
                 </p>
                 <p className='text-sm text-gray-500'>
-                  <strong>End Date:</strong> {item.end_date}
+                  <strong>End Date:</strong> {new Date(item.end_date).toLocaleDateString("en-GB")}
                 </p>
                 <p className='text-sm text-gray-500'>
-                  <strong>Price:</strong> {item.price}
+                  <strong>Price:</strong> {formatToVND(item.price)}
                 </p>
                 <p
                   className={`text-sm font-semibold mt-2 ${
@@ -118,12 +92,17 @@ const RequestPage = () => {
                   Status: {item.status}
                 </p>
               </div>
+              <div>
               <img
-                src={ex}
+                style={{
+                  backgroundSize: "100% 100%",
+                }}
+                src={item.image}
                 alt='Example'
                 className='mt-4 rounded-md shadow-md object-cover h-32 w-full cursor-pointer'
-                onClick={() => setSelectedImage(ex)}
+                onClick={() => setSelectedImage(item.image)}
               />
+              </div>
             </div>
           ))}
       </div>
