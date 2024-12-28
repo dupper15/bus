@@ -29,6 +29,21 @@ const getAllOpinion =  async (req, res) => {
     }
 }
 
+const getAllCustomer =  async (req, res) => {
+    try {
+        const customerId = req.params.id;
+        const response = await OpinionService.getAllCustomer(customerId)
+        return res.status(200).json(response)
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An error occurred while retrieving the opinions.',
+            error: e
+        })
+    }
+}
+
 const getAllStatus =  async (req, res) => {
     try {
         const response = await OpinionService.getAllStatus()
@@ -83,5 +98,6 @@ module.exports = {
     getAllOpinion,
     getDetailOpinion,
     resolveOpinion,
-    getAllStatus
+    getAllStatus,
+    getAllCustomer
 }

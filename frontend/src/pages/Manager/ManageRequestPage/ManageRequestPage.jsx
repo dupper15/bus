@@ -291,7 +291,7 @@ const ManageRequestPage = () => {
           </Pagination>
         </div>
       </div>
-      {showForm && type === "view" && (
+      {showForm && (
         <div className='fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform'>
           <FormRequest handleClose={handleClose} request={selected} />
         </div>

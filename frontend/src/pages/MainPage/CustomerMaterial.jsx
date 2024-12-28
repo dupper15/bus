@@ -1,34 +1,12 @@
 import { Button } from "@/components/ui/button";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import OpinionForm from "../../components/SmallForm/OpinionForm";
-const CustomerMaterial = () => {
-  const tickets = [
-    {
-      title: "T01",
-      customer: "Nguyen Thi B",
-      expiration_date: "2022-04-15",
-      status: "Valid",
-    },
-    {
-      title: "T02",
-      customer: "Nguyen Van A",
-      expiration_date: "2021-10-10",
-      status: "Expired",
-    },
-    {
-      title: "T03",
-      customer: "Tran Thi C",
-      expiration_date: "2023-02-25",
-      status: "Valid",
-    },
-    {
-      title: "T04",
-      customer: "Le Minh D",
-      expiration_date: "2023-06-10",
-      status: "Expired",
-    },
-  ];
+import { useMutation } from "react-query";
+import * as TicketService from "@/services/ticketService";
+import * as OpinionService from "@/services/opinionService";
+import { useSelector } from "react-redux";
 
+const CustomerMaterial = () => {
   const reflects = [
     {
       title: "Phản ánh thái độ nhân viên",
@@ -74,17 +52,50 @@ const CustomerMaterial = () => {
   const [showRequest, setShowRequest] = useState(false);
   const [refresh, setRefresh] = useState(false);
 
+  const account = useSelector((state) => state.account)
+  const [itemsTicket, setItemsTicket] = useState([]);
+  const [itemsOpinion, setItemsOpinion] = useState([]);
+
+  const mutaionGetTicket = useMutation({
+    mutationFn: async (id) => {
+      return await TicketService.getDetailTicket(id); 
+    },
+    onSuccess: (data) => {
+      setItemsTicket(data.data);
+    },
+    onError: (data) => {
+      console.log(data.message);
+    }
+  })
+
+  const mutaionGetOpinion = useMutation({
+    mutationFn: async (id) => {
+      return await OpinionService.getAllCustomer(id); 
+    },
+    onSuccess: (data) => {
+      setItemsOpinion(data.data);
+    },
+    onError: (data) => {
+      console.log(data.message);
+    }
+  })
+
+  useEffect(() => {
+    mutaionGetTicket.mutate(account?._id);
+    mutaionGetOpinion.mutate(account?._id);
+  }, [refresh])
+
   return (
     <div className='bg-slate-200 p-4 overflow-y-auto h-full scrollbar-hide'>
       <div className='bg-white p-6 h-max w-full border border-slate-300 m-2 shadow-md rounded-md'>
         <h3 className='text-xl font-semibold mb-4'>Your Ticket </h3>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
-          {tickets
+          {itemsTicket
             .slice()
             .reverse()
             .map((ticket) => (
               <div
-                key={ticket.title}
+                key={ticket.id}
                 className={`p-4 rounded-lg flex flex-col justify-between shadow-lg ${
                   ticket.status === "Valid"
                     ? "bg-green-100 border-l-4 border-green-500"
@@ -95,10 +106,10 @@ const CustomerMaterial = () => {
                     {ticket.title}
                   </h2>
                   <p className='text-gray-600 mt-2'>
-                    <strong>Customer:</strong> {ticket.customer}
+                    <strong>Customer:</strong> {ticket?.customer?.name}
                   </p>
                   <p className='text-gray-600 mt-2'>
-                    <strong>Expiration:</strong> {ticket.expiration_date}
+                    <strong>Expiration:</strong> {new Date(ticket.expiration_date).toLocaleDateString("en-GB")}
                   </p>
                 </div>
                 <div>
@@ -122,12 +133,12 @@ const CustomerMaterial = () => {
           <Button onClick={() => setShowRequest(true)}>Reflect</Button>
         </div>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6'>
-          {reflects
+          {itemsOpinion
             .slice()
             .reverse()
             .map((reflect) => (
               <div
-                key={reflect.title}
+                key={reflect.id}
                 className={`p-4 rounded-lg flex flex-col justify-between shadow-lg ${
                   reflect.status === "Resolved"
                     ? "bg-green-100 border-l-4 border-green-500"
@@ -143,7 +154,7 @@ const CustomerMaterial = () => {
                   {reflect.status === "Resolved" && (
                     <div>
                       <p className='text-gray-600 mt-2'>
-                        <strong>Receiver:</strong> {reflect.receiver}
+                        <strong>Receiver:</strong> {reflect?.receiver?.name}
                       </p>
                       <p className='text-gray-600 mt-2'>
                         <strong>Feedback:</strong> {reflect.feedback}
@@ -153,11 +164,11 @@ const CustomerMaterial = () => {
                 </div>
                 <div>
                   <p className='text-sm text-gray-500 mt-2'>
-                    <strong>Received Date:</strong> {reflect.receive_date}
+                    <strong>Received Date:</strong> {new Date(reflect.receive_date).toLocaleDateString("en-GB")}
                   </p>
                   {reflect.resolve_date && (
                     <p className='text-sm text-gray-500 mt-2'>
-                      <strong>Resolve Date:</strong> {reflect.resolve_date}
+                      <strong>Resolve Date:</strong> {new Date(reflect.resolve_date).toLocaleDateString("en-GB")}
                     </p>
                   )}
                   <p

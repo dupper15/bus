@@ -29,7 +29,24 @@ const getAllTicket =  async (req, res) => {
     }
 }
 
+const getDetailTicket =  async (req, res) => {
+    try {
+        const customerId = req.params.id;
+        const response = await TicketService.getDetailTicket(customerId);
+        return res.status(201).json(response)
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An error occurred while creating the stop.',
+            error: e
+        })
+    }
+}
+
+
 module.exports = {
     createTicket,
-    getAllTicket
+    getAllTicket,
+    getDetailTicket
 }

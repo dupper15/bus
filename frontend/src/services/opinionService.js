@@ -2,10 +2,30 @@ import axios from "axios";
 
 const API_KEY = import.meta.env.VITE_API_KEY; // Sử dụng biến môi trường
 
+export const createOpinion = async (data) => {
+  try {
+    const response = await axios.post(`${API_KEY}/opinion/create`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get all opinions", error);
+    throw error;
+  }
+};
+
 // Lấy danh sách tất cả ý kiến
 export const getAllOpinion = async () => {
   try {
     const response = await axios.get(`${API_KEY}/opinion/get-all`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get all opinions", error);
+    throw error;
+  }
+};
+
+export const getAllCustomer = async (id) => {
+  try {
+    const response = await axios.get(`${API_KEY}/opinion/get-all-customer/${id}`);
     return response.data;
   } catch (error) {
     console.error("Failed to get all opinions", error);
