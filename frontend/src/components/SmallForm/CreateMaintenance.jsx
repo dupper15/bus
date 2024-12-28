@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useMutation } from "react-query";
-import * as RequestService from "@/services/requestService";
+import * as BillService from "@/services/billService";
 import * as Message from "@/components/ui/alert";
 import { useSelector } from "react-redux";
 
 const CreateMaintenance = ({ childCloseFormRequest }) => {
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [licensePlate, setLicensePlate] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -17,7 +18,7 @@ const CreateMaintenance = ({ childCloseFormRequest }) => {
 
   const mutationCreate = useMutation({
     mutationFn: async ({ data }) => {
-      return await RequestService.createRequest(data);
+      return await BillService.createBill(data);
     },
     onSuccess: (data) => {
       if (data.status === "OK") {
@@ -39,25 +40,38 @@ const CreateMaintenance = ({ childCloseFormRequest }) => {
       Message.error("Please fill in all fields.");
       return;
     }
+    const values = {
+      employee: account?._id,
+      title: title,
+      content: content,
+      license_plate: licensePlate,
+      start_date: new Date(startDate),
+      end_date: new Date(endDate),
+      price: price,
+      image: previewImage,
+    };
 
-    const formData = new FormData();
-    formData.append("content", content);
-    formData.append("license_plate", licensePlate);
-    formData.append("start_date", startDate);
-    formData.append("end_date", endDate);
-    formData.append("price", price);
-    if (proofImage) formData.append("proof_image", proofImage);
-    formData.append("created_by", account?.id);
-
-    mutationCreate.mutate({ data: formData });
+    console.log("values", values);
+    mutationCreate.mutate({ data: values });
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setProofImage(file);
-      setPreviewImage(URL.createObjectURL(file));
-    }
+    const uploadPreset = "afh5sfc";
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    const response = await fetch("https://api.cloudinary.com/v1_1/ddcjjegzf/image/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json();
+
+    setProofImage(file);
+    setPreviewImage(result.secure_url);
   };
 
   return (
@@ -72,10 +86,19 @@ const CreateMaintenance = ({ childCloseFormRequest }) => {
         ×
       </button>
 
-      {/* Form Title */}
       <h1 className='text-3xl font-bold text-gray-800 mb-6 text-center'>
         Create Maintenance
       </h1>
+
+       {/* Title Input */}
+       <div className='mb-4'>
+        <textarea
+          rows={1}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder='Title of your request...'
+          className='w-full p-4 text-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400'></textarea>
+      </div>
 
       {/* Content Input */}
       <div className='mb-4'>

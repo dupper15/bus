@@ -2,7 +2,7 @@ const BillService = require('../services/MaintenanceBillService')
 
 const createBill =  async (req, res) => {
     try {
-        const data = req.boy
+        const data = req.body;
         const response = await BillService.createBill(data)
         return res.status(201).json(response)
     } catch (e) {
@@ -31,14 +31,8 @@ const getAllBill =  async (req, res) => {
 
 const getDetailBill =  async (req, res) => {
     try {
-        const billId = req.params.id
-        if (!billId){
-            return res.status(400).json({
-                status: 'ERROR',
-                message: 'Bill ID is required.'
-            })
-        }
-        const response = await BillService.getDetailBill(billId)
+        const employeeId = req.params.id;
+        const response = await BillService.getDetailBill(employeeId)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)

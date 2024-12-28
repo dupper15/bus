@@ -1,12 +1,12 @@
 const Bill = require("../models/MaintenanceBillModel");
-const { all } = require("../routes/ManagerRouter");
+const Bus = require("../models/BusModel");
 
 const createBill = async (data) => {
         try {
             // Lấy tất cả ID hiện có và sắp xếp
             const bills = await Bill.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
 
-            const ids = bills.map((bus) => parseInt(bus.id.replace('M', ''), 10));
+            const ids = bills.map((bill) => parseInt(bill.id.replace('M', ''), 10));
 
             // Tìm ID nhỏ nhất bị thiếu
             let newIdNumber = 1;
@@ -19,17 +19,31 @@ const createBill = async (data) => {
             }
             const newId = `M${String(newIdNumber).padStart(3, '0')}`;
 
+            const bus = await Bus.findOne({license_plate: data.license_plate})
+
+            if (bus) {
+                bus.status = "Maintenance"; 
+                await bus.save();           
+            } else {
+                return({
+                    status: "ERROR",
+                    message: `Bus not found with license plate: ${data.license_plate}`
+                })
+            }
+
             const createdBill = await Bill.create({
                 id: newId,
-                bus: data.bus,
+                bus: bus._id,
                 employee: data.employee,
                 start_date: data.start_date,
                 end_date: data.end_date,
+                image: data.image,
+                title: data.title,
                 content: data.content,
-                price: data.price
+                price: data.price,
             })
             if (createdBill) {
-                resolve({
+                return({
                     status: "OK",
                     message: "Maintenance bill created successfully.",
                     data: createdBill
@@ -62,34 +76,31 @@ const getAllBill = async () => {
         }
 }
 
-const getDetailBill = (BillId) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const bill = await Bill.findOne({
-                _id: BillId
-            })
-            if (bill === null) {
-                resolve({
-                    status: 'ERROR',
-                    message: 'No maintenance bill found with the provided ID.'
-                })
-                return;
-            }
-            resolve({
+const getDetailBill = async (employeeId) => {
+    try {
+        const bill = await Bill.findOne({
+            employee: employeeId
+        }).populate("bus", "license_plate");
+        if (bill === null) {
+            return {
                 status: "OK",
-                message: "Maintenance bill details retrieved successfully.",
-                data: bill
-            })
-
-        } catch (e) {
-            reject({
-                status: "ERROR",
-                message: "An error occurred while retrieving the maintenance bill details.",
-                error: e
-            })
+                message: "Maintenance bill not found.",
+                data: []
+            };
         }
-    })
-}
+        return {
+            status: "OK",
+            message: "Maintenance bill details retrieved successfully.",
+            data: bill
+        };
+    } catch (e) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while retrieving the maintenance bill details.",
+            error: e
+        };
+    }
+};
 
 module.exports = {
     createBill,

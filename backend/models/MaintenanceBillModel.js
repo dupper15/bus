@@ -12,10 +12,18 @@ const billSchema = new mongoose.Schema(
             ref: "Employee",
             require: true
         },
+        manager: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Manager",
+            require: true
+        },
+        image: {type: String, require: true},
         start_date: {type: Date, require: true},
         end_date: {type: Date, require: true},
+        title: {type: String, require: true},
         content: {type: String, require: true},
-        price: {type: Number, require: true}
+        price: {type: String, require: true},
+        status: {type: String, default: "Pending", require: true}
     },
     {
         timestamps: true

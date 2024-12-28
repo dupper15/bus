@@ -27,11 +27,13 @@ const RequestPage = () => {
   useEffect(() => {
     mutateGetAll.mutate(account?._id);
   }, [refresh]);
+  
+  const itemArray = Array.isArray(items) ? items : [items];
 
   return (
     <div className='p-8 bg-gray-50 min-h-screen'>
       <div className='flex justify-between items-center mb-8'>
-        <h1 className='text-3xl font-bold text-gray-800'>Your Maintenance</h1>
+        <h1 className='text-3xl font-bold text-gray-800'>Your Request</h1>
         <Button
           type='primary'
           size='large'
@@ -42,7 +44,7 @@ const RequestPage = () => {
       </div>
 
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
-        {items
+        {itemArray
           .slice()
           .reverse()
           .map((item, index) => (
@@ -95,7 +97,7 @@ const RequestPage = () => {
                     <p>
                       <p className='text-sm text-gray-500'>
                         <strong>Feedback Received:</strong>{" "}
-                        {new Date(item.updatedAt).toLocaleDateString("en-GB")}
+                        {new Date(item.date_resolved).toLocaleDateString("en-GB")}
                       </p>
                     </p>
                   </div>
