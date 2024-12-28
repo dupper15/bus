@@ -3,6 +3,7 @@ import TicketFare from "./TicketFare";
 import BusRoute from "./BusRoute";
 import ProfilePage from "../ProfilePage/ProfilePage.jsx";
 import CustomerNavbar from "../../components/CustomerNavBar/CustomerNavBar";
+import CustomerMaterial from "../MainPage/CustomerMaterial";
 
 const MainPage = () => {
   const location = useLocation();
@@ -11,20 +12,23 @@ const MainPage = () => {
   const hideNavbarRoutes = ["/home/busroute"];
 
   // Determine if the current route requires hiding the navbar
-  const hideNavbar = hideNavbarRoutes.some((route) => location.pathname.startsWith(route));
+  const hideNavbar = hideNavbarRoutes.some((route) =>
+    location.pathname.startsWith(route)
+  );
 
   return (
-      <div className="flex h-screen">
-        {/* Render CustomerNavbar only when it's not hidden */}
-        {!hideNavbar && <CustomerNavbar />}
-        <div className={`h-screen ${hideNavbar ? "basis-full" : "basis-5/6"}`}>
-          <Routes>
-            <Route index element={<TicketFare />} />
-            <Route path="busroute" element={<BusRoute />} />
-            <Route path="info" element={<ProfilePage />} />
-          </Routes>
-        </div>
+    <div className='flex h-screen'>
+      {/* Render CustomerNavbar only when it's not hidden */}
+      {!hideNavbar && <CustomerNavbar />}
+      <div className={`h-screen ${hideNavbar ? "basis-full" : "basis-5/6"}`}>
+        <Routes>
+          <Route index element={<TicketFare />} />
+          <Route path='busroute' element={<BusRoute />} />
+          <Route path='info' element={<ProfilePage />} />
+          <Route path='your-material' element={<CustomerMaterial />} />
+        </Routes>
       </div>
+    </div>
   );
 };
 

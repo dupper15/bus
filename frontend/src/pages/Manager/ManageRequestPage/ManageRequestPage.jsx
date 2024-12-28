@@ -47,14 +47,13 @@ const ManageRequestPage = () => {
   const currentPage = parseInt(searchParams.get("page")) || 1;
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  const [type, setType] = useState("");
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const currentItems = items
     .filter((item) =>
       item.title.toLowerCase().includes(searchWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setSearchParams({ page: page });
@@ -112,7 +111,7 @@ const ManageRequestPage = () => {
   };
 
   const [showForm, setShowForm] = useState(false);
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState("");
 
   return (
     <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
@@ -154,25 +153,49 @@ const ManageRequestPage = () => {
                 </TableHeader>
                 <TableBody>
                   {currentItems.map((item, index) => (
-                    <TableRow key={index} 
-                    onClick={(e) => 
-                    { e.preventDefault();
-                      setSelected(item);
-                      setShowForm(true);
-                    }}>
-                      <TableCell className='text-center font-semibold py-3 px-4'>
+                    <TableRow
+                      key={index}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSelected(item);
+
+                        setShowForm(true);
+                      }}>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center font-semibold py-3 px-4'>
                         {item.id}
                       </TableCell>
-                      <TableCell className='text-center font-semibold py-3 px-4'>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center font-semibold py-3 px-4'>
                         {item.title}
                       </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
                         {item.employee}
                       </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
-                        {new Date(item.date_requested).toLocaleDateString("en-GB")}
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
+                        {new Date(item.date_requested).toLocaleDateString(
+                          "en-GB"
+                        )}
                       </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
                         <span
                           className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
                             item.status === "Rejected"
@@ -184,59 +207,76 @@ const ManageRequestPage = () => {
                           {item.status}
                         </span>
                       </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
                         {item.manager}
                       </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
-                        {new Date(item.date_resolved).toLocaleDateString("en-GB")}
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
+                        {new Date(item.date_resolved).toLocaleDateString(
+                          "en-GB"
+                        )}
                       </TableCell>
                       <TableCell className='text-center flex justify-center items-center py-3 px-4'>
-                      <Dialog>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger  onClick={(e) => e.stopPropagation()}>
-                            <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent  onClick={(e) => e.stopPropagation()} className='bg-white shadow-md rounded-lg'>
-                            <DialogTrigger onClick={(e) => e.stopPropagation()} asChild>
-                              <DropdownMenuItem>
-                                <span>Delete</span>
-                              </DropdownMenuItem>
-                            </DialogTrigger>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        <DialogContent className='p-4'>
-                          <DialogHeader>
-                            <DialogTitle className='text-center text-lg font-semibold'>
-                              Are you sure you want to delete?
-                            </DialogTitle>
-                            <DialogDescription className='text-gray-600'>
-                              This action cannot be undone. This will
-                              permanently delete the request and remove your
-                              data from our servers.
-                            </DialogDescription>
-                            <div className='flex items-center justify-center gap-4 pt-4'>
-                              <DialogClose asChild>
-                                <Button variant='outline' className='w-28 '>
-                                  Cancel
-                                </Button>
-                              </DialogClose>
-                              <DialogClose asChild>
-                                <Button
-                                  onClick={(e) =>
-                                  {
-                                    e.preventDefault(); 
-                                    handleDelete(selected._id)
-                                  }}
-                                  className='w-28'
-                                  variant='destructive'>
-                                  Confirm
-                                </Button>
-                              </DialogClose>
-                            </div>
-                          </DialogHeader>
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
+                        <Dialog>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              onClick={(e) => e.stopPropagation()}>
+                              <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              onClick={(e) => e.stopPropagation()}
+                              className='bg-white shadow-md rounded-lg'>
+                              <DialogTrigger
+                                onClick={(e) => e.stopPropagation()}
+                                asChild>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setType("delete");
+                                  }}>
+                                  <span>Delete</span>
+                                </DropdownMenuItem>
+                              </DialogTrigger>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <DialogContent className='p-4'>
+                            <DialogHeader>
+                              <DialogTitle className='text-center text-lg font-semibold'>
+                                Are you sure you want to delete?
+                              </DialogTitle>
+                              <DialogDescription className='text-gray-600'>
+                                This action cannot be undone. This will
+                                permanently delete the request and remove your
+                                data from our servers.
+                              </DialogDescription>
+                              <div className='flex items-center justify-center gap-4 pt-4'>
+                                <DialogClose asChild>
+                                  <Button variant='outline' className='w-28 '>
+                                    Cancel
+                                  </Button>
+                                </DialogClose>
+                                <DialogClose asChild>
+                                  <Button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handleDelete(selected._id);
+                                    }}
+                                    className='w-28'
+                                    variant='destructive'>
+                                    Confirm
+                                  </Button>
+                                </DialogClose>
+                              </div>
+                            </DialogHeader>
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -276,12 +316,9 @@ const ManageRequestPage = () => {
           </Pagination>
         </div>
       </div>
-      {showForm && (
-        <div className="fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform">
-          <FormRequest
-            handleClose={handleClose}
-            request={selected}
-          />
+      {showForm && type === "view" && (
+        <div className='fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform'>
+          <FormRequest handleClose={handleClose} request={selected} />
         </div>
       )}
     </div>
