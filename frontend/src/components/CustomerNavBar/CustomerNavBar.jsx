@@ -5,7 +5,7 @@ import { CiMap } from "react-icons/ci";
 import { useState } from "react";
 import { IoTicketOutline } from "react-icons/io5";
 import * as AccountService from "../../services/accountService";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { resetAccount } from "@/redux/accountSlide";
 import * as Message from "../ui/alert";
 import { IoIosArrowBack } from "react-icons/io";
@@ -24,6 +24,8 @@ const CustomerNavbar = () => {
     navigate("/login");
   };
   const toggleSidebar = () => setIsExpanded(!isExpanded);
+
+  const account = useSelector((state) => state.account);
 
   return (
     <div
@@ -73,13 +75,13 @@ const CustomerNavbar = () => {
 
       <div className='w-full py-4 border-t border-gray-200 flex flex-col items-center cursor-pointer'>
         <img
-          src='https://via.placeholder.com/40'
+          src={account.image}
           alt='Profile'
           className='w-12 h-12 rounded-full mb-3 shadow-md border-2 border-green-500'
         />
         {isExpanded && (
           <div className='text-center'>
-            <p className='text-gray-800 font-semibold'>John Doe</p>
+            <p className='text-gray-800 font-semibold'>{account.name}</p>
             <p className='text-gray-500 text-sm'>Employee</p>
           </div>
         )}
@@ -96,7 +98,7 @@ const CustomerNavbar = () => {
   );
 };
 
-const SidebarItem = ({ isExpanded, to, icon: Icon, label }) => {
+const SidebarItem = ({ isExpanded, to, icon: Icon, label }) => {  
   return (
     <Link
       to={to}

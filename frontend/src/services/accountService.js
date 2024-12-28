@@ -32,6 +32,18 @@ export const getDetailAccount = async (id, access_token) => {
   }
 };
 
+export const updateAccount = async (data) => {
+  try {
+    const response = await axios.put(
+      `${API_KEY}/account/update`, data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get detail", error);
+    throw error;
+  }
+};
+
 export const refreshTokenJwt = async () => {
   try {
     const response = await axios.post(

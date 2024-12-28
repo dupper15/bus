@@ -174,8 +174,55 @@ const changePassword = async (data) => {
     }
 };
 
+const updateAccount = async (data) => {
+    try {
+        const checkAccount = await Account.findOne({
+            user: data.id_card
+        });
+
+        if (!checkAccount) {
+            return {
+                status: "ERROR",
+                message: `Account with id ${data.id_card} not found.`
+            };
+        }
+
+        const type = checkAccount.userType;
+        if (type === "Customer") {
+            await Customer.findByIdAndUpdate(
+                data._id,
+                data,
+                { new: true }
+            );
+        } else if (type === "Employee") {
+            await Employee.findByIdAndUpdate(
+                data._id,
+                data,
+                { new: true }
+            );
+        } else if (type === "Manager") {
+            await Manager.findByIdAndUpdate(
+                data._id,
+                data,
+                { new: true }
+            );
+        }
+        return {
+            status: "OK",
+            message: "Updated profile successfully"
+        };
+    } catch (e) {
+        return {
+            status: "ERROR",
+            message: "An error occurred during the password change process.",
+            error: e.message
+        };
+    }
+};
+
 module.exports = {
     loginAccount,
     getDetailAccount,
-    changePassword
+    changePassword,
+    updateAccount
 }

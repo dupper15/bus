@@ -116,7 +116,7 @@ export function EmployeeSideBar() {
           onClick={() => setIsMenuOpen((prev) => !prev)}
           className='flex items-center space-x-4 justify-start h-500 cursor-pointer relative'>
           <img
-            src={icon}
+            src={account.image || icon}
             alt='Profile Icon'
             className='w-10 h-10 rounded-full border border-gray-200'
           />

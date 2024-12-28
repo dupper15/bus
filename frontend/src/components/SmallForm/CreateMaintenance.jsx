@@ -51,7 +51,6 @@ const CreateMaintenance = ({ childCloseFormRequest }) => {
       image: previewImage,
     };
 
-    console.log("values", values);
     mutationCreate.mutate({ data: values });
   };
 

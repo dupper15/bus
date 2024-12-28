@@ -67,7 +67,6 @@ const getAllIncentives = async (req, res) => {
 const deleteIncentives = async (req, res) => {
     try {
         const data = req.body;
-        console.log("data",data)
         const response = await IncentivesService.deleteIncentives(data)
         return res.status(200).json(response)
     } catch (e) {
