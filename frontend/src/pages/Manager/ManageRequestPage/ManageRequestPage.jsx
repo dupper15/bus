@@ -47,6 +47,9 @@ const ManageRequestPage = () => {
   const currentPage = parseInt(searchParams.get("page")) || 1;
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refresh, setRefresh] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [selected, setSelected] = useState('');
 
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const currentItems = items
@@ -60,23 +63,22 @@ const ManageRequestPage = () => {
       setSearchParams({ page: page });
     }
   };
-  const { mutate: fetchRequests } = useMutation(
-    RequestService.getRequestNoCondition,
-    {
-      onSuccess: (data) => {
-        setItems(data.data);
-        setIsLoading(false);
-      },
-      onError: (error) => {
-        console.error("Failed to fetch requests:", error);
-        setIsLoading(false);
-      },
-    }
-  );
-  const { mutate } = useMutation(RequestService.deleteRequest, {
+  const mutaionGetAll = useMutation({
+    mutationFn: () => RequestService.getRequestNoCondition(),
+    onSuccess: (data) => {
+      setItems(data.data);
+      setIsLoading(false);
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+    
+  const mutationDelele = useMutation({
+    mutationFn: (id) => RequestService.deleteRequest(id),
     onSuccess: () => {
-      fetchRequests();
       Message.success("Request deleted successfully.");
+      setRefresh(!refresh);
     },
     onError: (error) => {
       Message.error("Failed to delete request:", error.message || error);
@@ -89,30 +91,17 @@ const ManageRequestPage = () => {
 
   // Sử dụng mutate để gọi hàm xóa
   const handleDelete = (id) => {
-    mutate(id, {
-      onSuccess: () => {
-        fetchRequests();
-        setShowForm(false); // Đóng FormRequest sau khi xóa
-        Message.success("Request deleted successfully.");
-      },
-      onError: (error) => {
-        Message.error("Failed to delete request:", error.message || error);
-        setIsLoading(false);
-      },
-    });
+    mutationDelele.mutate(id);
   };
 
   useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+    mutaionGetAll.mutate();
+  }, [refresh]);
 
   const handleSearchChanged = (e) => {
     setSearchWord(e.target.value);
     setSearchParams({ page: 1 });
   };
-
-  const [showForm, setShowForm] = useState(false);
-  const [selected, setSelected] = useState('');
 
   return (
     <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
@@ -167,7 +156,7 @@ const ManageRequestPage = () => {
                         {item.title}
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
-                        {item.employee}
+                        {item?.employee?.name}
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
                         {new Date(item.date_requested).toLocaleDateString("en-GB")}
@@ -185,7 +174,7 @@ const ManageRequestPage = () => {
                         </span>
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
-                        {item.manager}
+                        {item?.manager?.name}
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
                         {new Date(item.date_resolved).toLocaleDateString("en-GB")}
@@ -193,11 +182,11 @@ const ManageRequestPage = () => {
                       <TableCell className='text-center flex justify-center items-center py-3 px-4'>
                       <Dialog>
                         <DropdownMenu>
-                          <DropdownMenuTrigger  onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuTrigger>
                             <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent  onClick={(e) => e.stopPropagation()} className='bg-white shadow-md rounded-lg'>
-                            <DialogTrigger onClick={(e) => e.stopPropagation()} asChild>
+                            <DialogTrigger asChild>
                               <DropdownMenuItem>
                                 <span>Delete</span>
                               </DropdownMenuItem>
@@ -216,7 +205,7 @@ const ManageRequestPage = () => {
                             </DialogDescription>
                             <div className='flex items-center justify-center gap-4 pt-4'>
                               <DialogClose asChild>
-                                <Button variant='outline' className='w-28 '>
+                                <Button onClick={(e) => e.stopPropagation()} variant='outline' className='w-28 '>
                                   Cancel
                                 </Button>
                               </DialogClose>
@@ -224,7 +213,8 @@ const ManageRequestPage = () => {
                                 <Button
                                   onClick={(e) =>
                                   {
-                                    e.preventDefault(); 
+                                    e.stopPropagation();
+                                    setShowForm(false); 
                                     handleDelete(selected._id)
                                   }}
                                   className='w-28'

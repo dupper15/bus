@@ -60,8 +60,8 @@ const createBill = async (data) => {
 
 const getAllBill = async () => {
         try {
-            const allBill = await Bill.find()
-            resolve({
+            const allBill = await Bill.find().populate("bus", "license_plate")
+            return({
                 status: "OK",
                 message: "Maintenance bills retrieved successfully.",
                 data: allBill
@@ -102,8 +102,32 @@ const getDetailBill = async (employeeId) => {
     }
 };
 
+const editBill = async (data) => {
+    try {
+        const bill = await Bill.findOne({id: data.id});
+        bill.status = data.status;
+        bill.save();
+
+        if (bill) {
+            return({
+                status: "OK",
+                message: "Maintenance bill change status successfully.",
+                data: bill
+            })
+        }
+    } catch (e) {
+        return{
+            status: "ERROR",
+            message: "An error occurred while creating the maintenance bill.",
+            error: e
+        };
+    }
+};
+
+
 module.exports = {
     createBill,
     getAllBill,
     getDetailBill,
+    editBill
 }
