@@ -1,11 +1,11 @@
-import {useState, useCallback, useEffect} from "react";
+import { useState, useCallback, useEffect } from "react";
 import GeoapifyService from "@/services/GeoapifyService";
 
 const useNavigationViewModel = () => {
     const [path, setPath] = useState([]);
     const [error, setError] = useState(null);
-    const [start, setStart] = useState({name: "", coordinates: []});
-    const [end, setEnd] = useState({name: "", coordinates: []});
+    const [start, setStart] = useState({ name: "", coordinates: [] });
+    const [end, setEnd] = useState({ name: "", coordinates: [] });
     const [startSuggestions, setStartSuggestions] = useState([]);
     const [endSuggestions, setEndSuggestions] = useState([]);
 
@@ -29,7 +29,7 @@ const useNavigationViewModel = () => {
     const debouncedFetchSuggestions = useCallback(debounce(fetchSuggestions, 300), []);
 
     const handleChange = (value, setField, setSuggestions) => {
-        setField((prev) => ({...prev, name: value}));
+        setField((prev) => ({ ...prev, name: value }));
         debouncedFetchSuggestions(value, setSuggestions);
     };
 
@@ -38,137 +38,329 @@ const useNavigationViewModel = () => {
         setSuggestions([]);
     };
 
-    const findNearestBusStop = (coords, busStops) => {
-        let nearestStop = null;
-        let minDistance = Infinity;
-        const maxDistance = 10; // 1 km
+    const findNearestBusStops = (coords, busStops, maxDistance = 1) => {
+        const nearbyStops = [];
 
         busStops.forEach((stop) => {
-            const distance = Math.sqrt(Math.pow(stop.pointX - coords[1], 2) + Math.pow(stop.pointY - coords[0], 2));
+            const distance = Math.sqrt(
+                Math.pow(stop.pointX - coords[1], 2) +
+                Math.pow(stop.pointY - coords[0], 2)
+            ) * 111; // Convert to km
 
-            // Convert distance from degrees to kilometers (approximation)
-            const distanceInKm = distance * 111; // 1 degree is approximately 111 km
-
-            if (distanceInKm < minDistance && distanceInKm <= maxDistance) {
-                minDistance = distanceInKm;
-                nearestStop = stop;
+            if (distance <= maxDistance) {
+                nearbyStops.push({ stop, distance });
             }
         });
 
-        return nearestStop;
+        return nearbyStops.sort((a, b) => a.distance - b.distance);
+    };
+
+    const buildStopRoutesMap = (busLines) => {
+        const stopRoutes = new Map();
+
+        busLines.forEach((line) => {
+            line.arr_stop.forEach((stop) => {
+                if (!stopRoutes.has(stop.id)) {
+                    stopRoutes.set(stop.id, new Set());
+                }
+                stopRoutes.get(stop.id).add(line);
+            });
+        });
+
+        return stopRoutes;
     };
 
     const findPath = async (startCoords, endCoords, busStops, busLines) => {
         try {
-            const startStop = findNearestBusStop(startCoords, busStops);
-            const endStop = findNearestBusStop(endCoords, busStops);
+            const nearbyStartStops = findNearestBusStops(startCoords, busStops);
+            const nearbyEndStops = findNearestBusStops(endCoords, busStops);
 
-            if (!startStop || !endStop) {
-                console.error("No nearby stops found.");
-                setPath([]);
-                setError("No nearby stops found.");
+            if (nearbyStartStops.length === 0 || nearbyEndStops.length === 0) {
+                handleError("No nearby bus stops found within 1km.");
                 return;
             }
 
-            // BFS setup to find the bus route
-            const queue = [{ stop: startStop, path: [startStop], lines: [], transfers: 0 }];
-            const visited = new Set();
-            let shortestPath = null;
-
-            while (queue.length > 0) {
-                const { stop, path, lines, transfers } = queue.shift();
-
-                // Check if we've reached the destination
-                if (stop.id === endStop.id) {
-                    if (!shortestPath || path.length < shortestPath.length) {
-                        shortestPath = { path, lines, transfers };
-                    }
-                    continue;
-                }
-
-                // Mark as visited
-                const visitedKey = `${stop.id}-${transfers}`;
-                if (visited.has(visitedKey)) continue;
-                visited.add(visitedKey);
-
-                // Explore neighbors
-                busLines.forEach((line) => {
-                    const stopIndex = line.arr_stop.findIndex((s) => s.id === stop.id);
-                    if (stopIndex === -1) return; // Current stop not on this line
-
-                    // Get all subsequent stops in the line
-                    const subsequentStops = line.arr_stop.slice(stopIndex + 1);
-
-                    subsequentStops.forEach((nextStop, i) => {
-                        const newLines = lines.includes(line) ? lines : [...lines, line];
-                        const newTransfers = newLines.length - lines.length;
-
-                        if (newTransfers > 3) return; // Skip paths with excessive transfers
-
-                        queue.push({
-                            stop: nextStop,
-                            path: [...path, ...subsequentStops.slice(0, i + 1)],
-                            lines: newLines,
-                            transfers: transfers + newTransfers,
-                        });
-                    });
-                });
-            }
-
-            if (shortestPath) {
-                const busRouteStops = shortestPath.path;
-
-                // Walking paths
-                const walkingPathToStartStop = [startCoords, [startStop.pointY, startStop.pointX]];
-                const walkingPathFromEndStop = [[endStop.pointY, endStop.pointX], endCoords];
-
-                // Compress bus paths
-                const compressedBusPaths = compressBusPaths(busRouteStops);
-
-                // Format path data
-                const formattedPath = [
-                    { type: "walking", coords: walkingPathToStartStop },
-                    ...compressedBusPaths,
-                    { type: "walking", coords: walkingPathFromEndStop },
-                ];
-                console.log("formattedPath", formattedPath);
+            const stopRoutesMap = buildStopRoutesMap(busLines);
+            const bestPath = findBestPath(
+                nearbyStartStops,
+                nearbyEndStops,
+                stopRoutesMap,
+                busLines,
+                busStops
+            );
+            console.log("bestPath", bestPath);
+            if (bestPath) {
+                const formattedPath = formatFullPath(
+                    bestPath,
+                    startCoords,
+                    endCoords
+                );
                 setPath(formattedPath);
                 setError(null);
                 return formattedPath;
             } else {
-                setPath([]);
-                setError("No path found within 3 transfers.");
+                handleError("No valid path found.");
             }
         } catch (err) {
-            setPath([]);
-            setError(err.message || "An error occurred.");
+            handleError(err.message || "An error occurred.");
         }
     };
 
-    const compressBusPaths = (busRouteStops) => {
-        const compressedPaths = [];
-        let currentPath = { type: "bus", coords: [] };
+    const findBestPath = (startStops, endStops, stopRoutesMap, busLines, busStops) => {
+        const queue = new Queue();
+        const visited = new Map();
 
-        busRouteStops.forEach((stop, index) => {
-            currentPath.coords.push([stop.pointY, stop.pointX]);
+        // Try each possible start stop
+        startStops.forEach(({ stop: startStop, distance: initialWalk }) => {
+            queue.enqueue({
+                currentStop: startStop,
+                path: [startStop],
+                lines: [],
+                transfers: 0,
+                totalWalking: initialWalk,
+                segments: [{
+                    type: 'walking',
+                    distance: initialWalk,
+                    from: 'start',
+                    to: startStop
+                }]
+            });
+        });
 
-            // Start a new path for the next segment
-            if (
-                index < busRouteStops.length - 1 &&
-                stop.lineId !== busRouteStops[index + 1].lineId
-            ) {
-                compressedPaths.push(currentPath);
-                currentPath = { type: "bus", coords: [] };
+        let bestPath = null;
+        let minScore = Infinity;
+
+        while (!queue.isEmpty()) {
+            const current = queue.dequeue();
+
+            // Check if we've reached any end stop
+            const endStopMatch = endStops.find(
+                ({ stop }) => stop.id === current.currentStop.id
+            );
+
+            if (endStopMatch) {
+                const finalScore = calculatePathScore(
+                    current.transfers,
+                    current.totalWalking
+                );
+                if (finalScore < minScore) {
+                    minScore = finalScore;
+                    bestPath = {
+                        ...current,
+                        segments: [...current.segments]
+                    };
+                }
+                continue;
+            }
+
+            // Don't explore if we've exceeded limits
+            if (current.transfers >= 3 || current.totalWalking >= 4) continue;
+
+            const currentRoutes = stopRoutesMap.get(current.currentStop.id);
+            if (!currentRoutes) continue;
+
+            // Explore each possible route from current stop
+            currentRoutes.forEach(line => {
+                const lineStops = line.arr_stop;
+                const currentStopIndex = lineStops.findIndex(
+                    s => s.id === current.currentStop.id
+                );
+
+                if (currentStopIndex === -1) return;
+
+                // Try both directions
+                [lineStops, [...lineStops].reverse()].forEach(stops => {
+                    const stopIndex = stops.findIndex(
+                        s => s.id === current.currentStop.id
+                    );
+
+                    // Explore next stops in this direction
+                    for (let i = stopIndex + 1; i < stops.length; i++) {
+                        const nextStop = stops[i];
+                        const key = `${nextStop.id}-${current.transfers}`;
+
+                        if (visited.has(key)) continue;
+                        visited.set(key, true);
+
+                        const isNewLine = !current.lines.includes(line);
+                        const newTransfers = isNewLine ?
+                            current.transfers + 1 :
+                            current.transfers;
+
+                        // Get all intermediate stops between current and next stop
+                        const intermediateStops = stops.slice(stopIndex, i + 1);
+
+                        queue.enqueue({
+                            currentStop: nextStop,
+                            path: [...current.path, nextStop],
+                            lines: isNewLine ?
+                                [...current.lines, line] :
+                                current.lines,
+                            transfers: newTransfers,
+                            totalWalking: current.totalWalking,
+                            segments: [
+                                ...current.segments,
+                                {
+                                    type: 'bus',
+                                    line: line,
+                                    from: current.currentStop,
+                                    to: nextStop,
+                                    intermediateStops: intermediateStops // Add intermediate stops
+                                }
+                            ]
+                        });
+                    }
+                });
+            });
+
+            // Explore walking transfers to nearby stops
+            const nearbyStops = findNearestBusStops(
+                [current.currentStop.pointY, current.currentStop.pointX],
+                busStops
+            );
+
+            nearbyStops.forEach(({ stop: nearStop, distance }) => {
+                if (distance > 1) return; // Skip if walking distance > 1km
+                if (nearStop.id === current.currentStop.id) return; // Skip same stop
+
+                const totalWalking = current.totalWalking + distance;
+                if (totalWalking > 4) return; // Skip if total walking > 4km
+
+                const key = `${nearStop.id}-${current.transfers}`;
+                if (visited.has(key)) return;
+
+                queue.enqueue({
+                    currentStop: nearStop,
+                    path: [...current.path, nearStop],
+                    lines: current.lines,
+                    transfers: current.transfers,
+                    totalWalking: totalWalking,
+                    segments: [
+                        ...current.segments,
+                        {
+                            type: 'walking',
+                            distance: distance,
+                            from: current.currentStop,
+                            to: nearStop
+                        }
+                    ]
+                });
+            });
+        }
+
+        return bestPath;
+    };
+
+    const calculatePathScore = (transfers, totalWalking) => {
+        // Weighted scoring - lower is better
+        // Prioritize fewer transfers over walking distance
+        return transfers * 2 + totalWalking;
+    };
+
+    const formatFullPath = (pathData, startCoords, endCoords) => {
+        const formattedSegments = [];
+
+        // Add initial walking segment
+        if (pathData.segments[0].type === 'walking') {
+            formattedSegments.push({
+                type: 'walking',
+                distance: pathData.segments[0].distance,
+                coords: [
+                    startCoords,
+                    [pathData.segments[0].to.pointY, pathData.segments[0].to.pointX]
+                ]
+            });
+        }
+
+        // Format middle segments
+        for (let i = 1; i < pathData.segments.length; i++) {
+            const segment = pathData.segments[i];
+
+            if (segment.type === 'walking') {
+                formattedSegments.push({
+                    type: 'walking',
+                    distance: segment.distance,
+                    coords: [
+                        [segment.from.pointY, segment.from.pointX],
+                        [segment.to.pointY, segment.to.pointX]
+                    ]
+                });
+            } else { // bus segment
+                formattedSegments.push({
+                    type: 'bus',
+                    endStop: segment.to,
+                    line: segment.line,
+                    to: segment.intermediateStops, // Use intermediate stops for the route
+                    coords: [[segment.from.pointY, segment.from.pointX]] // Starting coordinate
+                });
+            }
+        }
+
+        // Add final walking segment
+        const lastStop = pathData.segments[pathData.segments.length - 1].to;
+        formattedSegments.push({
+            type: 'walking',
+            coords: [
+                [lastStop.pointY, lastStop.pointX],
+                endCoords
+            ]
+        });
+
+        return formattedSegments;
+    };
+
+    const getLineSegmentCoords = (line, fromStopId, toStopId) => {
+        const coords = [];
+        let recording = false;
+
+        line.arr_stop.forEach(stop => {
+            if (stop.id === fromStopId) {
+                recording = true;
+            }
+
+            if (recording) {
+                coords.push([stop.pointY, stop.pointX]);
+            }
+
+            if (stop.id === toStopId) {
+                recording = false;
             }
         });
 
-        if (currentPath.coords.length > 0) {
-            compressedPaths.push(currentPath);
+        // If not found in forward direction, try reverse
+        if (coords.length === 0) {
+            const reversedStops = [...line.arr_stop].reverse();
+            recording = false;
+
+            reversedStops.forEach(stop => {
+                if (stop.id === fromStopId) {
+                    recording = true;
+                }
+
+                if (recording) {
+                    coords.push([stop.pointY, stop.pointX]);
+                }
+
+                if (stop.id === toStopId) {
+                    recording = false;
+                }
+            });
         }
 
-        return compressedPaths;
+        return coords;
     };
 
+    const handleError = (message) => {
+        console.error(message);
+        setPath([]);
+        setError(message);
+    };
+
+    const handleSwap = () => {
+        const temp = start;
+        setStart(end);
+        setEnd(temp);
+    };
 
     useEffect(() => {
         if (error) {
@@ -179,13 +371,6 @@ const useNavigationViewModel = () => {
             return () => clearTimeout(timer);
         }
     }, [error]);
-
-
-    const handleSwap = () => {
-        const temp = start;
-        setStart(end);
-        setEnd(temp);
-    };
 
     return {
         path,
@@ -204,5 +389,23 @@ const useNavigationViewModel = () => {
         setError
     };
 };
+
+class Queue {
+    constructor() {
+        this.items = [];
+    }
+
+    enqueue(item) {
+        this.items.push(item);
+    }
+
+    dequeue() {
+        return this.items.shift();
+    }
+
+    isEmpty() {
+        return this.items.length === 0;
+    }
+}
 
 export default useNavigationViewModel;

@@ -107,15 +107,51 @@ const useMapViewModel = ({mapData, busLines, stops, selectedStopCoordinates, mod
     }, [busLines, mode]);
 
     useEffect(() => {
-        if (mapRef.current && stops.length) {
-            stops.forEach((stop) => {
-                new mapboxgl.Marker({color: "blue"})
+        if (mapRef.current) {
+            const map = mapRef.current;
+            let stopMarkers = [];
+
+            // Function to update visible stops based on zoom level
+            const updateMarkersVisibility = () => {
+                const currentZoom = Math.floor(map.getZoom()); // Use whole zoom levels for simplicity
+
+                // Calculate how many stops to display for the current zoom level
+                const maxZoom = 14; // Maximum zoom level where all stops are visible
+                const minZoom = 10; // Minimum zoom level where no stops are visible
+                const stopsToShow = Math.max(0, stops.length * (currentZoom - minZoom) / (maxZoom - minZoom));
+
+                stopMarkers.forEach((marker, index) => {
+                    if (index < stopsToShow) {
+                        marker.getElement().style.display = "block";
+                    } else {
+                        marker.getElement().style.display = "none";
+                    }
+                });
+            };
+
+            // Add all stops as markers initially
+            stopMarkers = stops.map((stop) => {
+                const marker = new mapboxgl.Marker({ color: "blue" })
                     .setLngLat([stop.pointX, stop.pointY])
                     .setPopup(new mapboxgl.Popup().setHTML(`<p>${stop.name}</p>`))
-                    .addTo(mapRef.current);
+                    .addTo(map);
+                return marker;
             });
+
+            // Update visibility whenever the zoom level changes
+            map.on("zoom", updateMarkersVisibility);
+
+            // Initial visibility update
+            updateMarkersVisibility();
+
+            return () => {
+                // Cleanup markers and event listeners
+                stopMarkers.forEach((marker) => marker.remove());
+                map.off("zoom", updateMarkersVisibility);
+            };
         }
     }, [stops]);
+
 
     useEffect(() => {
         if (mapRef.current && selectedStopCoordinates) {
@@ -132,122 +168,112 @@ const useMapViewModel = ({mapData, busLines, stops, selectedStopCoordinates, mod
             const map = mapRef.current;
 
             // Remove existing layers and sources
-            ["path-driving", "path-walking", "path-bus"].forEach((layerId) => {
-                if (map.getLayer(layerId)) {
-                    map.removeLayer(layerId);
-                    map.removeSource(layerId);
+            const existingLayers = map.getStyle().layers;
+            existingLayers?.forEach((layer) => {
+                if (layer.id.startsWith("path-")) {
+                    map.removeLayer(layer.id);
+                    map.removeSource(layer.id);
                 }
             });
 
             // Helper to fetch and draw routes
-            const fetchAndDrawRoute = (waypoints, layerId, lineColor, profile) => {
-                return fetch(`https://api.mapbox.com/directions/v5/mapbox/${profile}/${waypoints}?geometries=geojson&access_token=${mapboxgl.accessToken}`)
-                    .then(response => response.json())
-                    .then(data => {
+            const fetchAndDrawRoute = async (segment, index) => {
+                const { type, coords } = segment;
+                let waypoints = '';
+                let color = '#FF0000'; // Default color for driving
+
+                if (type === 'walking') {
+                    color = '#00FF00';
+                } else if (type === 'bus') {
+                    color = '#007cbf';
+                }
+
+                // Handle bus segments with intermediate stops
+                if (type === 'bus' && segment.to) {
+                    // Use all intermediate stops for the route
+                    waypoints = segment.to
+                        .map(stop => `${stop.pointX},${stop.pointY}`)
+                        .join(';');
+                }
+                // Handle walking segments
+                else if (coords && coords.length >= 2) {
+                    waypoints = coords
+                        .map(coord => Array.isArray(coord)
+                            ? `${coord[1]},${coord[0]}`
+                            : `${coord.longitude},${coord.latitude}`)
+                        .join(';');
+                }
+
+                if (waypoints) {
+                    const profile = type === 'walking' ? 'walking' : 'driving';
+                    const sourceId = `path-${type}-${index}`;
+
+                    try {
+                        const response = await fetch(
+                            `https://api.mapbox.com/directions/v5/mapbox/${profile}/${waypoints}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+                        );
+                        const data = await response.json();
+
                         if (data.routes && data.routes.length > 0) {
                             const route = data.routes[0].geometry;
 
-                            if (map.getSource(layerId)) {
-                                map.getSource(layerId).setData({
+                            map.addSource(sourceId, {
+                                type: "geojson",
+                                data: {
                                     type: "Feature",
-                                    geometry: route,
-                                });
-                            } else {
-                                map.addSource(layerId, {
-                                    type: "geojson",
-                                    data: {
-                                        type: "Feature",
-                                        geometry: route,
-                                    },
-                                });
+                                    geometry: route
+                                }
+                            });
 
-                                map.addLayer({
-                                    id: layerId,
-                                    type: "line",
-                                    source: layerId,
-                                    layout: {
-                                        "line-join": "round",
-                                        "line-cap": "round",
-                                    },
-                                    paint: {
-                                        "line-color": lineColor,
-                                        "line-width": 4,
-                                    },
-                                });
-                            }
+                            map.addLayer({
+                                id: sourceId,
+                                type: "line",
+                                source: sourceId,
+                                layout: {
+                                    "line-join": "round",
+                                    "line-cap": "round"
+                                },
+                                paint: {
+                                    "line-color": color,
+                                    "line-width": 4
+                                }
+                            });
 
                             return route.coordinates;
                         }
-                        return [];
-                    })
-                    .catch(err => {
-                        console.error(`Error fetching route for ${layerId}:`, err);
-                        return [];
-                    });
+                    } catch (error) {
+                        console.error(`Error fetching route for ${type} segment ${index}:`, error);
+                    }
+                }
+                return [];
             };
 
-            // Process and fetch routes for each type
-            const fetchRoutes = async () => {
+            // Process each segment
+            const processSegments = async () => {
                 const allCoordinates = [];
 
-                // Driving route
-                const drivingPaths = path.filter(p => p.type === "driving");
-                for (const [index, drivingPath] of drivingPaths.entries()) {
-                    if (drivingPath.coords.length > 0) {
-                        const waypoints = drivingPath.coords
-                            .map(([latitude, longitude]) => `${longitude},${latitude}`)
-                            .join(";");
-
-                        const coords = await fetchAndDrawRoute(waypoints, `path-driving-${index}`, "#FF0000", "driving");
-                        allCoordinates.push(...coords);
-                    }
+                for (let i = 0; i < path.length; i++) {
+                    const coords = await fetchAndDrawRoute(path[i], i);
+                    allCoordinates.push(...coords);
                 }
 
-                // Walking route
-                const walkingPaths = path.filter(p => p.type === "walking");
-                for (const [index, walkingPath] of walkingPaths.entries()) {
-                    if (walkingPath.coords.length > 0) {
-                        const waypoints = walkingPath.coords
-                            .map(([latitude, longitude]) => `${longitude},${latitude}`)
-                            .join(";");
-
-                        const coords = await fetchAndDrawRoute(waypoints, `path-walking-${index}`, "#00FF00", "walking");
-                        allCoordinates.push(...coords);
-                    }
-                }
-
-                // Bus route
-                const busPaths = path.filter(p => p.type === "bus");
-                for (const [index, busPath] of busPaths.entries()) {
-                    if (busPath.coords.length > 0) {
-                        const waypoints = busPath.coords
-                            .map(([latitude, longitude]) => `${longitude},${latitude}`)
-                            .join(";");
-
-                        const coords = await fetchAndDrawRoute(waypoints, `path-bus-${index}`, "#007cbf", "driving");
-                        allCoordinates.push(...coords);
-                    }
-                }
-
-                // Fit bounds after all routes are fetched
+                // Fit bounds to show all segments
                 if (allCoordinates.length > 0) {
                     try {
-                        const bounds = allCoordinates.reduce((bounds, coords) => {
-                            return bounds.extend(coords);
-                        }, new mapboxgl.LngLatBounds(allCoordinates[0], allCoordinates[0]));
-
-                        map.fitBounds(bounds, { padding: 20 });
-                    } catch (e) {
-                        console.error("Error fitting bounds:", e);
+                        const bounds = allCoordinates.reduce(
+                            (bounds, coord) => bounds.extend(coord),
+                            new mapboxgl.LngLatBounds(allCoordinates[0], allCoordinates[0])
+                        );
+                        map.fitBounds(bounds, { padding: 50 });
+                    } catch (error) {
+                        console.error("Error fitting bounds:", error);
                     }
                 }
             };
 
-            fetchRoutes();
+            processSegments();
         }
     }, [path]);
-
-
 
     return {
         mapContainerRef,
