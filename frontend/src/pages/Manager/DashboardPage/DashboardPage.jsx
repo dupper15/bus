@@ -10,9 +10,7 @@ import { AppSidebar } from "../../../components/app-sidebar";
 import { BusFront, StickyNote, Users } from "lucide-react";
 import {
   ChartContainer,
-  ChartLegend,
   ChartLegendContent,
-  ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
@@ -23,39 +21,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { useState } from "react";
-
-const items = [
-  {
-    title: "Total Employees",
-    icon: Users,
-    total: 20,
-    color: "bg-sky-300", // Màu nền cho Card
-    iconColor: "text-sky-700", // Màu cho Icon
-  },
-  {
-    title: "Total Buses",
-    icon: BusFront,
-    total: 10,
-    color: "bg-emerald-300", // Màu nền cho Card
-    iconColor: "text-emerald-700", // Màu cho Icon
-  },
-  {
-    title: "Request Leave",
-    icon: StickyNote,
-    total: 2,
-    color: "bg-amber-300", // Màu nền cho Card
-    iconColor: "text-amber-700", // Màu cho Icon
-  },
-  {
-    title: "Opinion",
-    icon: StickyNote,
-    total: 10,
-    color: "bg-amber-300", // Màu nền cho Card
-    iconColor: "text-amber-700", // Màu cho Icon
-  },
-];
+import {
+  LineChart,
+  Line,
+  XAxis,
+  CartesianGrid,
+  Tooltip as ChartTooltip,
+  Legend as ChartLegend,
+  AreaChart,
+  Area,
+} from "recharts";
+import { useEffect, useState } from "react";
+import { useMutation } from "react-query";
+import * as DashboardService from "@/services/dashboardService";
 
 const chartData = [
   { date: "2024-04-01", desktop: 222, mobile: 150 },
@@ -276,6 +254,65 @@ const chartReportConfig = {
 
 const DashboardPage = () => {
   const [timeRange, setTimeRange] = useState("90d");
+  const [items, setItems] = useState([
+    {
+      title: "Total Employees",
+      icon: Users,
+      total: 0,
+      color: "bg-sky-300",
+      iconColor: "text-sky-700",
+    },
+    {
+      title: "Total Buses",
+      icon: BusFront,
+      total: 0,
+      color: "bg-emerald-300",
+      iconColor: "text-emerald-700",
+    },
+    {
+      title: "Pending Requests",
+      icon: StickyNote,
+      total: 0,
+      color: "bg-amber-300",
+      iconColor: "text-amber-700",
+    },
+    {
+      title: "Opinions",
+      icon: StickyNote,
+      total: 0,
+      color: "bg-amber-300",
+      iconColor: "text-amber-700",
+    },
+  ]);
+
+  const mutation = useMutation({
+    mutationFn: DashboardService.getSumary,
+    onSuccess: (data) => {
+      setItems((prevItems) =>
+        prevItems.map((item, index) => {
+          switch (index) {
+            case 0:
+              return { ...item, total: data.data.totalEmployees };
+            case 1:
+              return { ...item, total: data.data.totalBus };
+            case 2:
+              return { ...item, total: data.data.totalDayOffs };
+            case 3:
+              return { ...item, total: data.data.totalOpinions };
+            default:
+              return item;
+          }
+        })
+      );
+    },
+    onError: (error) => {
+      console.error("Error fetching summary:", error);
+    },
+  });
+
+  useEffect(() => {
+    mutation.mutate();
+  }, []);
 
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.date);
@@ -306,23 +343,23 @@ const DashboardPage = () => {
   });
 
   return (
-    <div className="flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4">
-      <div className="space-y-6 w-full max-w-6xl">
-        <div className="flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300">
+    <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
+      <div className='space-y-6 w-full max-w-6xl'>
+        <div className='flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
           {/* Cards */}
-          <div className="grid grid-cols-4 gap-5 cursor-pointer">
+          <div className='grid grid-cols-4 gap-5 cursor-pointer'>
             {items.map((item, index) => (
               <Card
                 key={index}
                 className={`${item.color} hover:scale-105 transition-transform duration-200`}>
                 <CardHeader>
-                  <div className="flex items-center justify-between w-full">
+                  <div className='flex items-center justify-between w-full'>
                     <CardTitle>{item.title}</CardTitle>
                     <item.icon className={`h-6 w-6 ml-0 ${item.iconColor}`} />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <span className="text-4xl font-semibold">{item.total}</span>
+                  <span className='text-4xl font-semibold'>{item.total}</span>
                 </CardContent>
               </Card>
             ))}
@@ -330,8 +367,8 @@ const DashboardPage = () => {
 
           {/* Chart */}
           <Card>
-            <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-              <div className="grid flex-1 gap-1 text-center sm:text-left">
+            <CardHeader className='flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row'>
+              <div className='grid flex-1 gap-1 text-center sm:text-left'>
                 <CardTitle>Area Chart - Interactive</CardTitle>
                 <CardDescription>
                   Showing financial report for last{" "}
@@ -344,62 +381,62 @@ const DashboardPage = () => {
               </div>
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger
-                  className="w-[160px] rounded-lg sm:ml-auto"
-                  aria-label="Select a value">
-                  <SelectValue placeholder="Last 3 months" />
+                  className='w-[160px] rounded-lg sm:ml-auto'
+                  aria-label='Select a value'>
+                  <SelectValue placeholder='Last 3 months' />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="90d" className="rounded-lg">
+                <SelectContent className='rounded-xl'>
+                  <SelectItem value='90d' className='rounded-lg'>
                     Last 3 months
                   </SelectItem>
-                  <SelectItem value="30d" className="rounded-lg">
+                  <SelectItem value='30d' className='rounded-lg'>
                     Last 30 days
                   </SelectItem>
-                  <SelectItem value="7d" className="rounded-lg">
+                  <SelectItem value='7d' className='rounded-lg'>
                     Last 7 days
                   </SelectItem>
                 </SelectContent>
               </Select>
             </CardHeader>
-            <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+            <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
               <ChartContainer
                 config={chartConfig}
-                className="aspect-auto h-[250px] w-full">
+                className='aspect-auto h-[250px] w-full'>
                 <AreaChart data={filteredData}>
                   <defs>
                     <linearGradient
-                      id="fillDesktop"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1">
+                      id='fillDesktop'
+                      x1='0'
+                      y1='0'
+                      x2='0'
+                      y2='1'>
                       <stop
-                        offset="5%"
-                        stopColor="var(--color-desktop)"
+                        offset='5%'
+                        stopColor='var(--color-desktop)'
                         stopOpacity={0.8}
                       />
                       <stop
-                        offset="95%"
-                        stopColor="var(--color-desktop)"
+                        offset='95%'
+                        stopColor='var(--color-desktop)'
                         stopOpacity={0.1}
                       />
                     </linearGradient>
-                    <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id='fillMobile' x1='0' y1='0' x2='0' y2='1'>
                       <stop
-                        offset="5%"
-                        stopColor="var(--color-mobile)"
+                        offset='5%'
+                        stopColor='var(--color-mobile)'
                         stopOpacity={0.8}
                       />
                       <stop
-                        offset="95%"
-                        stopColor="var(--color-mobile)"
+                        offset='95%'
+                        stopColor='var(--color-mobile)'
                         stopOpacity={0.1}
                       />
                     </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} />
                   <XAxis
-                    dataKey="date"
+                    dataKey='date'
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
@@ -422,31 +459,31 @@ const DashboardPage = () => {
                             day: "numeric",
                           });
                         }}
-                        indicator="dot"
+                        indicator='dot'
                       />
                     }
                   />
                   <Area
-                    dataKey="mobile"
-                    type="natural"
-                    fill="url(#fillMobile)"
-                    stroke="var(--color-mobile)"
-                    stackId="a"
+                    dataKey='mobile'
+                    type='natural'
+                    fill='url(#fillMobile)'
+                    stroke='var(--color-mobile)'
+                    stackId='a'
                   />
                   <Area
-                    dataKey="desktop"
-                    type="natural"
-                    fill="url(#fillDesktop)"
-                    stroke="var(--color-desktop)"
-                    stackId="a"
+                    dataKey='desktop'
+                    type='natural'
+                    fill='url(#fillDesktop)'
+                    stroke='var(--color-desktop)'
+                    stackId='a'
                   />
                   <ChartLegend content={<ChartLegendContent />} />
                 </AreaChart>
               </ChartContainer>
             </CardContent>
 
-            <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-              <div className="grid flex-1 gap-1 text-center sm:text-left">
+            <CardHeader className='flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row'>
+              <div className='grid flex-1 gap-1 text-center sm:text-left'>
                 <CardTitle>Area Chart - Financial report</CardTitle>
                 <CardDescription>
                   Showing financial report for last{" "}
@@ -458,57 +495,57 @@ const DashboardPage = () => {
                 </CardDescription>
               </div>
             </CardHeader>
-            <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+            <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
               <ChartContainer
                 config={chartReportConfig}
-                className="aspect-auto h-[250px] w-full">
-                <AreaChart data={filteredReportData}>
+                className='aspect-auto h-[250px] w-full'>
+                <LineChart data={filteredReportData}>
                   <defs>
                     <linearGradient
-                      id="fillRevenue"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1">
+                      id='fillRevenue'
+                      x1='0'
+                      y1='0'
+                      x2='0'
+                      y2='1'>
                       <stop
-                        offset="5%"
-                        stopColor="var(--color-revenue)"
+                        offset='5%'
+                        stopColor='var(--color-revenue)'
                         stopOpacity={0.8}
                       />
                       <stop
-                        offset="95%"
-                        stopColor="var(--color-revenue)"
+                        offset='95%'
+                        stopColor='var(--color-revenue)'
                         stopOpacity={0.1}
                       />
                     </linearGradient>
-                    <linearGradient id="fillCost" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id='fillCost' x1='0' y1='0' x2='0' y2='1'>
                       <stop
-                        offset="5%"
-                        stopColor="var(--color-cost)"
+                        offset='5%'
+                        stopColor='var(--color-cost)'
                         stopOpacity={0.8}
                       />
                       <stop
-                        offset="95%"
-                        stopColor="var(--color-cost)"
+                        offset='95%'
+                        stopColor='var(--color-cost)'
                         stopOpacity={0.1}
                       />
                     </linearGradient>
-                    <linearGradient id="fillProfit" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id='fillProfit' x1='0' y1='0' x2='0' y2='1'>
                       <stop
-                        offset="5%"
-                        stopColor="var(--color-profit)"
+                        offset='5%'
+                        stopColor='var(--color-profit)'
                         stopOpacity={0.8}
                       />
                       <stop
-                        offset="95%"
-                        stopColor="var(--color-profit)"
+                        offset='95%'
+                        stopColor='var(--color-profit)'
                         stopOpacity={0.1}
                       />
                     </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} />
                   <XAxis
-                    dataKey="date"
+                    dataKey='date'
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
@@ -531,33 +568,56 @@ const DashboardPage = () => {
                             day: "numeric",
                           });
                         }}
-                        indicator="dot"
+                        indicator='dot'
                       />
                     }
                   />
+                  {/* Tô màu dưới các đường biểu đồ */}
                   <Area
-                    dataKey="revenue"
-                    type="natural"
-                    fill="url(#fillRevenue)"
-                    stroke="var(--color-revenue)"
-                    stackId="a"
+                    dataKey='revenue'
+                    type='monotone'
+                    stroke='var(--color-revenue)'
+                    fill='url(#fillRevenue)'
+                    dot={false}
                   />
                   <Area
-                    dataKey="cost"
-                    type="natural"
-                    fill="url(#fillCost)"
-                    stroke="var(--color-cost)"
-                    stackId="a"
+                    dataKey='cost'
+                    type='monotone'
+                    stroke='var(--color-cost)'
+                    fill='url(#fillCost)'
+                    dot={false}
                   />
                   <Area
-                    dataKey="profit"
-                    type="natural"
-                    fill="url(#fillProfit)"
-                    stroke="var(--color-profit)"
-                    stackId="a"
+                    dataKey='profit'
+                    type='monotone'
+                    stroke='var(--color-profit)'
+                    fill='url(#fillProfit)'
+                    dot={false}
+                  />
+                  {/* Các đường biểu đồ */}
+                  <Line
+                    dataKey='revenue'
+                    type='monotone'
+                    stroke='var(--color-revenue)'
+                    fill='none'
+                    dot={false}
+                  />
+                  <Line
+                    dataKey='cost'
+                    type='monotone'
+                    stroke='var(--color-cost)'
+                    fill='none'
+                    dot={false}
+                  />
+                  <Line
+                    dataKey='profit'
+                    type='monotone'
+                    stroke='var(--color-profit)'
+                    fill='none'
+                    dot={false}
                   />
                   <ChartLegend content={<ChartLegendContent />} />
-                </AreaChart>
+                </LineChart>
               </ChartContainer>
             </CardContent>
           </Card>
