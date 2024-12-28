@@ -110,7 +110,7 @@ const updateDayOff = async (data) => {
         manager: data.manager,
         status: data.status,
         feedback: data.feedback,
-        date_solved: new Date(),
+        date_resolved: new Date(),
       },
       { new: true }
     );

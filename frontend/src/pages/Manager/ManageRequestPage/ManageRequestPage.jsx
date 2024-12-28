@@ -24,10 +24,21 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { useMutation } from "react-query";
 import * as RequestService from "@/services/requestService";
 import { useSearchParams } from "react-router-dom";
 import * as Message from "../../../components/ui/alert";
+import { use } from "react";
+import FormRequest from "@/components/SmallForm/FormRequest";
 
 const ManageRequestPage = () => {
   const ITEMS_PER_PAGE = 10;
@@ -72,10 +83,23 @@ const ManageRequestPage = () => {
       setIsLoading(false);
     },
   });
+  const handleClose = () => {
+    setShowForm(false);
+  };
 
   // Sử dụng mutate để gọi hàm xóa
   const handleDelete = (id) => {
-    mutate(id);
+    mutate(id, {
+      onSuccess: () => {
+        fetchRequests();
+        setShowForm(false); // Đóng FormRequest sau khi xóa
+        Message.success("Request deleted successfully.");
+      },
+      onError: (error) => {
+        Message.error("Failed to delete request:", error.message || error);
+        setIsLoading(false);
+      },
+    });
   };
 
   useEffect(() => {
@@ -86,6 +110,9 @@ const ManageRequestPage = () => {
     setSearchWord(e.target.value);
     setSearchParams({ page: 1 });
   };
+
+  const [showForm, setShowForm] = useState(false);
+  const [selected, setSelected] = useState('');
 
   return (
     <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
@@ -110,13 +137,11 @@ const ManageRequestPage = () => {
                     {[
                       "Request ID",
                       "Title",
-                      "Content",
                       "Sender",
                       "Sent At",
                       "Status",
                       "Receiver",
-                      "Feedback",
-                      "Feedback Sent At",
+                      "Resolve at",
                       "Action",
                     ].map((header, idx) => (
                       <TableHead
@@ -129,21 +154,23 @@ const ManageRequestPage = () => {
                 </TableHeader>
                 <TableBody>
                   {currentItems.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className='text-center py-3 px-4'>
+                    <TableRow key={index} 
+                    onClick={(e) => 
+                    { e.preventDefault();
+                      setSelected(item);
+                      setShowForm(true);
+                    }}>
+                      <TableCell className='text-center font-semibold py-3 px-4'>
                         {item.id}
                       </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
+                      <TableCell className='text-center font-semibold py-3 px-4'>
                         {item.title}
-                      </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
-                        {item.content}
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
                         {item.employee}
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
-                        {item.date_requested}
+                        {new Date(item.date_requested).toLocaleDateString("en-GB")}
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
                         <span
@@ -161,24 +188,55 @@ const ManageRequestPage = () => {
                         {item.manager}
                       </TableCell>
                       <TableCell className='text-center py-3 px-4'>
-                        {item.feedback}
+                        {new Date(item.date_resolved).toLocaleDateString("en-GB")}
                       </TableCell>
-                      <TableCell className='text-center py-3 px-4'>
-                        {item.updatedAt}
-                      </TableCell>
-                      <TableCell className='text-center flex justify-center items-center my-auto px-4'>
+                      <TableCell className='text-center flex justify-center items-center py-3 px-4'>
+                      <Dialog>
                         <DropdownMenu>
-                          <DropdownMenuTrigger className='my-auto'>
-                            <EllipsisVertical className='mb-2' />
+                          <DropdownMenuTrigger  onClick={(e) => e.stopPropagation()}>
+                            <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(item._id)}>
-                              Delete
-                            </DropdownMenuItem>
+                          <DropdownMenuContent  onClick={(e) => e.stopPropagation()} className='bg-white shadow-md rounded-lg'>
+                            <DialogTrigger onClick={(e) => e.stopPropagation()} asChild>
+                              <DropdownMenuItem>
+                                <span>Delete</span>
+                              </DropdownMenuItem>
+                            </DialogTrigger>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
+                        <DialogContent className='p-4'>
+                          <DialogHeader>
+                            <DialogTitle className='text-center text-lg font-semibold'>
+                              Are you sure you want to delete?
+                            </DialogTitle>
+                            <DialogDescription className='text-gray-600'>
+                              This action cannot be undone. This will
+                              permanently delete the request and remove your
+                              data from our servers.
+                            </DialogDescription>
+                            <div className='flex items-center justify-center gap-4 pt-4'>
+                              <DialogClose asChild>
+                                <Button variant='outline' className='w-28 '>
+                                  Cancel
+                                </Button>
+                              </DialogClose>
+                              <DialogClose asChild>
+                                <Button
+                                  onClick={(e) =>
+                                  {
+                                    e.preventDefault(); 
+                                    handleDelete(selected._id)
+                                  }}
+                                  className='w-28'
+                                  variant='destructive'>
+                                  Confirm
+                                </Button>
+                              </DialogClose>
+                            </div>
+                          </DialogHeader>
+                        </DialogContent>
+                      </Dialog>
+                    </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -218,6 +276,14 @@ const ManageRequestPage = () => {
           </Pagination>
         </div>
       </div>
+      {showForm && (
+        <div className="fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform">
+          <FormRequest
+            handleClose={handleClose}
+            request={selected}
+          />
+        </div>
+      )}
     </div>
   );
 };
