@@ -88,13 +88,12 @@ const useNavigationViewModel = () => {
                 busLines,
                 busStops
             );
-
+            console.log("bestPath", bestPath);
             if (bestPath) {
                 const formattedPath = formatFullPath(
                     bestPath,
                     startCoords,
-                    endCoords,
-                    busStops
+                    endCoords
                 );
                 setPath(formattedPath);
                 setError(null);
@@ -188,6 +187,9 @@ const useNavigationViewModel = () => {
                             current.transfers + 1 :
                             current.transfers;
 
+                        // Get all intermediate stops between current and next stop
+                        const intermediateStops = stops.slice(stopIndex, i + 1);
+
                         queue.enqueue({
                             currentStop: nextStop,
                             path: [...current.path, nextStop],
@@ -202,7 +204,8 @@ const useNavigationViewModel = () => {
                                     type: 'bus',
                                     line: line,
                                     from: current.currentStop,
-                                    to: nextStop
+                                    to: nextStop,
+                                    intermediateStops: intermediateStops // Add intermediate stops
                                 }
                             ]
                         });
@@ -254,7 +257,7 @@ const useNavigationViewModel = () => {
         return transfers * 2 + totalWalking;
     };
 
-    const formatFullPath = (pathData, startCoords, endCoords, busStops) => {
+    const formatFullPath = (pathData, startCoords, endCoords) => {
         const formattedSegments = [];
 
         // Add initial walking segment
@@ -285,26 +288,23 @@ const useNavigationViewModel = () => {
             } else { // bus segment
                 formattedSegments.push({
                     type: 'bus',
+                    endStop: segment.to,
                     line: segment.line,
-                    coords: getLineSegmentCoords(
-                        segment.line,
-                        segment.from.id,
-                        segment.to.id
-                    )
+                    to: segment.intermediateStops, // Use intermediate stops for the route
+                    coords: [[segment.from.pointY, segment.from.pointX]] // Starting coordinate
                 });
             }
         }
 
-        // Add final walking segment to destination
+        // Add final walking segment
         const lastStop = pathData.segments[pathData.segments.length - 1].to;
-        const finalWalkingSegment = {
+        formattedSegments.push({
             type: 'walking',
             coords: [
                 [lastStop.pointY, lastStop.pointX],
                 endCoords
             ]
-        };
-        formattedSegments.push(finalWalkingSegment);
+        });
 
         return formattedSegments;
     };

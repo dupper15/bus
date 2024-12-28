@@ -152,16 +152,19 @@ const useMapViewModel = ({mapData, busLines, stops, selectedStopCoordinates, mod
                     color = '#007cbf';
                 }
 
-                // Handle bus segments by using the arr_stop coordinates
-                if (type === 'bus' && segment.line && segment.line.arr_stop) {
-                    waypoints = segment.line.arr_stop
+                // Handle bus segments with intermediate stops
+                if (type === 'bus' && segment.to) {
+                    // Use all intermediate stops for the route
+                    waypoints = segment.to
                         .map(stop => `${stop.pointX},${stop.pointY}`)
                         .join(';');
                 }
-                // Handle walking and driving segments
+                // Handle walking segments
                 else if (coords && coords.length >= 2) {
                     waypoints = coords
-                        .map(coord => Array.isArray(coord) ? `${coord[1]},${coord[0]}` : `${coord.longitude},${coord.latitude}`)
+                        .map(coord => Array.isArray(coord)
+                            ? `${coord[1]},${coord[0]}`
+                            : `${coord.longitude},${coord.latitude}`)
                         .join(';');
                 }
 
