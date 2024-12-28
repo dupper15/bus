@@ -62,7 +62,7 @@ const BusPage = () => {
     onError: (error) => {
       console.log(error);
     },
-  })
+  });
 
   const mutationDelete = useMutation({
     mutationFn: async (data) => {
@@ -75,17 +75,17 @@ const BusPage = () => {
         Message.success(data.message); // Hiển thị thông báo thành công
         setShowForm(false);
         setShowDialog(false);
-        setRefresh(!refresh)
+        setRefresh(!refresh);
       }
     },
     onError: (error) => {
       console.log(error);
     },
-  })
+  });
 
   useEffect(() => {
     mutationGetAll.mutate();
-  },[refresh])
+  }, [refresh]);
 
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const currentItems = items
@@ -127,11 +127,11 @@ const BusPage = () => {
   const handleClose = () => {
     setShowForm(false);
     setShowDialog(false);
-    setRefresh(!refresh)
+    setRefresh(!refresh);
   };
 
   const handleDelete = (bus) => {
-    mutationDelete.mutate({ data: bus});
+    mutationDelete.mutate({ data: bus });
   };
 
   const [type, setType] = useState("");
@@ -149,9 +149,6 @@ const BusPage = () => {
             onChange={handleSearchChanged}
             text='Type license plate...'
           />
-          <Button className='flex-shrink-0'>
-            <FaRegCalendarMinus />
-          </Button>
           <Button onClick={handleAddClick} className='flex-shrink-0'>
             +
           </Button>
@@ -180,9 +177,7 @@ const BusPage = () => {
             </TableHeader>
             <TableBody>
               {currentItems.map((item, index) => (
-                <TableRow 
-                  key={index} 
-                  onClick={() => setSelectedBus(item)}>
+                <TableRow key={index} onClick={() => setSelectedBus(item)}>
                   <TableCell className='text-center py-3 px-4'>
                     {item.id}
                   </TableCell>
@@ -318,7 +313,10 @@ const BusPage = () => {
                     onClick={handleClose}>
                     Cancel
                   </Button>
-                  <Button variant='destructive' className='w-[120px]' onClick={() => handleDelete(selectedBus)}>
+                  <Button
+                    variant='destructive'
+                    className='w-[120px]'
+                    onClick={() => handleDelete(selectedBus)}>
                     Confirm
                   </Button>
                 </div>

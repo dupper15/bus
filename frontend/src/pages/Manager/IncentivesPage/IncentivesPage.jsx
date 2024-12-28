@@ -41,7 +41,6 @@ import * as IncentivesService from "@/services/incentivesService";
 import * as Message from "@/components/ui/alert";
 import { useMutation } from "react-query";
 
-
 const IncentivesPage = () => {
   const ITEMS_PER_PAGE = 10;
   const [items, setItems] = useState([]);
@@ -59,12 +58,12 @@ const IncentivesPage = () => {
       console.log(error);
     },
     onSuccess: (data) => {
-      setItems(data.data)
+      setItems(data.data);
     },
   });
 
   const mutationDelete = useMutation({
-    mutationFn: async (data) =>  {
+    mutationFn: async (data) => {
       return await IncentivesService.deleteIncentives(data);
     },
     onError: (error) => {
@@ -82,7 +81,7 @@ const IncentivesPage = () => {
 
   useEffect(() => {
     mutationGetAll.mutate();
-  }, [refresh])
+  }, [refresh]);
 
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const currentItems = items
@@ -142,22 +141,22 @@ const IncentivesPage = () => {
   const [price, setPrice] = useState("");
 
   return (
-    <div className="flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4">
-      <div className="flex w-full space-x-6">
-        <div className="flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300">
-          <div className="flex items-center gap-4">
+    <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
+      <div className='flex w-full space-x-6'>
+        <div className='flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
+          <div className='flex items-center gap-4'>
             <Search
-              className="flex-grow border border-gray-300 rounded-lg p-2"
+              className='flex-grow border border-gray-300 rounded-lg p-2'
               onChange={handleSearchChanged}
-              text="Type employee name..."
+              text='Type employee name...'
             />
-            <Button onClick={handleAddClick} className="flex-shrink-0">
+            <Button onClick={handleAddClick} className='flex-shrink-0'>
               +
             </Button>
           </div>
-          <div className="overflow-x-auto rounded-lg bg-white shadow-md">
-            <Table className="overflow-hidden rounded-t-lg border border-gray-300">
-              <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
+          <div className='overflow-x-auto rounded-lg bg-white shadow-md'>
+            <Table className='overflow-hidden rounded-t-lg border border-gray-300'>
+              <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
                 <TableRow>
                   {[
                     "ID",
@@ -170,7 +169,7 @@ const IncentivesPage = () => {
                   ].map((header, idx) => (
                     <TableHead
                       key={idx}
-                      className="text-center text-white text-base py-3 px-4">
+                      className='text-center text-white text-base py-3 px-4'>
                       {header}
                     </TableHead>
                   ))}
@@ -179,13 +178,13 @@ const IncentivesPage = () => {
               <TableBody>
                 {currentItems.map((item, index) => (
                   <TableRow key={index} onClick={() => setSelected(item)}>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       {item.id}
                     </TableCell>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       {item.employee.name}
                     </TableCell>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       <span
                         className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
                           item.type === "Reward"
@@ -195,19 +194,19 @@ const IncentivesPage = () => {
                         {item.type}
                       </span>
                     </TableCell>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       {item.content}
                     </TableCell>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       {new Date(item.date).toLocaleDateString("en-GB")}
                     </TableCell>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       {item.price}
                     </TableCell>
-                    <TableCell className="text-center flex justify-center items-center py-3 px-4">
+                    <TableCell className='text-center flex justify-center items-center py-3 px-4'>
                       <DropdownMenu>
                         <DropdownMenuTrigger>
-                          <EllipsisVertical className="mb-2 " />
+                          <EllipsisVertical className='mb-2 ' />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           <DropdownMenuItem
@@ -234,20 +233,20 @@ const IncentivesPage = () => {
               </TableBody>
             </Table>
           </div>
-          <Pagination className="flex justify-center items-center gap-4">
-            <PaginationContent className="flex gap-2">
+          <Pagination className='flex justify-center items-center gap-4'>
+            <PaginationContent className='flex gap-2'>
               <PaginationItem>
                 <PaginationPrevious
-                  href="#"
+                  href='#'
                   onClick={() => handlePageChange(currentPage - 1)}
-                  className="text-green-500 hover:text-green-700">
+                  className='text-green-500 hover:text-green-700'>
                   Previous
                 </PaginationPrevious>
               </PaginationItem>
               {[...Array(totalPages)].map((_, index) => (
                 <PaginationItem key={index}>
                   <PaginationLink
-                    href="#"
+                    href='#'
                     onClick={() => handlePageChange(index + 1)}
                     className={`px-4 py-2 rounded-full transition ${
                       index + 1 === currentPage
@@ -260,24 +259,24 @@ const IncentivesPage = () => {
               ))}
               <PaginationItem>
                 <PaginationNext
-                  href="#"
+                  href='#'
                   onClick={() => handlePageChange(currentPage + 1)}
-                  className="text-green-500 hover:text-green-700">
+                  className='text-green-500 hover:text-green-700'>
                   Next
                 </PaginationNext>
               </PaginationItem>
             </PaginationContent>
           </Pagination>
           {showForm && dialogType == "add" && (
-            <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
-              <FormIncentives handleClose={handleClose} isAdd="true" />
+            <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
+              <FormIncentives handleClose={handleClose} isAdd='true' />
             </div>
           )}
           {showForm && dialogType == "edit" && (
-            <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
+            <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
               <FormIncentives
                 handleClose={handleClose}
-                isAdd="false"
+                isAdd='false'
                 id={id}
                 name={name}
                 type={type}
@@ -292,21 +291,24 @@ const IncentivesPage = () => {
             <Dialog open={showDialog} onOpenChange={handleClose}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle className="text-center">
+                  <DialogTitle className='text-center'>
                     Are you sure you want to delete?
                   </DialogTitle>
                   <DialogDescription>
                     This action cannot be undone. This will permanently delete
                     the incentives.
                   </DialogDescription>
-                  <div className="flex items-center justify-center gap-2 pt-4">
+                  <div className='flex items-center justify-center gap-2 pt-4'>
                     <Button
-                      variant="outline"
-                      className="w-[120px]"
+                      variant='outline'
+                      className='w-[120px]'
                       onClick={handleClose}>
                       Cancel
                     </Button>
-                    <Button variant="destructive" className="w-[120px]" onClick={() => handleDelete(selected)}>
+                    <Button
+                      variant='destructive'
+                      className='w-[120px]'
+                      onClick={() => handleDelete(selected)}>
                       Confirm
                     </Button>
                   </div>

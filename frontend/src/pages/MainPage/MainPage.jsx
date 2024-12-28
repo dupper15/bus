@@ -1,7 +1,7 @@
 import { Route, Routes, useLocation } from "react-router-dom";
 import TicketFare from "./TicketFare";
 import BusRoute from "./BusRoute";
-import ProfilePage from "../ProfilePage/ProfilePage.jsx";
+import ProfilePage from "../Manager/ProfilePage/ProfilePage";
 import CustomerNavbar from "../../components/CustomerNavBar/CustomerNavBar";
 import CustomerMaterial from "../MainPage/CustomerMaterial";
 
