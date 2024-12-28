@@ -351,34 +351,6 @@ const OpinionPage = () => {
           </PaginationContent>
         </Pagination>
       </div>
-      {/* <div className="hidden w-1/3 md:flex flex-col gap-6">
-        <div className="bg-white shadow-lg rounded-xl p-6 border border-gray-300">
-          <div className="text-lg font-semibold text-gray-700 mb-4">
-            Status Overview
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col items-center justify-center bg-gradient-to-r from-red-400 to-red-500 text-white rounded-lg py-6 shadow-md">
-              <div className="text-xl font-semibold">Pending</div>
-              <div className="text-lg font-normal">{countPending}</div>
-            </div>
-            <div className="flex flex-col items-center justify-center bg-gradient-to-r from-green-400 to-green-600 text-white rounded-lg py-6 shadow-md">
-              <div className="text-xl font-semibold">Resolved</div>
-              <div className="text-lg font-normal">{countResolved}</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white shadow-lg rounded-xl p-6 border border-gray-300">
-          <div className="text-lg font-semibold text-gray-700 mb-4">
-            Summary
-          </div>
-          <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-700 text-white rounded-lg py-6 shadow-md">
-            <div className="text-xl font-semibold">Sum of Opinions</div>
-            <div className="text-lg font-normal">
-              {countPending + countResolved}
-            </div>
-          </div>
-        </div>
-      </div> */}
       <div className="hidden w-1/3 md:flex flex-col gap-6">
         <Card className="flex flex-col">
           <CardHeader className="items-center pb-0">
