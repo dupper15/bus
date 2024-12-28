@@ -77,14 +77,17 @@ const items = [
 
 const LinePage = () => {
   const ITEMS_PER_PAGE = 10;
-  const [searchWord, setSearchWord] = useState("");
+  const [startPlaceWord, setStartPlaceWord] = useState("");
+  const [endPlaceWord, setEndPlaceWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
 
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const currentItems = items
-    .filter((item) =>
-      item.name.toLowerCase().includes(searchWord.toLowerCase())
+    .filter(
+      (item) =>
+        item.start_place.toLowerCase().includes(startPlaceWord.toLowerCase()) &&
+        item.end_place.toLowerCase().includes(endPlaceWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -93,8 +96,12 @@ const LinePage = () => {
       setSearchParams({ page: page });
     }
   };
-  const handleSearchChanged = (e) => {
-    setSearchWord(e.target.value);
+  const handleStartPlaceChanged = (e) => {
+    setStartPlaceWord(e.target.value);
+    setSearchParams({ page: 1 });
+  };
+  const handleEndPlaceChanged = (e) => {
+    setEndPlaceWord(e.target.value);
     setSearchParams({ page: 1 });
   };
   const [showForm, setShowForm] = useState(false);
@@ -128,27 +135,27 @@ const LinePage = () => {
   const [end_place, setEnd_place] = useState("");
   const [time, setTime] = useState("");
   return (
-    <div className="flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4">
-      <div className="flex w-full space-x-6">
-        <div className="flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300">
-          <div className="flex items-center gap-4">
+    <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
+      <div className='flex w-full space-x-6'>
+        <div className='flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
+          <div className='flex items-center gap-4'>
             <Search
-              className="flex-grow border border-gray-300 rounded-lg p-2"
-              onChange={handleSearchChanged}
-              text="Type start place..."
+              className='flex-grow border border-gray-300 rounded-lg p-2'
+              onChange={handleStartPlaceChanged}
+              text='Type start place...'
             />
             <Search
-              className="flex-grow border border-gray-300 rounded-lg p-2"
-              onChange={handleSearchChanged}
-              text="Type end place..."
+              className='flex-grow border border-gray-300 rounded-lg p-2'
+              onChange={handleEndPlaceChanged}
+              text='Type end place...'
             />
-            <Button onClick={handleAddClick} className="flex-shrink-0">
+            <Button onClick={handleAddClick} className='flex-shrink-0'>
               +
             </Button>
           </div>
-          <div className="overflow-x-auto rounded-lg bg-white shadow-md">
-            <Table className="overflow-hidden rounded-t-lg border border-gray-300">
-              <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
+          <div className='overflow-x-auto rounded-lg bg-white shadow-md'>
+            <Table className='overflow-hidden rounded-t-lg border border-gray-300'>
+              <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
                 <TableRow>
                   {[
                     "Id",
@@ -160,7 +167,7 @@ const LinePage = () => {
                   ].map((header, idx) => (
                     <TableHead
                       key={idx}
-                      className="text-center text-white text-base py-3 px-4">
+                      className='text-center text-white text-base py-3 px-4'>
                       {header}
                     </TableHead>
                   ))}
@@ -169,25 +176,25 @@ const LinePage = () => {
               <TableBody>
                 {currentItems.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       {item.id}
                     </TableCell>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       {item.name}
                     </TableCell>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       {item.start_place}
                     </TableCell>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       {item.end_place}
                     </TableCell>
-                    <TableCell className="text-center py-3 px-4">
+                    <TableCell className='text-center py-3 px-4'>
                       {item.time}
                     </TableCell>
-                    <TableCell className="text-center flex justify-center items-center py-3 px-4">
+                    <TableCell className='text-center flex justify-center items-center py-3 px-4'>
                       <DropdownMenu>
                         <DropdownMenuTrigger>
-                          <EllipsisVertical className="mb-2 " />
+                          <EllipsisVertical className='mb-2 ' />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           <DropdownMenuItem
@@ -213,20 +220,20 @@ const LinePage = () => {
               </TableBody>
             </Table>
           </div>
-          <Pagination className="flex justify-center items-center gap-4">
-            <PaginationContent className="flex gap-2">
+          <Pagination className='flex justify-center items-center gap-4'>
+            <PaginationContent className='flex gap-2'>
               <PaginationItem>
                 <PaginationPrevious
-                  href="#"
+                  href='#'
                   onClick={() => handlePageChange(currentPage - 1)}
-                  className="text-green-500 hover:text-green-700">
+                  className='text-green-500 hover:text-green-700'>
                   Previous
                 </PaginationPrevious>
               </PaginationItem>
               {[...Array(totalPages)].map((_, index) => (
                 <PaginationItem key={index}>
                   <PaginationLink
-                    href="#"
+                    href='#'
                     onClick={() => handlePageChange(index + 1)}
                     className={`px-4 py-2 rounded-full transition ${
                       index + 1 === currentPage
@@ -239,24 +246,24 @@ const LinePage = () => {
               ))}
               <PaginationItem>
                 <PaginationNext
-                  href="#"
+                  href='#'
                   onClick={() => handlePageChange(currentPage + 1)}
-                  className="text-green-500 hover:text-green-700">
+                  className='text-green-500 hover:text-green-700'>
                   Next
                 </PaginationNext>
               </PaginationItem>
             </PaginationContent>
           </Pagination>
           {showForm && dialogType == "add" && (
-            <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
-              <FormLine handleClose={handleClose} isAdd="true" />
+            <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
+              <FormLine handleClose={handleClose} isAdd='true' />
             </div>
           )}
           {showForm && dialogType == "edit" && (
-            <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
+            <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
               <FormLine
                 handleClose={handleClose}
-                isAdd="false"
+                isAdd='false'
                 id={id}
                 name={name}
                 start_place={start_place}
@@ -270,21 +277,21 @@ const LinePage = () => {
             <Dialog open={showDialog} onOpenChange={handleClose}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle className="text-center">
+                  <DialogTitle className='text-center'>
                     Are you sure you want to delete?
                   </DialogTitle>
                   <DialogDescription>
                     This action cannot be undone. This will permanently delete
                     the schedule.
                   </DialogDescription>
-                  <div className="flex items-center justify-center gap-2 pt-4">
+                  <div className='flex items-center justify-center gap-2 pt-4'>
                     <Button
-                      variant="outline"
-                      className="w-[120px]"
+                      variant='outline'
+                      className='w-[120px]'
                       onClick={handleClose}>
                       Cancel
                     </Button>
-                    <Button className="w-[120px]" onClick={handleClose}>
+                    <Button className='w-[120px]' onClick={handleClose}>
                       Confirm
                     </Button>
                   </div>

@@ -106,7 +106,6 @@ export default function App() {
           <Route path='/signup' element={<SignUpPage />} />
           <Route path='/home/*' element={<MainPage />} />
           <Route path='/payment/*' element={<MainBuyPage />} />
-          <Route path='/your-material' element={<MainBuyPage />} />
           <Route path='*' element={<Page404 />} />
           <Route path='/test' element={<Test />} />
 
