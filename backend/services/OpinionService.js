@@ -3,7 +3,6 @@ const Manager = require("../models/ManagerModel")
 
 const createOpinion = async (data) => {
     try {
-        console.log("data", data)
         const opinions = await Opinion.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
         const ids = opinions.map((op) => parseInt(op.id.replace('O', ''), 10));
         let newIdNumber = 1;

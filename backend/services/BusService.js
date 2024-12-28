@@ -2,7 +2,6 @@ const Bus = require("../models/BusModel")
 
 const createBus = async (data) => {
     try {
-        console.log("data", data)
         // Kiểm tra xe buýt với biển số xe đã tồn tại
         const checkBus = await Bus.findOne({ license_plate: data.license_plate });
         if (checkBus !== null) {

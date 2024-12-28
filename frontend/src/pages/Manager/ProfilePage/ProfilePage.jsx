@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import * as Message from "../../../components/ui/alert";
 import { updateAccount } from "@/redux/accountSlide";
 import { useMutation } from "react-query";
-import * as ManagerService from "../../../services/managerService";
+import * as AccountService from "../../../services/accountService";
 import ChangePassword from "@/components/ChangePassword/ChangePassword";
 import { Button } from "@/components/ui/button";
 
@@ -42,14 +42,15 @@ const ProfilePage = () => {
   const handleUpdateUserName = () => {
     try {
       const values = {
+        _id: account?._id,
         id_card: account?.id_card,
         username: userName,
       };
-      mutaion.mutate({ data: values });
+      mutation.mutate({ data: values });
       dispatch(
         updateAccount({
           ...account,
-          username: userName,
+          name: userName,
         })
       );
       setIsEditingUserName(false);
@@ -100,10 +101,11 @@ const ProfilePage = () => {
         })
       );
       const values = {
+        _id: account?._id,
         id_card: account?.id_card,
         image: result.secure_url,
       };
-      mutaion.mutate({ data: values });
+      mutation.mutate({ data: values });
       Message.success("Change image successfully");
     } catch (error) {
       Message.error("Failed to upload image. Please try again.");
@@ -127,10 +129,11 @@ const ProfilePage = () => {
         })
       );
       const values = {
+        _id: account?._id,
         id_card: account?.id_card,
         image: profileIcon,
       };
-      mutaion.mutate({ data: values });
+      mutation.mutate({ data: values });
       Message.success("Remove image successfully!");
     } catch (error) {
       Message.error("Failed to remove image. Please try again.");
@@ -138,9 +141,9 @@ const ProfilePage = () => {
     }
   };
 
-  const mutaion = useMutation({
+  const mutation = useMutation({
     mutationFn: async ({ data }) => {
-      return await ManagerService.updateManager(data);
+      return await AccountService.updateAccount(data);
     },
     onSuccess: (data) => {
       console.log(data);
