@@ -1,40 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
-import visa from "../../assets/image 8.png";
 import { Link, useNavigate } from "react-router-dom";
-import usePurchasePagesViewModel from "./PurchasePagesViewModel";
 import * as TicketService from "@/services/ticketService";
 import * as Message from "@/components/ui/alert";
-import { useMutation } from "react-query";
 import { useSelector } from "react-redux";
 import axios from "axios";
+import { Button } from "@/components/ui/button";
 
 const Purchase = ({ prevStep }) => {
   const navigate = useNavigate();
   const account = useSelector((state) => state.account);
+
   useEffect(() => {
     prevStep();
-  });
-  const [selectedLine, setSelectedLine] = useState("Line 1");
-  const [content, setContent] = useState("");
-  const date = new Date().toISOString();
+  },[]);
 
-  const selectedLineRef = useRef(selectedLine);
-  const contentRef = useRef(date + selectedLineRef.current);
+  const date = new Date().toISOString();
+  const content = date.split(".")[0].replace("T", ""); 
 
   const MY_BANK = "MB";
   const ACCOUNT_NO = "0948041545";
   const ACCOUNT_NAME = "CAO DUONG LAM";
   const price = 10000;
 
-  useEffect(() => {
-    // Cập nhật selectedLineRef ngay lập tức
-    selectedLineRef.current = selectedLine;
-    contentRef.current = date + selectedLineRef.current;
-  }, [selectedLine]);
-  useEffect(() => {
-    // Cập nhật content mỗi khi selectedLine thay đổi
-    setContent(date.replace(/[-:.\s]/g, "") + selectedLine.replace(/\s/g, ""));
-  }, [selectedLine]);
   const checkPaid = async () => {
     try {
       const response = await axios.get(
@@ -42,18 +29,16 @@ const Purchase = ({ prevStep }) => {
       );
       const data = await response.data.data;
       const lastPaid = data[data.length - 1];
-      const check = contentRef.current.replace(/[-:.\s]/g, "");
+      const check = content.replace(/[-:.\s]/g, "");
       const lastPrice = lastPaid["Giá trị"];
       const lastContent = lastPaid["Mô tả"];
       if (lastPrice >= price && lastContent.includes(check)) {
         const data = await TicketService.createTicket({
-          line: selectedLineRef.current,
           price: price,
           customer: account._id,
         });
         if (data.status === "OK") {
           Message.success(data.message);
-          nextStep();
           navigate("/payment/thanks");
         } else {
           Message.error(data.message);
@@ -64,7 +49,7 @@ const Purchase = ({ prevStep }) => {
     } catch (error) {
       console.error("Failed to check paid", error);
       throw error;
-    }
+    } 
   };
 
   useEffect(() => {
@@ -144,22 +129,10 @@ const Purchase = ({ prevStep }) => {
 
       {/* QR Code and Selection */}
       <div className='flex flex-col items-center bg-white shadow-md rounded-lg mx-6 md:mx-10 p-6'>
-        <div className='flex items-center gap-4 mb-4'>
-          <label className='text-gray-700 text-sm font-medium'>Time:</label>
-          <select
-            onChange={(e) => setSelectedLine(e.target.value)}
-            value={selectedLine}
-            className='border border-gray-300 rounded-lg px-3 py-2 text-gray-700'>
-            <option value='Line 1'>Line 1</option>
-            <option value='Line 2'>Line 2</option>
-            <option value='Line 3'>Line 3</option>
-          </select>
-        </div>
         <div className='text-gray-700 text-sm font-medium mb-2'>
           Scan the QR Code to complete payment:
         </div>
         <img
-          key={content}
           src={`https://img.vietqr.io/image/${MY_BANK}-${ACCOUNT_NO}-compact2.png?amount=${price}&addInfo=${content}&accountName=${ACCOUNT_NAME}`}
           alt='QR Code'
           className='w-48 h-48'
@@ -167,12 +140,11 @@ const Purchase = ({ prevStep }) => {
       </div>
 
       {/* Footer Buttons */}
+     
       <div className='flex justify-center gap-4 bg-white py-6 shadow-inner'>
-        <button
-          onClick={() => (window.location.href = "/home")}
-          className='bg-gray-500 hover:bg-gray-400 text-white font-semibold py-3 px-8 rounded-lg transition-all'>
+        <Button variant="outline" onClick={() => (window.location.href = "/home")} className="font-semibold">
           Cancel
-        </button>
+        </Button>  
       </div>
     </div>
   );

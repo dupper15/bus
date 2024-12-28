@@ -44,7 +44,7 @@ const ProfilePage = () => {
       const values = {
         _id: account?._id,
         id_card: account?.id_card,
-        username: userName,
+        name: userName,
       };
       mutation.mutate({ data: values });
       dispatch(

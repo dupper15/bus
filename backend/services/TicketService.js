@@ -1,4 +1,3 @@
-const Line = require("../models/LineModel");
 const Ticket = require("../models/TicketModel");
 
 const createTicket = async (data) => {
@@ -17,8 +16,6 @@ const createTicket = async (data) => {
         }
         const newId = `T${String(newIdNumber).padStart(3, '0')}`;
 
-        const lineId = await Line.findOne({name: data.line})
-
         // Tính toán expiration_date dựa trên effective_date
         const effectiveDate = data.effective_date
             ? new Date(data.effective_date)
@@ -33,7 +30,6 @@ const createTicket = async (data) => {
         const createdTicket = await Ticket.create({
             id: newId,
             customer: data.customer,
-            line: lineId,
             price: data.price,
             effective_date: effectiveDate,
             expiration_date: expirationDate,

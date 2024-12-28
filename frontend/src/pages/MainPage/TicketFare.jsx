@@ -6,58 +6,45 @@ import { useNavigate } from "react-router-dom";
 const TicketFare = () => {
   const navigate = useNavigate();
   return (
-    <div className='w-full flex h-full p-6 bg-white'>
-      {/* Left Section */}
-      <div className='basis-1/2 flex flex-col pl-8 gap-6'>
-        {/* Title */}
-        <div className='font-bold text-4xl text-green-500 mt-4'>
-          Fares and Tickets
-        </div>
-        {/* Subtitle */}
-        <div className='font-semibold text-2xl text-green-500'>
-          Your One-Stop Ticket to the City
-        </div>
-        {/* Description */}
-        <div className='font-normal text-lg text-gray-700'>
-          Experience hassle-free travel with our convenient ticketing system,
-          designed to make your journey smooth and enjoyable.
-        </div>
-        {/* Offerings Title */}
-        <div className='font-semibold text-2xl text-green-500'>
-          Our Offerings:
-        </div>
-        {/* Ticket Card */}
-        <div className='w-full  border-2 border-gray-300 shadow-lg rounded-lg p-6 flex flex-col gap-4 items-center'>
-          <div className='font-semibold text-2xl text-green-500'>
-            Monthly Ticket
-          </div>
-          <div className='font-bold text-5xl text-gray-800'>$30</div>
-          <div className='font-normal text-lg text-gray-600'>
-            Validity: 30 days
-          </div>
-          <div className='font-normal text-lg text-gray-600'>
-            Usage: Valid on all bus routes
-          </div>
-          <div className='font-normal text-lg text-gray-600'>
-            Locale: Ho Chi Minh City
-          </div>
-          <button
-            onClick={() => navigate("/payment")}
-            className='bg-green-500 hover:bg-green-400 text-white font-bold py-2 px-8 rounded-md transition'>
-            Buy Now
-          </button>
-        </div>
+    <div className="flex flex-col md:flex-row w-full h-full p-6 bg-gradient-to-r from-blue-50 to-green-50">
+  {/* Left Section */}
+  <div className="md:basis-2/5 flex flex-col px-4 md:px-8 gap-6 justify-center">
+    <h1 className="text-4xl font-extrabold text-green-600">
+      Fares and Tickets
+    </h1>
+    <p className="text-xl font-medium text-gray-700">
+      Your One-Stop Ticket to the City
+    </p>
+    <p className="text-base text-gray-600 leading-relaxed">
+      Experience hassle-free travel with our convenient ticketing system,
+      designed to make your journey smooth and enjoyable.
+    </p>
+    <h2 className="text-2xl font-semibold text-green-600">Our Offerings:</h2>
+    <div className="p-6 rounded-lg bg-white shadow-md hover:shadow-xl transition transform duration-200 ease-in-out flex flex-col items-center">
+      <h3 className="text-2xl text-center font-semibold text-green-500">Monthly Ticket</h3>
+      <p className="text-4xl text-center font-bold text-gray-800 my-2">50.000 VND</p>
+      <div className="text-center space-y-1">
+        <p className="text-gray-500 text-base">🕒 Validity: <span className="text-gray-800">30 days</span></p>
+        <p className="text-gray-500 text-base">🚌 Usage: <span className="text-gray-800">All bus routes</span></p>
+        <p className="text-gray-500 text-base">📍 Locale: <span className="text-gray-800">Ho Chi Minh City</span></p>
       </div>
-
-      {/* Right Section */}
-      <div
-        className='basis-1/2 mt-4 mb-2 ml-6 rounded-lg shadow-lg'
-        style={{
-          backgroundImage: `url(${image})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}></div>
+      <button onClick={() => navigate("/payment")} className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 mt-4 rounded-md">
+        Buy Now
+      </button>
     </div>
+  </div>
+
+  {/* Right Section */}
+  <div
+    className="md:basis-3/5 rounded-lg shadow-lg"
+    style={{
+      backgroundImage: `url(${image})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    }}
+  />
+</div>
+
   );
 };
 
