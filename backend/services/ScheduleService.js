@@ -5,15 +5,15 @@ const Schedule = require("../models/ScheduleModel")
 
 const createSchedule = async (data) => {
         try {
-            // const checkSchedule = await Schedule.findOne({
-                
-            // })
-            // if (checkSchedule !== null) {
-            //     resolve({
-            //         status: "ERROR", message: "A schedule with this information already exists."
-            //     })
-            //     return;
-            // }
+            const checkSchedule = await Schedule.findOne({line: data.line, time_start: data.time_start})
+            .populate("line", "name")
+            .populate("bus", "license_plate")
+            if(checkSchedule){
+                return({
+                    status: "ERROR",
+                    message: `Schedule already exists on line ${checkSchedule.line.name} at ${checkSchedule.time_start} with bus ${checkSchedule.bus.license_plate}.`,
+                })
+            }
             // Lấy tất cả ID hiện có và sắp xếp
             const schedules = await Schedule.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
 
@@ -56,25 +56,78 @@ const createSchedule = async (data) => {
 }
 
 const getAllSchedule = async () => {
-        try {
-            const allSchedule = await Schedule.find()
+    try {
+        const allSchedule = await Schedule.find()
             .populate("bus", "_id id license_plate status")
             .populate("line", "_id id name")
             .populate("driver", "_id id name status")
             .populate("busboy", "_id id name status");
-            return({
-                status: "OK", 
-                message: "Schedules retrieved successfully.", 
-                data: allSchedule
-            })
-        } catch (e) {
-            return({
-                status: "ERROR", 
-                message: "An error occurred while retrieving the schedules.", 
-                error: e
-            })
+
+        const now = new Date();
+        const offset = 7 * 60; // GMT+7 in minutes
+        const localTime = new Date(now.getTime() + offset * 60 * 1000);
+        const currentDate = localTime.toISOString().split("T")[0]; // Lấy ngày hiện tại ở định dạng YYYY-MM-DD
+
+        const newSchedules = [];
+
+        allSchedule.forEach(schedule => {
+            const scheduleDate = new Date(schedule.date).toISOString().split("T")[0]; // Ngày của schedule
+
+            // Nếu khác ngày hiện tại, tạo schedule mới
+            if (scheduleDate !== currentDate) {
+                const newSchedule = {
+                    id: schedule.id, // Tạo ID mới
+                    bus: schedule.bus,
+                    line: schedule.line,
+                    driver: schedule.driver,
+                    busboy: schedule.busboy,
+                    time_start: schedule.time_start,
+                    time: schedule.time,
+                    status: "Pending",
+                    ticket3: 0,
+                    ticket7: 0,
+                    date: localTime // Ngày mới
+                };
+
+                newSchedules.push(newSchedule);
+            }
+        });
+
+        // Thêm các schedule mới vào cơ sở dữ liệu
+        if (newSchedules.length > 0) {
+            await Schedule.insertMany(newSchedules);
         }
-}
+
+        // Cập nhật trạng thái cho các schedule hiện tại
+        const hours = localTime.getUTCHours();
+        const minutes = localTime.getUTCMinutes();
+
+        allSchedule.forEach(schedule => {
+            const [startHours, startMinutes] = schedule.time_start.split(":").map(Number);
+            const startTotalMinutes = startHours * 60 + startMinutes;
+            const currentTotalMinutes = hours * 60 + minutes;
+            const finishTotalMinutes = startTotalMinutes + schedule.time;
+
+            if (finishTotalMinutes <= currentTotalMinutes) {
+                schedule.status = "Completed";
+            } else if (startTotalMinutes <= currentTotalMinutes) {
+                schedule.status = "In Progress";
+            }
+        });
+
+        return ({
+            status: "OK",
+            message: "Schedules retrieved and updated successfully.",
+            data: allSchedule
+        });
+    } catch (e) {
+        return ({
+            status: "ERROR",
+            message: "An error occurred while retrieving the schedules.",
+            error: e
+        });
+    }
+};
 
 const getAllAdd = async () => {
     try {
@@ -103,12 +156,13 @@ const getAllAdd = async () => {
 
 const updateSchedule = async (data) => {
         try {
-            console.log("data",data);
-            const checkSchedule = await Schedule.findOne({_id: data._id});
-            if (!checkSchedule) {
+            const checkSchedule = await Schedule.findOne({line: data.line, time_start: data.time_start})
+            .populate("line", "name")
+            .populate("bus", "license_plate")
+            if(checkSchedule){
                 return({
-                    status: "ERROR", 
-                    message: "No schedule found with the provided ID."
+                    status: "ERROR",
+                    message: `Schedule already exists on line ${checkSchedule.line.name} at ${checkSchedule.time_start} with bus ${checkSchedule.bus.license_plate}.`,
                 })
             }
 
@@ -194,6 +248,36 @@ const deleteSchedule = (ScheduleId) => {
     })
 }
 
+const approveAllSchedule = async () => {
+    try {
+        const date = new Date().toDateString();
+        const schedules = await Schedule.find({date: {$gte: date}});
+        schedules.forEach(async (schedule) => {
+            schedule.status = "Not start yet";
+            await schedule.save();
+        })
+        
+        return({
+            status: "OK", 
+            message: "Schedule updated successfully.", 
+            data: schedules
+        })
+
+    } catch (e) {
+        return({
+            status: "ERROR", 
+            message: "An error occurred while updating the schedule.", 
+            error: e
+        })
+    }
+}
+
 module.exports = {
-    createSchedule, getAllSchedule, updateSchedule, getDetailSchedule, deleteSchedule, getAllAdd
+    createSchedule, 
+    getAllSchedule, 
+    updateSchedule, 
+    getDetailSchedule, 
+    deleteSchedule, 
+    getAllAdd,
+    approveAllSchedule
 }

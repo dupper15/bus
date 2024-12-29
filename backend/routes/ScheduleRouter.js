@@ -8,5 +8,6 @@ router.get('/get-all-add' , scheduleController.getAllAdd);
 router.get('/get-detail/:id' , scheduleController.getDetailSchedule);
 router.delete('/delete/:id' , scheduleController.deleteSchedule);
 router.put('/edit', scheduleController.updateSchedule);
+router.put('/approve-all', scheduleController.approveAllSchedule);
 
 module.exports = router
