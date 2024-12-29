@@ -1,148 +1,400 @@
 import { z } from "zod";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useEffect, useRef, useState, useCallback } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { Button } from "@/components/ui/button";
+import { GripVertical, X } from 'lucide-react';
+
+mapboxgl.accessToken = 'pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg';
 
 const formSchema = z.object({
-  name: z.string().nonempty({ message: "Name is required." }),
-  phone: z
-    .string()
-    .regex(/^\d{10,12}$/, { message: "Invalid phone number." })
-    .nonempty({ message: "Phone number is required." }),
-  id_card: z.string().nonempty({ message: "ID Card is required." }),
-  status: z.enum(["able", "disable"], { message: "Invalid status." }),
+    name: z.string().nonempty({ message: "Name is required." }),
+    start_place: z.object({
+        id: z.string(),
+        name: z.string(),
+        pointX: z.number(),
+        pointY: z.number(),
+    }).nullable(),
+    end_place: z.object({
+        id: z.string(),
+        name: z.string(),
+        pointX: z.number(),
+        pointY: z.number(),
+    }).nullable(),
+    arr_stop: z.array(z.object({
+        id: z.string(),
+        name: z.string(),
+        pointX: z.number(),
+        pointY: z.number(),
+    })),
+    time: z.number().min(0, { message: "Time must be a positive number." }),
 });
 
 const FormLine = ({
-  isAdd,
-  handleClose,
-  id = "",
-  name = "",
-  start_place = "",
-  end_place = "",
-  time = "",
-}) => {
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name,
-      start_place,
-      end_place,
-      time,
-    },
-  });
+                      isAdd,
+                      handleClose,
+                      initialData = null,
+                      onSubmit,
+                  }) => {
+    const mapContainerRef = useRef(null);
+    const mapRef = useRef(null);
+    const [stops, setStops] = useState([]);
+    const [routeCoordinates, setRouteCoordinates] = useState([]);
 
-  const onCreate = (e) => {
-    e.preventDefault();
-    const values = form.getValues();
-    console.log("Form submitted successfully:", values);
-  };
+    const form = useForm({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: initialData?.name || "",
+            start_place: initialData?.start_place || null,
+            end_place: initialData?.end_place || null,
+            arr_stop: initialData?.arr_stop || [],
+            time: initialData?.time || 0,
+        },
+    });
 
-  return (
-    <div className='absolute inset-0 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
-      <Form {...form}>
-        <form
-          onSubmit={onCreate}
-          className='w-full max-w-2xl bg-white shadow-lg border rounded-lg p-6 space-y-6'>
-          <h1 className='text-2xl font-bold text-green-500 text-center'>
-            {isAdd === "true" ? "Add New Line" : "Edit Line"}
-          </h1>
+    const fetchStops = useCallback(async () => {
+        try {
+            const response = await StopService.getStops();
+            const rawStops = response.data;
+            setStops(rawStops);
+        } catch (error) {
+            console.error("Failed to fetch stops:", error);
+        }
+    }, []);
 
-          {/* Form Fields */}
-          <div className='grid grid-cols-1 gap-6'>
-            {isAdd === "false" && (
-              <div className='flex flex-col space-y-2'>
-                <FormLabel>ID:</FormLabel>
-                <div className='text-gray-700 bg-gray-100 p-2 rounded border'>
-                  {id}
+    useEffect(() => {
+        fetchStops();
+    }, [fetchStops]);
+
+    useEffect(() => {
+        if (!mapRef.current && mapContainerRef.current) {
+            mapRef.current = new mapboxgl.Map({
+                container: mapContainerRef.current,
+                style: 'mapbox://styles/mapbox/streets-v11',
+                center: [106.6297, 10.8231],
+                zoom: 12
+            });
+
+            mapRef.current.addControl(new mapboxgl.NavigationControl());
+        }
+
+        return () => {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!mapRef.current) return;
+
+        const markers = document.getElementsByClassName('mapboxgl-marker');
+        while (markers[0]) {
+            markers[0].remove();
+        }
+
+        if (mapRef.current.getSource('route')) {
+            mapRef.current.removeLayer('route');
+            mapRef.current.removeSource('route');
+        }
+
+        const values = form.getValues();
+        const allStops = [
+            values.start_place,
+            ...values.arr_stop,
+            values.end_place
+        ].filter(stop => stop !== null);
+
+        allStops.forEach((stop, index) => {
+            if (!stop) return;
+
+            const el = document.createElement('div');
+            el.className = 'marker';
+            el.style.width = '20px';
+            el.style.height = '20px';
+            el.style.borderRadius = '50%';
+            el.style.backgroundColor = index === 0 ? '#22c55e' :
+                index === allStops.length - 1 ? '#ef4444' : '#3b82f6';
+
+            new mapboxgl.Marker(el)
+                .setLngLat([stop.pointX, stop.pointY])
+                .setPopup(new mapboxgl.Popup().setHTML(`<h3>${stop.name}</h3>`))
+                .addTo(mapRef.current);
+        });
+
+        if (allStops.length >= 2) {
+            const coordinates = allStops.map(stop => [stop.pointX, stop.pointY]);
+
+            const fetchRoute = async () => {
+                const coordinateString = coordinates
+                    .map(coord => coord.join(','))
+                    .join(';');
+
+                try {
+                    const response = await fetch(
+                        `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinateString}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+                    );
+                    const data = await response.json();
+
+                    if (data.routes && data.routes[0]) {
+                        const route = data.routes[0].geometry;
+
+                        mapRef.current.addSource('route', {
+                            type: 'geojson',
+                            data: {
+                                type: 'Feature',
+                                properties: {},
+                                geometry: route
+                            }
+                        });
+
+                        mapRef.current.addLayer({
+                            id: 'route',
+                            type: 'line',
+                            source: 'route',
+                            layout: {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            paint: {
+                                'line-color': '#3b82f6',
+                                'line-width': 4
+                            }
+                        });
+
+                        const bounds = new mapboxgl.LngLatBounds();
+                        coordinates.forEach(coord => bounds.extend(coord));
+                        mapRef.current.fitBounds(bounds, { padding: 50 });
+                    }
+                } catch (error) {
+                    console.error('Error fetching route:', error);
+                }
+            };
+
+            fetchRoute();
+        }
+    }, [form.watch('start_place'), form.watch('end_place'), form.watch('arr_stop')]);
+
+    const onDragEnd = (result) => {
+        if (!result.destination) return;
+
+        const arr_stop = form.getValues('arr_stop');
+        const items = Array.from(arr_stop);
+        const [reorderedItem] = items.splice(result.source.index, 1);
+        items.splice(result.destination.index, 0, reorderedItem);
+
+        form.setValue('arr_stop', items);
+    };
+
+    const handleSubmit = async (values) => {
+        try {
+            await onSubmit(values);
+            handleClose();
+        } catch (error) {
+            console.error('Error submitting form:', error);
+        }
+    };
+
+    return (
+        <div className='absolute inset-0 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
+            <div className='w-full max-w-6xl bg-white shadow-lg border rounded-lg p-6 mx-4'>
+                <h1 className='text-2xl font-bold text-green-500 text-center mb-6'>
+                    {isAdd ? "Add New Line" : "Edit Line"}
+                </h1>
+
+                <div className='grid grid-cols-2 gap-6'>
+                    <div>
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+                                {!isAdd && (
+                                    <div className='flex flex-col space-y-2'>
+                                        <FormLabel>ID:</FormLabel>
+                                        <div className='text-gray-700 bg-gray-100 p-2 rounded border'>
+                                            {initialData.id}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <FormField
+                                    control={form.control}
+                                    name='name'
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder='Enter Line Name' {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name='start_place'
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Start Place</FormLabel>
+                                            <Select
+                                                value={field.value?.id}
+                                                onValueChange={(value) => {
+                                                    const stop = stops.find(s => s.id === value);
+                                                    field.onChange(stop);
+                                                }}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select start stop" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {stops.map(stop => (
+                                                        <SelectItem key={stop.id} value={stop.id}>
+                                                            {stop.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <DragDropContext onDragEnd={onDragEnd}>
+                                    <Droppable droppableId="stops">
+                                        {(provided) => (
+                                            <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4 h-64 overflow-y-auto border rounded p-2">
+                                                {form.watch('arr_stop').map((stop, index) => (
+                                                    <Draggable key={stop?.id || index} draggableId={stop?.id || `temp-${index}`} index={index}>
+                                                        {(provided) => (
+                                                            <div
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                className="flex items-center gap-2 bg-gray-50 p-2 rounded"
+                                                            >
+                                                                <div {...provided.dragHandleProps}>
+                                                                    <GripVertical className="text-gray-500" />
+                                                                </div>
+                                                                <Select
+                                                                    value={stop?.id}
+                                                                    onValueChange={(value) => {
+                                                                        const newStop = stops.find(s => s.id === value);
+                                                                        const arr_stop = form.getValues('arr_stop');
+                                                                        arr_stop[index] = newStop;
+                                                                        form.setValue('arr_stop', arr_stop);
+                                                                    }}>
+                                                                    <SelectTrigger className="flex-1">
+                                                                        <SelectValue placeholder={`Select stop ${index + 1}`} />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {stops.map(s => (
+                                                                            <SelectItem key={s.id} value={s.id}>
+                                                                                {s.name}
+                                                                            </SelectItem>
+                                                                        ))}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => {
+                                                                        const arr_stop = form.getValues('arr_stop');
+                                                                        form.setValue('arr_stop', arr_stop.filter((_, i) => i !== index));
+                                                                    }}>
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                ))}
+                                                {provided.placeholder}
+                                            </div>
+                                        )}
+                                    </Droppable>
+                                </DragDropContext>
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        const arr_stop = form.getValues('arr_stop');
+                                        form.setValue('arr_stop', [...arr_stop, null]);
+                                    }}>
+                                    Add Stop
+                                </Button>
+
+                                <FormField
+                                    control={form.control}
+                                    name='end_place'
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>End Place</FormLabel>
+                                            <Select
+                                                value={field.value?.id}
+                                                onValueChange={(value) => {
+                                                    const stop = stops.find(s => s.id === value);
+                                                    field.onChange(stop);
+                                                }}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select end stop" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {stops.map(stop => (
+                                                        <SelectItem key={stop.id} value={stop.id}>
+                                                            {stop.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name='time'
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Time (minutes)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" min="0" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <div className='flex justify-end gap-4'>
+                                    <Button variant="outline" onClick={handleClose}>
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit" className="bg-green-500 hover:bg-green-600">
+                                        Submit
+                                    </Button>
+                                </div>
+                            </form>
+                        </Form>
+                    </div>
+
+                    <div className='relative'>
+                        <div ref={mapContainerRef} className='h-[600px] rounded-lg border' />
+                    </div>
                 </div>
-              </div>
-            )}
-
-            {/* Name */}
-            <FormField
-              control={form.control}
-              name='name'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Enter Line Name' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='start_place'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start place</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Enter Start Place...' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='end_place'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>End Place</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Enter End Place...' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='time'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Time</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Enter Time...' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Buttons */}
-          <div className='flex justify-end gap-4 mt-4'>
-            <button
-              onClick={handleClose}
-              type='button'
-              className='bg-slate-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200'>
-              Cancel
-            </button>
-            <button
-              type='submit'
-              className='bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-400'>
-              Submit
-            </button>
-          </div>
-        </form>
-      </Form>
-    </div>
-  );
+            </div>
+        </div>
+    );
 };
 
 export default FormLine;

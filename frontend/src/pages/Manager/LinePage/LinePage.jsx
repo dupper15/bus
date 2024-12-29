@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Search from "@/components/ui/search";
-import React, { useState } from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {
   Table,
   TableBody,
@@ -36,268 +36,264 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-
-const items = [
-  {
-    id: "L001",
-    name: "01",
-    start_place: "võ văn ngân",
-    end_place: "nguyễn thị minh khai",
-    time: "1 tiếng 15p",
-  },
-  {
-    id: "L002",
-    name: "02",
-    start_place: "Tân Sơn Nhất",
-    end_place: "Bến Thành",
-    time: "45 phút",
-  },
-  {
-    id: "L003",
-    name: "03",
-    start_place: "Bến Thành",
-    end_place: "Chợ Lớn",
-    time: "1 tiếng",
-  },
-  {
-    id: "L004",
-    name: "04",
-    start_place: "Chợ Lớn",
-    end_place: "Gò Vấp",
-    time: "1 tiếng 20 phút",
-  },
-  {
-    id: "L005",
-    name: "05",
-    start_place: "Bình Thạnh",
-    end_place: "Quận 7",
-    time: "50 phút",
-  },
-];
+import LineService from "@/services/LineService.js";
 
 const LinePage = () => {
   const ITEMS_PER_PAGE = 10;
+  const [lines, setLines] = useState([]);
+  const [filteredLines, setFilteredLines] = useState([]);
   const [startPlaceWord, setStartPlaceWord] = useState("");
   const [endPlaceWord, setEndPlaceWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentPage = parseInt(searchParams.get("page")) || 1;
-
-  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
-  const currentItems = items
-    .filter(
-      (item) =>
-        item.start_place.toLowerCase().includes(startPlaceWord.toLowerCase()) &&
-        item.end_place.toLowerCase().includes(endPlaceWord.toLowerCase())
-    )
-    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setSearchParams({ page: page });
-    }
-  };
-  const handleStartPlaceChanged = (e) => {
-    setStartPlaceWord(e.target.value);
-    setSearchParams({ page: 1 });
-  };
-  const handleEndPlaceChanged = (e) => {
-    setEndPlaceWord(e.target.value);
-    setSearchParams({ page: 1 });
-  };
   const [showForm, setShowForm] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [dialogType, setDialogType] = useState("");
+  const [selectedLine, setSelectedLine] = useState(null);
 
+  const currentPage = parseInt(searchParams.get("page")) || 1;
+
+  // Fetch lines data
+  const fetchLines = useCallback(async () => {
+    try {
+      const response = await LineService.getLines();
+      const rawLines = response.data;
+      const transformedLines = rawLines.map(line => ({
+        ...line,
+        start_place: {
+          id: line.start_place.id,
+          name: line.start_place.name,
+          pointX: line.start_place.pointX,
+          pointY: line.start_place.pointY,
+        },
+        end_place: {
+          id: line.end_place.id,
+          name: line.end_place.name,
+          pointX: line.end_place.pointX,
+          pointY: line.end_place.pointY,
+        },
+        arr_stop: line.arr_stop.map(stop => ({
+          id: stop.id,
+          name: stop.name,
+          pointX: stop.pointX,
+          pointY: stop.pointY,
+        }))
+      }));
+      setLines(transformedLines);
+      setFilteredLines(transformedLines);
+    } catch (error) {
+      console.error("Error fetching lines:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLines();
+  }, [fetchLines]);
+
+  // Filter lines based on search
+  useEffect(() => {
+    const filtered = lines.filter(
+        (line) =>
+            line.start_place.name.toLowerCase().includes(startPlaceWord.toLowerCase()) &&
+            line.end_place.name.toLowerCase().includes(endPlaceWord.toLowerCase())
+    );
+    setFilteredLines(filtered);
+  }, [startPlaceWord, endPlaceWord, lines]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredLines.length / ITEMS_PER_PAGE);
+  const currentItems = filteredLines.slice(
+      (currentPage - 1) * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setSearchParams({ page: page.toString() });
+    }
+  };
+
+  // Form handlers
   const handleAddClick = () => {
     setDialogType("add");
-    setShowForm(true);
-    setShowDialog(false);
-  };
-  const handleEditClick = () => {
-    setDialogType("edit");
+    setSelectedLine(null);
     setShowForm(true);
     setShowDialog(false);
   };
 
-  const handleDialogOpen = (type) => {
-    setDialogType(type);
+  const handleEditClick = (line) => {
+    setDialogType("edit");
+    setSelectedLine(line);
+    setShowForm(true);
+    setShowDialog(false);
+  };
+
+  const handleDeleteClick = (line) => {
+    setSelectedLine(line);
+    setDialogType("delete");
     setShowDialog(true);
     setShowForm(false);
   };
 
-  const handleClose = () => {
-    setShowForm(false);
-    setShowDialog(false);
+  const handleFormSubmit = async (values) => {
+    try {
+      if (dialogType === "add") {
+        await LineService.createLine(values);
+      } else {
+        await LineService.updateLine(selectedLine.id, values);
+      }
+      await fetchLines();
+      setShowForm(false);
+    } catch (error) {
+      console.error("Error submitting line:", error);
+    }
   };
-  const [id, setId] = useState("");
-  const [name, setName] = useState("");
-  const [start_place, setStart_place] = useState("");
-  const [end_place, setEnd_place] = useState("");
-  const [time, setTime] = useState("");
+
+  const handleDelete = async () => {
+    try {
+      await LineService.deleteLine(selectedLine.id);
+      await fetchLines();
+      setShowDialog(false);
+    } catch (error) {
+      console.error("Error deleting line:", error);
+    }
+  };
   return (
     <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
       <div className='flex w-full space-x-6'>
         <div className='flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
           <div className='flex items-center gap-4'>
             <Search
-              className='flex-grow border border-gray-300 rounded-lg p-2'
-              onChange={handleStartPlaceChanged}
-              text='Type start place...'
+                className='flex-grow'
+                onChange={(e) => setStartPlaceWord(e.target.value)}
+                text='Search start place...'
             />
             <Search
-              className='flex-grow border border-gray-300 rounded-lg p-2'
-              onChange={handleEndPlaceChanged}
-              text='Type end place...'
+                className='flex-grow'
+                onChange={(e) => setEndPlaceWord(e.target.value)}
+                text='Search end place...'
             />
             <Button onClick={handleAddClick} className='flex-shrink-0'>
               +
             </Button>
           </div>
           <div className='overflow-x-auto rounded-lg bg-white shadow-md'>
-            <Table className='overflow-hidden rounded-t-lg border border-gray-300'>
-              <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
+            <Table className='w-full border border-gray-300'>
+              <TableHeader className='bg-green-500'>
                 <TableRow>
-                  {[
-                    "Id",
-                    "Name",
-                    "Start place",
-                    "End place",
-                    "Time",
-                    "Action",
-                  ].map((header, idx) => (
-                    <TableHead
-                      key={idx}
-                      className='text-center text-white text-base py-3 px-4'>
-                      {header}
-                    </TableHead>
-                  ))}
+                  {["Id", "Name", "Start Place", "End Place", "Time", "Action"].map(
+                      (header, idx) => (
+                          <TableHead
+                              key={idx}
+                              className='text-center text-white text-sm py-2 px-3'>
+                            {header}
+                          </TableHead>
+                      )
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.id}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.name}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.start_place}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.end_place}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.time}
-                    </TableCell>
-                    <TableCell className='text-center flex justify-center items-center py-3 px-4'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <EllipsisVertical className='mb-2 ' />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setId(item.id);
-                              setName(item.name);
-                              setStart_place(item.start_place);
-                              setEnd_place(item.end_place);
-                              setTime(item.time);
-                              handleEditClick();
-                            }}>
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDialogOpen("delete")}>
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                {currentItems.map((line) => (
+                    <TableRow key={line.id} className='hover:bg-gray-100'>
+                      <TableCell className='text-sm text-center py-2 px-3'>{line._id}</TableCell>
+                      <TableCell className='text-sm text-center py-2 px-3'>{line.name}</TableCell>
+                      <TableCell className='text-sm text-center py-2 px-3'>
+                        {line.start_place.name}
+                      </TableCell>
+                      <TableCell className='text-sm text-center py-2 px-3'>
+                        {line.end_place.name}
+                      </TableCell>
+                      <TableCell className='text-sm text-center py-2 px-3'>
+                        {line.time}
+                      </TableCell>
+                      <TableCell className='text-sm text-center py-2 px-3'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger>
+                            <EllipsisVertical/>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleEditClick(line)}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDeleteClick(line)}>
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
+
           <Pagination className='flex justify-center items-center gap-4'>
             <PaginationContent className='flex gap-2'>
               <PaginationItem>
                 <PaginationPrevious
-                  href='#'
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  className='text-green-500 hover:text-green-700'>
+                    href='#'
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className='text-green-500 hover:text-green-700'>
                   Previous
                 </PaginationPrevious>
               </PaginationItem>
               {[...Array(totalPages)].map((_, index) => (
-                <PaginationItem key={index}>
-                  <PaginationLink
-                    href='#'
-                    onClick={() => handlePageChange(index + 1)}
-                    className={`px-4 py-2 rounded-full transition ${
-                      index + 1 === currentPage
-                        ? "bg-green-500 text-white"
-                        : "hover:bg-gray-200"
-                    }`}>
-                    {index + 1}
-                  </PaginationLink>
-                </PaginationItem>
+                  <PaginationItem key={index}>
+                    <PaginationLink
+                        href='#'
+                        onClick={() => handlePageChange(index + 1)}
+                        className={`px-4 py-2 rounded-full transition ${
+                            index + 1 === currentPage
+                                ? "bg-green-500 text-white"
+                                : "hover:bg-gray-200"
+                        }`}>
+                      {index + 1}
+                    </PaginationLink>
+                  </PaginationItem>
               ))}
               <PaginationItem>
                 <PaginationNext
-                  href='#'
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  className='text-green-500 hover:text-green-700'>
+                    href='#'
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className='text-green-500 hover:text-green-700'>
                   Next
                 </PaginationNext>
               </PaginationItem>
             </PaginationContent>
           </Pagination>
-          {showForm && dialogType == "add" && (
-            <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
-              <FormLine handleClose={handleClose} isAdd='true' />
-            </div>
-          )}
-          {showForm && dialogType == "edit" && (
-            <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
+          {showForm && (
               <FormLine
-                handleClose={handleClose}
-                isAdd='false'
-                id={id}
-                name={name}
-                start_place={start_place}
-                end_place={end_place}
-                time={time}
+                  isAdd={dialogType === "add"}
+                  handleClose={() => setShowForm(false)}
+                  initialData={selectedLine}
+                  onSubmit={handleFormSubmit}
               />
-            </div>
           )}
           {/* Hiển thị Dialog khi showDialog là true */}
           {showDialog && dialogType == "delete" && (
-            <Dialog open={showDialog} onOpenChange={handleClose}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle className='text-center'>
-                    Are you sure you want to delete?
-                  </DialogTitle>
-                  <DialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    the schedule.
-                  </DialogDescription>
-                  <div className='flex items-center justify-center gap-2 pt-4'>
-                    <Button
-                      variant='outline'
-                      className='w-[120px]'
-                      onClick={handleClose}>
-                      Cancel
-                    </Button>
-                    <Button className='w-[120px]' onClick={handleClose}>
-                      Confirm
-                    </Button>
-                  </div>
-                </DialogHeader>
-              </DialogContent>
-            </Dialog>
+              <Dialog open={showDialog} onOpenChange={() => setShowDialog(false)}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className='text-center'>
+                      Are you sure you want to delete?
+                    </DialogTitle>
+                    <DialogDescription>
+                      This action cannot be undone. This will permanently delete
+                      the schedule.
+                    </DialogDescription>
+                    <div className='flex items-center justify-center gap-2 pt-4'>
+                      <Button
+                          variant='outline'
+                          className='w-[120px]'
+                          onClick={() => setShowDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button variant="destructive" className='w-[120px]' onClick={handleDelete}>
+                        Confirm
+                      </Button>
+                    </div>
+                  </DialogHeader>
+                </DialogContent>
+              </Dialog>
           )}
         </div>
       </div>
