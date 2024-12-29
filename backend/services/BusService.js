@@ -156,5 +156,5 @@ module.exports = {
     updateBus,
     getAllBus,
     getDetailBus,
-    deleteBus
+    deleteBus,
 }

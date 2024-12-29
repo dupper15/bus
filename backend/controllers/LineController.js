@@ -105,5 +105,5 @@ module.exports = {
     updateLine,
     getAllLine,
     getDetailLine,
-    deleteLine
+    deleteLine,
 }

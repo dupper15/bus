@@ -7,7 +7,6 @@ router.post('/log-in' , customerController.loginCustomer);
 router.put('/update/:id' , customerController.updateCustomer);
 router.put('/change-status/:id' , customerController.changeStatus);
 router.delete('/delete/:id' , customerController.deleteCustomer);
-// router.put('/update-password/:id' , customerController.updatePasswordCustomer);
 router.get('/get-all', customerController.getAllCustomer);
 router.get('/get-detail/:id', customerController.getDetailCustomer);
 router.post('/refresh-token' , customerController.refreshTokenJwtCustomer);

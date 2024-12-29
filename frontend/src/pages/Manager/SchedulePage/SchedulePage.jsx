@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Search from "@/components/ui/search";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -35,44 +35,24 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-const items = [
-  {
-    sId: "S001",
-    bId: "B001",
-    lId: "L001",
-    date: "20-10-2024",
-    time: "7:00:00",
-    status: "Pending",
-  },
-  {
-    sId: "S002",
-    bId: "B001",
-    lId: "L001",
-    date: "20-10-2024",
-    time: "8:00:00",
-    status: "Not start yet",
-  },
-  {
-    sId: "S003",
-    bId: "B001",
-    lId: "L001",
-    date: "20-10-2024",
-    time: "9:00:00",
-    status: "Gone",
-  },
-  {
-    sId: "S004",
-    bId: "B001",
-    lId: "L001",
-    date: "20-10-2024",
-    time: "10:00:00",
-    status: "Pending",
-  },
-];
+import { useMutation } from "react-query";
+import { convertMinutesToHoursAndMinutes } from "@/utils/translateToVND"
+import * as ScheduleService from "@/services/scheduleService";
+import * as Message from "@/components/ui/alert";
+import { format } from "date-fns";
+
 
 const SchedulePage = () => {
   const ITEMS_PER_PAGE = 10;
+  const [items, setItems] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [dialogType, setDialogType] = useState("");
@@ -98,11 +78,12 @@ const SchedulePage = () => {
   };
 
   const handleClose = () => {
+    mutationDelete.mutate(selected._id)
     setShowForm(false);
     setShowDialog(false);
   };
   const currentItems = items
-    .filter((item) => item.lId.toLowerCase().includes(searchWord.toLowerCase()))
+    .filter((item) => item.line.name.toLowerCase().includes(searchWord.toLowerCase()))
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const handlePageChange = (page) => {
@@ -114,13 +95,38 @@ const SchedulePage = () => {
     setSearchWord(e.target.value);
     setSearchParams({ page: 1 });
   };
-  const [bus, setBus] = useState("");
-  const [line, setLine] = useState("");
-  const [driver, setDriver] = useState("");
-  const [busboy, setBusboy] = useState("");
-  const [time_start, setTime_start] = useState("");
+
+  const [refresh, setRefresh] = useState(false);
+  const [selected, setSelected] = useState('');
+  const [date, setDate] = useState(new Date());
+
+  const mutationGetAll = useMutation({
+    mutationFn: () => ScheduleService.getAllSchedule(),
+    onSuccess: (data) => {
+      setItems(data.data);
+    },
+    onError: (error) => {
+      console.error("Error creating schedule:", error);
+    },
+  })
+
+  const mutationDelete = useMutation({
+    mutationFn: (id) => ScheduleService.deleteSchedule(id),
+    onSuccess: (data) => {
+      Message.success(data.message);
+      setRefresh(!refresh);
+    },
+    onError: (error) => {
+      console.error("Error deleting schedule:", error);
+    },
+  })
+
+  useEffect(() => {
+    mutationGetAll.mutate();
+  }, [refresh])
+
   return (
-    <div className="flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4">
+    <div className="flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4 ">
       <div className="flex w-full space-x-6">
         <div className="flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300">
           <div className="flex items-center gap-4">
@@ -129,9 +135,23 @@ const SchedulePage = () => {
               onChange={handleSearchChanged}
               text="Type line id..."
             />
-            <Button className="flex-shrink-0">
-              <FaRegCalendarMinus />
-            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="text-left font-normal">
+                  {date ? format(date, "PPP") : "Pick a date"}
+                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate} // Cập nhật giá trị khi chọn ngày mới
+                />
+              </PopoverContent>
+            </Popover>
             <Button onClick={handleAddClick} className="flex-shrink-0">
               +
             </Button>
@@ -142,11 +162,14 @@ const SchedulePage = () => {
                 <TableRow>
                   {[
                     "Schedule ID",
-                    "Bus ID",
-                    "Line ID",
+                    "Bus",
+                    "Line",
                     "Driver",
                     "Bus boy",
                     "Time start",
+                    "Time",
+                    "Ticket 3k",
+                    "Ticket 7k",
                     "Status",
                     "Action",
                   ].map((header, idx) => (
@@ -160,36 +183,58 @@ const SchedulePage = () => {
               </TableHeader>
               <TableBody>
                 {currentItems.map((item, index) => (
-                  <TableRow key={index}>
+                  <TableRow 
+                    key={index} 
+                    onClick={() => setSelected(item)}
+                    className={`${
+                      item.bus.status !== "Active" || 
+                      item.driver.status !== "Enable" || 
+                      item.busboy.status !== "Enable"
+                      ? "bg-red-100 hover:bg-red-300" // Màu nền cảnh báo và màu khi hover
+                      : "hover:bg-gray-100" // Màu nền khi hover nếu không có cảnh báo
+                    }`}
+                    >
                     <TableCell className="text-center py-3 px-4">
-                      {item.sId}
+                      {item.id}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {item.bId}
+                      {item.bus.license_plate}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {item.lId}
+                      {item.line.name}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {item.date}
+                      {item.driver.name}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {item.time}
+                      {item.busboy.name}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {item.time}
+                      {item.time_start}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      <span
-                        className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
-                          item.status === "Pending"
-                            ? "bg-red-100 text-red-600"
-                            : item.status === "Not start yet"
-                            ? "bg-yellow-100 text-orange-600"
-                            : "bg-green-100 text-green-600"
-                        }`}>
-                        {item.status}
-                      </span>
+                      {convertMinutesToHoursAndMinutes(item.time)}
+                    </TableCell>
+                    <TableCell className="text-center py-3 px-4">
+                      {item.ticket3}
+                    </TableCell>
+                    <TableCell className="text-center py-3 px-4">
+                      {item.ticket7}
+                    </TableCell>
+                    <TableCell className="text-center py-3 px-4">
+                    <span
+                      className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
+                        item.status === "Pending"
+                          ? "bg-red-100 text-red-600"
+                          : item.status === "Not start yet"
+                          ? "bg-yellow-100 text-orange-600"
+                          : item.status === "In Progress"
+                          ? "bg-green-100 text-green-600"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
                     </TableCell>
                     <TableCell className="text-center flex justify-center items-center py-3 px-4">
                       <DropdownMenu>
@@ -197,15 +242,7 @@ const SchedulePage = () => {
                           <EllipsisVertical className="mb-2 " />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setBus(item.bId);
-                              setLine(item.lId);
-                              setDriver(item.date);
-                              setBusboy(item.time);
-                              setTime_start(item.time_start);
-                              handleEditClick();
-                            }}>
+                          <DropdownMenuItem  onClick={() => handleEditClick()}>
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -254,25 +291,22 @@ const SchedulePage = () => {
               </PaginationItem>
             </PaginationContent>
           </Pagination>
-          {showForm && dialogType == "add" && (
+          {showForm && (
             <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
-              <FormSchedule handleClose={handleClose} isAdd="true" />
+              {dialogType === "add" && (
+                <FormSchedule handleClose={handleClose} isAdd="true" />
+              )}
+              {dialogType === "edit" && selected?.status === "Pending" && (
+                <FormSchedule
+                  handleClose={handleClose}
+                  isAdd="false"
+                  schedule={selected}
+                />
+              )}
             </div>
           )}
-          {showForm && dialogType == "edit" && (
-            <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
-              <FormSchedule
-                handleClose={handleClose}
-                isAdd="false"
-                bus={bus}
-                line={line}
-                driver={driver}
-                busboy={busboy}
-                time_start={time_start}
-              />
-            </div>
-          )}
-          {showDialog && dialogType == "delete" && (
+
+          {showDialog && dialogType === "delete" && (
             <Dialog open={showDialog} onOpenChange={handleClose}>
               <DialogContent>
                 <DialogHeader>
@@ -280,8 +314,8 @@ const SchedulePage = () => {
                     Are you sure you want to delete?
                   </DialogTitle>
                   <DialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    the schedule.
+                    This action cannot be undone. This will permanently delete the
+                    schedule.
                   </DialogDescription>
                   <div className="flex items-center justify-center gap-2 pt-4">
                     <Button
@@ -290,7 +324,7 @@ const SchedulePage = () => {
                       onClick={handleClose}>
                       Cancel
                     </Button>
-                    <Button className="w-[120px]" onClick={handleClose}>
+                    <Button variant="destructive" className="w-[120px]" onClick={handleClose}>
                       Confirm
                     </Button>
                   </div>
@@ -298,6 +332,7 @@ const SchedulePage = () => {
               </DialogContent>
             </Dialog>
           )}
+
         </div>
       </div>
     </div>
