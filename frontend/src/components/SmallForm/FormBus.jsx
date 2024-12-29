@@ -20,30 +20,34 @@ import {
 } from "@/components/ui/select";
 import { useMutation } from "react-query";
 import * as BusService from "../../services/busService";
-import * as Message from "../../components/ui/alert"
+import * as Message from "../../components/ui/alert";
 import { useState } from "react";
 
 const formSchema = z.object({
   type: z
     .string()
     .refine((value) => value === "Electricity" || value === "Power", {
-     message: "Type must be either 'Electricity' or 'Power'.",
-  }),
+      message: "Type must be either 'Electricity' or 'Power'.",
+    }),
   manufacture_year: z
     .string()
     .length(4, { message: "Manufacture year must be exactly 4 digits." })
-    .refine((value) => /^\d{4}$/.test(value), { message: "Manufacture year must be a valid year." }),
+    .refine((value) => /^\d{4}$/.test(value), {
+      message: "Manufacture year must be a valid year.",
+    }),
   license_plate: z
     .string()
     .min(5, { message: "License plate must be at least 5 characters." })
     .max(12, { message: "License plate must not exceed 12 characters." }),
   count_seat: z
     .string()
-    .refine((value) => /^\d+$/.test(value), { message: "Seat count must be a valid number." })
+    .refine((value) => /^\d+$/.test(value), {
+      message: "Seat count must be a valid number.",
+    })
     .refine((value) => parseInt(value) >= 20 && parseInt(value) <= 60, {
       message: "Seat count must be between 20 and 60.",
     }),
-})
+});
 
 const FormBus = ({
   isAdd,
@@ -105,26 +109,29 @@ const FormBus = ({
     },
   });
 
-  const [uploadImage, setUploadImage] = useState(image)
+  const [uploadImage, setUploadImage] = useState(image);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     const uploadPreset = "afh5sfc";
-    
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", uploadPreset);
 
-    const response = await fetch("https://api.cloudinary.com/v1_1/ddcjjegzf/image/upload", {
-      method: "POST",
-      body: formData,
-    });
+    const response = await fetch(
+      "https://api.cloudinary.com/v1_1/ddcjjegzf/image/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
     const result = await response.json();
 
     setUploadImage(result.secure_url);
 
-    form.setValue('image', result.secure_url); 
+    form.setValue("image", result.secure_url);
   };
 
   const onSubmit = async () => {
@@ -135,7 +142,7 @@ const FormBus = ({
       return; // Dừng lại nếu form có lỗi
     }
     const values = form.getValues();
-    if (isAdd === "true"){
+    if (isAdd === "true") {
       mutationCreate.mutate({ data: values });
     } else {
       mutationEdit.mutate({ data: values });
@@ -151,53 +158,50 @@ const FormBus = ({
           <h1 className='text-3xl font-semibold text-green-600 text-center'>
             {isAdd === "true" ? "Add New Bus" : "Edit Bus"}
           </h1>
-     
-          <div className="flex justify-center mb-6 relative">
-            <Avatar className="w-28 h-28 border-4 border-green-500 shadow-lg">
-              <AvatarImage src={uploadImage  || "default-avatar.jpg"} />
+
+          <div className='flex justify-center mb-6 relative'>
+            <Avatar className='w-28 h-28 border-4 border-green-500 shadow-lg'>
+              <AvatarImage src={uploadImage || "default-avatar.jpg"} />
               <AvatarFallback>CN</AvatarFallback>
             </Avatar>
-            <div className="absolute bottom-0 translate-y-1/2">
-              <label 
-              htmlFor="upload-avatar"
-              className="w-6 h-6 bg-green-500 text-white flex items-center justify-center rounded-full cursor-pointer"
-              >
+            <div className='absolute bottom-0 translate-y-1/2'>
+              <label
+                htmlFor='upload-avatar'
+                className='w-6 h-6 bg-green-500 text-white flex items-center justify-center rounded-full cursor-pointer'>
                 +
               </label>
-              <input 
-                id="upload-avatar" 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                onChange={handleImageUpload} 
+              <input
+                id='upload-avatar'
+                type='file'
+                accept='image/*'
+                className='hidden'
+                onChange={handleImageUpload}
               />
             </div>
           </div>
-          
+
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          <FormField
-                  control={form.control}
-                  name='type'
-                  render={({ field }) => (
-                    <FormItem className='flex-1'>
-                      <FormLabel>Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select a type' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value='Electricity'>Electricity</SelectItem>
-                          <SelectItem value='Power'>Power</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name='type'
+              render={({ field }) => (
+                <FormItem className='flex-1'>
+                  <FormLabel>Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select a type' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value='Electricity'>Electricity</SelectItem>
+                      <SelectItem value='Power'>Power</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -220,7 +224,11 @@ const FormBus = ({
                 <FormItem>
                   <FormLabel>License Plate</FormLabel>
                   <FormControl>
-                    <Input type='text' placeholder='Enter license plate' {...field} />
+                    <Input
+                      type='text'
+                      placeholder='Enter license plate'
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -245,29 +253,29 @@ const FormBus = ({
               )}
             />
 
-            {isAdd === 'false' && (<FormField
-                  control={form.control}
-                  name='status'
-                  render={({ field }) => (
-                    <FormItem className='flex-1'>
-                      <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select a status' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value='Active'>Active</SelectItem>
-                          <SelectItem value='Unactive'>Unactive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />  )}
+            {isAdd === "false" && (
+              <FormField
+                control={form.control}
+                name='status'
+                render={({ field }) => (
+                  <FormItem className='flex-1'>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select a status' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='Active'>Active</SelectItem>
+                        <SelectItem value='Unactive'>Unactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </div>
 
           <div className='flex justify-end gap-4 mt-6'>

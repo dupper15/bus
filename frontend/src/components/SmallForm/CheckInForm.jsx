@@ -1,9 +1,23 @@
 import React, { useState } from "react";
-
+import * as ScheduleService from "@/services/scheduleService";
+import { useMutation } from "@tanstack/react-query";
+import * as Message from "@/components/ui/alert";
 const CheckInForm = ({ childCloseFormRequest, scheduleId }) => {
   const [ticket3, setTicket3] = useState("");
   const [ticket7, setTicket7] = useState("");
+  const mutation = useMutation({
+    mutationFn: (data) => {
+      return ScheduleService.employeeCheckIn(data);
+    },
+    onSuccess: (data) => {
+      Message.success(data.message); // Hiển thị thông báo thành công
+      childCloseFormRequest(false); // Đóng form
+    },
 
+    onError: (error) => {
+      console.log(error);
+    },
+  });
   const handleOnChange3 = (e) => {
     setTicket3(e.target.value);
   };
@@ -14,9 +28,8 @@ const CheckInForm = ({ childCloseFormRequest, scheduleId }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    e.stopPropagation(); // Sửa lỗi ở đây
-    console.log("Ticket 3k:", ticket3);
-    console.log("Ticket 7k:", ticket7);
+    e.stopPropagation();
+    mutation.mutate({ ticket3, ticket7, scheduleId });
   };
 
   return (
@@ -35,6 +48,7 @@ const CheckInForm = ({ childCloseFormRequest, scheduleId }) => {
       <h1 className='text-2xl font-semibold text-gray-600 mb-6'>Check In</h1>
 
       {/* Ticket 3k Input */}
+
       <div className='mb-4'>
         <input
           name='ticket3'
@@ -64,7 +78,7 @@ const CheckInForm = ({ childCloseFormRequest, scheduleId }) => {
       <button
         type='submit'
         className='w-full py-3 font-semibold text-white bg-green-500 rounded-md hover:bg-green-600 transition duration-200'>
-        Submit
+        Check in
       </button>
     </form>
   );
