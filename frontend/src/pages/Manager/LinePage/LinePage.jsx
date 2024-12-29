@@ -136,10 +136,11 @@ const LinePage = () => {
 
   const handleFormSubmit = async (values) => {
     try {
+      console.log("Form values:", values);
       if (dialogType === "add") {
         await LineService.createLine(values);
       } else {
-        await LineService.updateLine(selectedLine.id, values);
+        await LineService.updateLine(selectedLine._id, values);
       }
       await fetchLines();
       setShowForm(false);

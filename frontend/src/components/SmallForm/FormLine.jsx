@@ -1,4 +1,4 @@
-import { z } from "zod";
+import {z} from "zod";
 import {
     Form,
     FormControl,
@@ -7,41 +7,41 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useEffect, useRef, useState, useCallback } from 'react';
+import {Input} from "@/components/ui/input";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {useForm} from "react-hook-form";
+import {useEffect, useRef, useState, useCallback} from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { ChevronUp, ChevronDown, X } from 'lucide-react';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Button} from "@/components/ui/button";
+import {ChevronUp, ChevronDown, X} from 'lucide-react';
 import StopService from "@/services/StopService.js";
 
 mapboxgl.accessToken = 'pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg';
 
 // Form schema remains the same
 const formSchema = z.object({
-    name: z.string().nonempty({ message: "Name is required." }),
+    name: z.string().nonempty({message: "Name is required."}),
     start_place: z.object({
-        id: z.string(),
+        _id: z.string(),
         name: z.string(),
         pointX: z.number(),
         pointY: z.number(),
     }).nullable(),
     end_place: z.object({
-        id: z.string(),
+        _id: z.string(),
         name: z.string(),
         pointX: z.number(),
         pointY: z.number(),
     }).nullable(),
     arr_stop: z.array(z.object({
-        id: z.string(),
+        _id: z.string(),
         name: z.string(),
         pointX: z.number(),
         pointY: z.number(),
     })),
-    time: z.number().min(0, { message: "Time must be a positive number." }),
+    time: z.number().min(0, {message: "Time must be a positive number."}),
 });
 
 const FormLine = ({
@@ -145,118 +145,105 @@ const FormLine = ({
     }, []);
 
     useEffect(() => {
-        console.log(form.getValues())
         // Return early if map isn't initialized or style isn't loaded
         if (!mapRef.current || !mapRef.current.isStyleLoaded) return;
 
 
-            const markers = document.getElementsByClassName('mapboxgl-marker');
-            while (markers[0]) {
-                markers[0].remove();
-            }
+        const markers = document.getElementsByClassName('mapboxgl-marker');
+        while (markers[0]) {
+            markers[0].remove();
+        }
 
-            if (mapRef.current.getSource('route')) {
-                mapRef.current.removeLayer('route');
-                mapRef.current.removeSource('route');
-            }
+        if (mapRef.current.getSource('route')) {
+            mapRef.current.removeLayer('route');
+            mapRef.current.removeSource('route');
+        }
 
-            const values = form.getValues();
-            const allStops = [
-                values.start_place,
-                ...values.arr_stop,
-                values.end_place
-            ].filter(stop => stop !== null);
+        const values = form.getValues();
+        const allStops = [
+            values.start_place,
+            ...values.arr_stop,
+            values.end_place
+        ].filter(stop => stop !== null);
 
-            allStops.forEach((stop, index) => {
-                if (!stop) return;
+        allStops.forEach((stop, index) => {
+            if (!stop) return;
 
-                const el = document.createElement('div');
-                el.className = 'marker';
-                el.style.width = '20px';
-                el.style.height = '20px';
-                el.style.borderRadius = '50%';
-                el.style.backgroundColor = index === 0 ? '#22c55e' :
-                    index === allStops.length - 1 ? '#ef4444' : '#3b82f6';
+            const el = document.createElement('div');
+            el.className = 'marker';
+            el.style.width = '20px';
+            el.style.height = '20px';
+            el.style.borderRadius = '50%';
+            el.style.backgroundColor = index === 0 ? '#22c55e' :
+                index === allStops.length - 1 ? '#ef4444' : '#3b82f6';
 
-                new mapboxgl.Marker(el)
-                    .setLngLat([stop.pointX, stop.pointY])
-                    .setPopup(new mapboxgl.Popup().setHTML(`<h3>${stop.name}</h3>`))
-                    .addTo(mapRef.current);
-            });
+            new mapboxgl.Marker(el)
+                .setLngLat([stop.pointX, stop.pointY])
+                .setPopup(new mapboxgl.Popup().setHTML(`<h3>${stop.name}</h3>`))
+                .addTo(mapRef.current);
+        });
 
-            if (allStops.length >= 2) {
-                const coordinates = allStops.map(stop => [stop.pointX, stop.pointY]);
+        if (allStops.length >= 2) {
+            const coordinates = allStops.map(stop => [stop.pointX, stop.pointY]);
 
-                const fetchRoute = async () => {
-                    try {
-                        // Check again if map is loaded before fetching route
+            const fetchRoute = async () => {
+                try {
+                    const coordinateString = coordinates
+                        .map(coord => coord.join(','))
+                        .join(';');
 
-                        const coordinateString = coordinates
-                            .map(coord => coord.join(','))
-                            .join(';');
+                    const response = await fetch(
+                        `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinateString}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+                    );
+                    const data = await response.json();
 
-                        const response = await fetch(
-                            `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinateString}?geometries=geojson&access_token=${mapboxgl.accessToken}`
-                        );
-                        const data = await response.json();
+                    if (data.routes && data.routes[0]) {
+                        const route = data.routes[0].geometry;
 
-                        if (data.routes && data.routes[0]) {
-                            const route = data.routes[0].geometry;
-
-                            // Additional check before adding source and layer
-                            if (!mapRef.current || !mapRef.current.isStyleLoaded) return;if (mapRef.current.getSource('route')) {
-                                mapRef.current.removeLayer('route');
-                                mapRef.current.removeSource('route');
-                            }
-
-                            mapRef.current.addSource('route', {
-                                type: 'geojson',
-                                data: {
-                                    type: 'Feature',
-                                    properties: {},
-                                    geometry: route
-                                }
-                            });
-
-                            mapRef.current.addLayer({
-                                id: 'route',
-                                type: 'line',
-                                source: 'route',
-                                layout: {
-                                    'line-join': 'round',
-                                    'line-cap': 'round'
-                                },
-                                paint: {
-                                    'line-color': '#3b82f6',
-                                    'line-width': 4
-                                }
-                            });
-
-                            const bounds = new mapboxgl.LngLatBounds();
-                            coordinates.forEach(coord => bounds.extend(coord));
-                            mapRef.current.fitBounds(bounds, { padding: 50 });
+                        // Additional check before adding source and layer
+                        if (!mapRef.current || !mapRef.current.isStyleLoaded) return;
+                        if (mapRef.current.getSource('route')) {
+                            mapRef.current.removeLayer('route');
+                            mapRef.current.removeSource('route');
                         }
-                    } catch (error) {
-                        console.error('Error fetching route:', error);
+
+                        mapRef.current.addSource('route', {
+                            type: 'geojson',
+                            data: {
+                                type: 'Feature',
+                                properties: {},
+                                geometry: route
+                            }
+                        });
+
+                        mapRef.current.addLayer({
+                            id: 'route',
+                            type: 'line',
+                            source: 'route',
+                            layout: {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            paint: {
+                                'line-color': '#3b82f6',
+                                'line-width': 4
+                            }
+                        });
+
+                        const bounds = new mapboxgl.LngLatBounds();
+                        coordinates.forEach(coord => bounds.extend(coord));
+                        mapRef.current.fitBounds(bounds, {padding: 50});
                     }
-                };
+                } catch (error) {
+                    // if (error.detail !== 'Style is not done loading') {
+                    //     console.error('Error fetching route:', error);
+                    // }
+                }
+            };
 
-                fetchRoute();
-            }
+            fetchRoute();
+        }
     }, [form.watch('start_place'), form.watch('end_place'), form.watch('arr_stop')]);
-
-    const onDragEnd = (result) => {
-        if (!result.destination) return;
-
-        const arr_stop = form.getValues('arr_stop');
-        console.log(arr_stop);
-        const items = Array.from(arr_stop);
-        const [reorderedItem] = items.splice(result.source.index, 1);
-        items.splice(result.destination.index, 0, reorderedItem);
-
-        form.setValue('arr_stop', items);
-    };
-
     const handleSubmit = async (values) => {
         try {
             await onSubmit(values);
@@ -267,7 +254,8 @@ const FormLine = ({
     };
 
     return (
-        <div className='absolute inset-0 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
+        <div
+            className='absolute inset-0 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
             <div className='w-full max-w-4xl bg-white shadow-lg border rounded-lg p-4 mx-4'>
                 <h1 className='text-xl font-bold text-green-500 text-center mb-4'>
                     {isAdd ? "Add New Line" : "Edit Line"}
@@ -309,7 +297,6 @@ const FormLine = ({
                                             <Select
                                                 value={field.value?._id}
                                                 onValueChange={(value) => {
-                                                    console.log(field.value?._id);
                                                     const stop = stops.find(s => s._id === value);
                                                     field.onChange(stop);
                                                 }}>
