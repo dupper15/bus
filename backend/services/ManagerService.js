@@ -162,6 +162,11 @@ const changeStatusManager = async (managerId) => {
       { new: true }
     );
 
+    const account = await Account.findOne({ user: checkManager.id_card });
+
+    account.status = status;
+    account.save();
+
     if (!updatedManager) {
       return {
         status: "ERROR",
