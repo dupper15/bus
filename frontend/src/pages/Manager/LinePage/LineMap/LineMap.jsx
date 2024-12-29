@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import {linePropTypes} from "@/utils/PropTypes.js";
+import useLineMapViewModel from "@/pages/Manager/LinePage/LineMap/LineMapViewModel.js";
 
 export const LineMapView = ({currentLine, mode, error}) => {
     const {mapContainerRef} = useLineMapViewModel({

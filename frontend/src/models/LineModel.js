@@ -1,3 +1,5 @@
+import {z} from "zod";
+
 class LineModel {
     constructor({ id, name, start_place, end_place, time, arr_stop }) {
         this.id = id || null; // Line ID
@@ -9,3 +11,5 @@ class LineModel {
     }
 }
 export default LineModel;
+
+

@@ -60,19 +60,19 @@ const LinePage = () => {
       const transformedLines = rawLines.map(line => ({
         ...line,
         start_place: {
-          id: line.start_place.id,
+          _id: line.start_place._id,
           name: line.start_place.name,
           pointX: line.start_place.pointX,
           pointY: line.start_place.pointY,
         },
         end_place: {
-          id: line.end_place.id,
+          _id: line.end_place._id,
           name: line.end_place.name,
           pointX: line.end_place.pointX,
           pointY: line.end_place.pointY,
         },
         arr_stop: line.arr_stop.map(stop => ({
-          id: stop.id,
+          _id: stop._id,
           name: stop.name,
           pointX: stop.pointX,
           pointY: stop.pointY,
@@ -193,7 +193,7 @@ const LinePage = () => {
               </TableHeader>
               <TableBody>
                 {currentItems.map((line) => (
-                    <TableRow key={line.id} className='hover:bg-gray-100'>
+                    <TableRow key={line._id} className='hover:bg-gray-100'>
                       <TableCell className='text-sm text-center py-2 px-3'>{line._id}</TableCell>
                       <TableCell className='text-sm text-center py-2 px-3'>{line.name}</TableCell>
                       <TableCell className='text-sm text-center py-2 px-3'>
@@ -261,43 +261,46 @@ const LinePage = () => {
             </PaginationContent>
           </Pagination>
           {showForm && (
-              <FormLine
-                  isAdd={dialogType === "add"}
-                  handleClose={() => setShowForm(false)}
-                  initialData={selectedLine}
-                  onSubmit={handleFormSubmit}
-              />
-          )}
-          {/* Hiển thị Dialog khi showDialog là true */}
-          {showDialog && dialogType == "delete" && (
-              <Dialog open={showDialog} onOpenChange={() => setShowDialog(false)}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle className='text-center'>
-                      Are you sure you want to delete?
-                    </DialogTitle>
-                    <DialogDescription>
-                      This action cannot be undone. This will permanently delete
-                      the schedule.
-                    </DialogDescription>
-                    <div className='flex items-center justify-center gap-2 pt-4'>
-                      <Button
-                          variant='outline'
-                          className='w-[120px]'
-                          onClick={() => setShowDialog(false)}>
-                        Cancel
-                      </Button>
-                      <Button variant="destructive" className='w-[120px]' onClick={handleDelete}>
-                        Confirm
-                      </Button>
-                    </div>
-                  </DialogHeader>
-                </DialogContent>
-              </Dialog>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-export default LinePage;
+              <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
+                <FormLine
+                    isAdd={dialogType === "add"}
+                    handleClose={() => setShowForm(false)}
+                    initialData={selectedLine}
+                    onSubmit={handleFormSubmit}
+                />
+              </div>
+
+                )}
+                {/* Hiển thị Dialog khi showDialog là true */}
+                {showDialog && dialogType == "delete" && (
+                    <Dialog open={showDialog} onOpenChange={() => setShowDialog(false)}>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle className='text-center'>
+                            Are you sure you want to delete?
+                          </DialogTitle>
+                          <DialogDescription>
+                            This action cannot be undone. This will permanently delete
+                            the schedule.
+                          </DialogDescription>
+                          <div className='flex items-center justify-center gap-2 pt-4'>
+                            <Button
+                                variant='outline'
+                                className='w-[120px]'
+                                onClick={() => setShowDialog(false)}>
+                              Cancel
+                            </Button>
+                            <Button variant="destructive" className='w-[120px]' onClick={handleDelete}>
+                              Confirm
+                            </Button>
+                          </div>
+                        </DialogHeader>
+                      </DialogContent>
+                    </Dialog>
+                )}
+              </div>
+            </div>
+            </div>
+            );
+          };
+          export default LinePage;

@@ -1,14 +1,6 @@
 import React, {useEffect, useRef, useState, useCallback} from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import {Button} from "@/components/ui/button";
-import {
-    Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {DragDropContext, Droppable, Draggable} from 'react-beautiful-dnd';
 import {transformLine, transformStop} from "@/utils/Transformer.js";
 import LineService from "@/services/LineService.js";
 import StopService from "@/services/StopService.js";
@@ -115,117 +107,6 @@ const useLineMapViewModel = ({currentLine, mode, onLineUpdate}) => {
     }, [stops, selectedLine]);
 
     // Handle stop reordering
-    const onDragEnd = (result) => {
-        if (!result.destination) return;
-
-        const items = Array.from(formData.arr_stop);
-        const [reorderedItem] = items.splice(result.source.index, 1);
-        items.splice(result.destination.index, 0, reorderedItem);
-
-        setFormData({
-            ...formData, arr_stop: items
-        });
-    };
-
-    // Line form component
-    const LineForm = () => (<Dialog open={showLineForm} onOpenChange={() => setShowLineForm(false)}>
-        <DialogContent className="sm:max-w-[900px] flex">
-            <div className="w-1/2 pr-4">
-                <DialogHeader>
-                    <DialogTitle>{mode === 'add' ? 'Add New Line' : 'Edit Line'}</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <Select
-                        value={formData.start_place?.id}
-                        onValueChange={(value) => {
-                            const stop = stops.find(s => s.id === value);
-                            setFormData({...formData, start_place: stop});
-                        }}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select start stop"/>
-                        </SelectTrigger>
-                        <SelectContent>
-                            {stops.map(stop => (<SelectItem key={stop.id} value={stop.id}>
-                                {stop.name}
-                            </SelectItem>))}
-                        </SelectContent>
-                    </Select>
-
-                    <Select
-                        value={formData.end_place?.id}
-                        onValueChange={(value) => {
-                            const stop = stops.find(s => s.id === value);
-                            setFormData({...formData, end_place: stop});
-                        }}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select end stop"/>
-                        </SelectTrigger>
-                        <SelectContent>
-                            {stops.map(stop => (<SelectItem key={stop.id} value={stop.id}>
-                                {stop.name}
-                            </SelectItem>))}
-                        </SelectContent>
-                    </Select>
-
-                    <DragDropContext onDragEnd={onDragEnd}>
-                        <Droppable droppableId="stops">
-                            {(provided) => (<div {...provided.droppableProps} ref={provided.innerRef}>
-                                {formData.arr_stop.map((stop, index) => (
-                                    <Draggable key={stop.id} draggableId={stop.id} index={index}>
-                                        {(provided) => (<div
-                                            ref={provided.innerRef}
-                                            {...provided.draggableProps}
-                                            {...provided.dragHandleProps}
-                                            className="flex items-center gap-2 mb-2"
-                                        >
-                                            <Select
-                                                value={stop.id}
-                                                onValueChange={(value) => {
-                                                    const newStop = stops.find(s => s.id === value);
-                                                    const newArr = [...formData.arr_stop];
-                                                    newArr[index] = newStop;
-                                                    setFormData({...formData, arr_stop: newArr});
-                                                }}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder={`Stop ${index + 1}`}/>
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {stops.map(s => (<SelectItem key={s.id} value={s.id}>
-                                                        {s.name}
-                                                    </SelectItem>))}
-                                                </SelectContent>
-                                            </Select>
-                                            <Button
-                                                variant="ghost"
-                                                onClick={() => {
-                                                    const newArr = formData.arr_stop.filter((_, i) => i !== index);
-                                                    setFormData({...formData, arr_stop: newArr});
-                                                }}>
-                                                ×
-                                            </Button>
-                                        </div>)}
-                                    </Draggable>))}
-                                {provided.placeholder}
-                            </div>)}
-                        </Droppable>
-                    </DragDropContext>
-
-                    <Button
-                        onClick={() => {
-                            setFormData({
-                                ...formData, arr_stop: [...formData.arr_stop, null]
-                            });
-                        }}>
-                        Add Stop
-                    </Button>
-                </div>
-            </div>
-            <div className="w-1/2">
-                <div ref={mapContainerRef} className="h-[500px]"/>
-            </div>
-        </DialogContent>
-    </Dialog>);
-
     return {
         mapContainerRef,
         stops,
@@ -236,7 +117,6 @@ const useLineMapViewModel = ({currentLine, mode, onLineUpdate}) => {
         setSelectedLine,
         setShowLineForm,
         setFormData,
-        LineForm
     };
 };
 
