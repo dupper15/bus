@@ -7,9 +7,21 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
+import * as ScheduleService from "@/services/scheduleService";
+import { useEffect, useState } from "react";
+import * as Message from "@/components/ui/alert"
+
 
 const formSchema = z.object({
   bus: z.string().nonempty({ message: "Bus ID is required." }),
@@ -22,30 +34,87 @@ const formSchema = z.object({
 const FormSchedule = ({
   isAdd,
   handleClose,
-  bus = "",
-  line = "",
-  driver = "",
-  busboy = "",
-  time_start = "",
+  schedule
 }) => {
-  const formattedTimeStart = time_start ? time_start.slice(0, 5) : "";
-
+  
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      bus: isAdd == "true" ? "" : bus,
-      line: isAdd == "true" ? "" : line,
-      driver: isAdd == "true" ? "" : driver,
-      busboy: isAdd == "true" ? "" : busboy,
-      time_start: isAdd == "true" ? "" : formattedTimeStart,
+    defaultValues: isAdd === "true"
+    ? {
+        bus: "",
+        line: "",
+        driver: "",
+        busboy: "",
+        time_start: "",
+        time: "",
+      }
+    : {
+        bus: schedule.bus._id,
+        line: schedule.line._id,
+        driver: schedule.driver._id ,
+        busboy: schedule.busboy._id,
+        time_start: schedule.time_start,
+        time: schedule.time,
+      },
+  });
+
+  const [itemsBus, setItemsBus] = useState([]);
+  const [itemsLine, setItemsLine] = useState([]);
+  const [itemsDriver, setItemsDriver] = useState([]);
+  const [itemsBusboy, setItemsBusboy] = useState([]);
+
+  const mutationGetAllAdd = useMutation({
+    mutationFn: () => ScheduleService.getAllAdd(),
+    onSuccess: (data) => {
+      setItemsBus(data.data.bus);
+      setItemsLine(data.data.line);
+      setItemsDriver(data.data.driver);
+      setItemsBusboy(data.data.busboy);
+    },
+    onError: (error) => {
+      console.error("Error creating bus:", error);
     },
   });
+  
+  const mutationCreate = useMutation({
+    mutationFn: (data) => ScheduleService.createSchedule(data),
+    onSuccess: (data) => {
+      Message.success(data.message)
+      handleClose();
+    },
+    onError: (error) => {
+      console.error("Error creating bus:", error);
+    },
+  });
+
+  const mutationEdit = useMutation({
+    mutationFn: (data) => ScheduleService.editSchedule(data),
+    onSuccess: (data) => {
+      Message.success(data.message)
+      handleClose();
+    },
+    onError: (error) => {
+      console.error("Error creating bus:", error);
+    },
+  });
+
+  useEffect(() => {
+    mutationGetAllAdd.mutate();
+  }, [handleClose])
 
   const onCreate = (e) => {
     e.preventDefault();
     const values = form.getValues();
-    console.log("Form submitted successfully");
-    console.log(values);
+    if (isAdd == "true") {
+      mutationCreate.mutate(values);
+    } else {
+      const data = {
+        _id: schedule._id,
+        ...values
+      }
+      mutationEdit.mutate(data);
+    }
+   
   };
   return (
     <div className='absolute inset-0 bg-black bg-opacity-50 -top-10 backdrop-blur-sm flex justify-center items-center'>
@@ -56,62 +125,113 @@ const FormSchedule = ({
           <h1 className='text-2xl font-bold text-green-600 text-center mb-4'>
             {isAdd == "true" ? "Add New Schedule" : "Edit Schedule"}
           </h1>
+                <FormField
+                  control={form.control}
+                  name='bus'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Bus</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select a bus' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {itemsBus.map((item) => (
+                            <SelectItem key={item._id} value={item._id}>
+                              {item.license_plate}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={form.control}
-            name='bus'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bus ID</FormLabel>
-                <FormControl>
-                  <Input placeholder='Bus ID ...' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={form.control}
+                  name='line'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Line</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select a line' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {itemsLine.map((item) => (
+                            <SelectItem key={item._id} value={item._id}>
+                              {item.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />    
 
-          <FormField
-            control={form.control}
-            name='line'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Line ID</FormLabel>
-                <FormControl>
-                  <Input placeholder='Line ID ...' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={form.control}
+                  name='driver'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Driver</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select a bus' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {itemsDriver.map((item) => (
+                            <SelectItem key={item._id} value={item._id}>
+                              {item.name}-{item.id}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />  
 
-          <FormField
-            control={form.control}
-            name='driver'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Driver ID</FormLabel>
-                <FormControl>
-                  <Input placeholder='Driver ID ...' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='busboy'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bus Boy ID</FormLabel>
-                <FormControl>
-                  <Input placeholder='Bus Boy ID ...' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={form.control}
+                  name='busboy'
+                  render={({ field }) => (
+                    <FormItem className='flex-1'>
+                      <FormLabel>Bus boy</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select a bus boy' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {itemsBusboy.map((item) => (
+                            <SelectItem key={item._id} value={item._id}>
+                              {item.name}-{item.id}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
           <FormField
             control={form.control}
@@ -121,6 +241,20 @@ const FormSchedule = ({
                 <FormLabel>Time Start</FormLabel>
                 <FormControl>
                   <Input type='time' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='time'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Time</FormLabel>
+                <FormControl>
+                  <Input type='text' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
