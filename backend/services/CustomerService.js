@@ -169,6 +169,10 @@ const changeStatus = async (customerId) => {
             { new: true }
         );
 
+        const account = await Account.findOne({ user: checkCustomer.id_card });
+        account.status = status;
+        account.save();
+
         if (!updatedCustomer) {
             return {
                 status: "ERROR",
