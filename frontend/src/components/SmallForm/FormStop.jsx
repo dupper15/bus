@@ -79,7 +79,7 @@ const FormStop = ({
                                     <FormItem>
                                         <FormLabel>Stop ID</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Enter Stop ID" {...field} disabled={!isAdd} />
+                                            <Input placeholder="Enter Stop ID" {...field} disabled={true} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -125,6 +125,7 @@ const FormStop = ({
                                         <FormLabel>Point X (Longitude)</FormLabel>
                                         <FormControl>
                                             <Input
+                                                disabled={true}
                                                 placeholder="Enter longitude"
                                                 {...field}
                                             />
@@ -143,6 +144,7 @@ const FormStop = ({
                                         <FormLabel>Point Y (Latitude)</FormLabel>
                                         <FormControl>
                                             <Input
+                                                disabled={true}
                                                 placeholder="Enter latitude"
                                                 {...field}
                                             />
