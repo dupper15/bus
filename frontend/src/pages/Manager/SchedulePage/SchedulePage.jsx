@@ -78,10 +78,21 @@ const SchedulePage = () => {
   };
 
   const handleClose = () => {
-    mutationDelete.mutate(selected._id)
+    setRefresh(!refresh);
     setShowForm(false);
     setShowDialog(false);
   };
+
+  const handleDelete = () => {
+    mutationDelete.mutate(selected._id)
+    setShowForm(false);
+    setShowDialog(false);
+  }
+
+  const handleApproveAll = () => {
+    mutationApproveAll.mutate();
+  }
+
   const currentItems = items
     .filter((item) => item.line.name.toLowerCase().includes(searchWord.toLowerCase()))
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -121,9 +132,23 @@ const SchedulePage = () => {
     },
   })
 
+  const mutationApproveAll = useMutation({
+    mutationFn: () => ScheduleService.approveAllSchedule(),
+    onSuccess: (data) => {
+      Message.success(data.message);
+      setRefresh(!refresh);
+    },
+    onError: (error) => {
+      console.error("Error approving schedule:", error);
+    },
+  })
+
   useEffect(() => {
     mutationGetAll.mutate();
   }, [refresh])
+
+  const allNotPending = items.every(schedule => schedule.status !== "Pending");
+
 
   return (
     <div className="flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4 ">
@@ -152,10 +177,12 @@ const SchedulePage = () => {
                 />
               </PopoverContent>
             </Popover>
+            <Button onClick={handleApproveAll} disabled={allNotPending}>Approve All</Button>
             <Button onClick={handleAddClick} className="flex-shrink-0">
               +
             </Button>
           </div>
+          
           <div className="overflow-x-auto rounded-lg bg-white shadow-md">
             <Table className="overflow-hidden rounded-t-lg border border-gray-300">
               <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
@@ -229,14 +256,15 @@ const SchedulePage = () => {
                           : item.status === "Not start yet"
                           ? "bg-yellow-100 text-orange-600"
                           : item.status === "In Progress"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-gray-100 text-gray-600"
+                          ? "bg-blue-100 text-blue-600"
+                          : "bg-green-100 text-green-600"
                       }`}
                     >
                       {item.status}
                     </span>
                     </TableCell>
-                    <TableCell className="text-center flex justify-center items-center py-3 px-4">
+                    {item.status === "Pending" && (
+                      <TableCell className="text-center flex justify-center items-center py-3 px-4">
                       <DropdownMenu>
                         <DropdownMenuTrigger>
                           <EllipsisVertical className="mb-2 " />
@@ -252,6 +280,7 @@ const SchedulePage = () => {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -324,7 +353,7 @@ const SchedulePage = () => {
                       onClick={handleClose}>
                       Cancel
                     </Button>
-                    <Button variant="destructive" className="w-[120px]" onClick={handleClose}>
+                    <Button variant="destructive" className="w-[120px]" onClick={handleDelete}>
                       Confirm
                     </Button>
                   </div>

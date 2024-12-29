@@ -1,7 +1,6 @@
-const mongoose = require("mongoose");
-const scheduleSchema = new mongoose.Schema(
-  {
-    id: { type: String, require: true, unique: true },
+const mongoose = require('mongoose')
+const scheduleSchema = new mongoose.Schema({
+    id: {type: String, require: true},
     bus: {
       type: mongoose.Schema.ObjectId,
       ref: "Bus",

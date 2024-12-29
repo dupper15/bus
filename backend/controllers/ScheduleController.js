@@ -97,6 +97,19 @@ const getAllAdd = async (req, res) => {
   }
 };
 
+const approveAllSchedule = async (req, res) => {
+    try {
+        const response = await ScheduleService.approveAllSchedule()
+        return res.status(200).json(response)
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An error occurred while updating the schedule.'
+        })
+    }
+}
+
 const deleteSchedule = async (req, res) => {
   try {
     const ScheduleId = req.params.id;
@@ -126,13 +139,16 @@ const employeeCheckIn = async (req, res) => {
     });
   }
 };
+
 module.exports = {
-  createSchedule,
-  getDetailSchedule,
-  updateSchedule,
-  getAllSchedule,
-  deleteSchedule,
-  getEmployeeTask,
-  employeeCheckIn,
-  getAllAdd,
-};
+    createSchedule,
+    getDetailSchedule,
+    updateSchedule,
+    getAllSchedule,
+    deleteSchedule,
+    getAllAdd,
+    approveAllSchedule,
+    getEmployeeTask,
+    employeeCheckIn,
+}
+

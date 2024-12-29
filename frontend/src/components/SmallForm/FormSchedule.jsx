@@ -79,8 +79,12 @@ const FormSchedule = ({
   const mutationCreate = useMutation({
     mutationFn: (data) => ScheduleService.createSchedule(data),
     onSuccess: (data) => {
-      Message.success(data.message)
-      handleClose();
+      if (data.status === "OK") {
+        Message.success(data.message)
+        handleClose();
+      } else {
+        Message.error(data.message)
+      }
     },
     onError: (error) => {
       console.error("Error creating bus:", error);
@@ -90,8 +94,12 @@ const FormSchedule = ({
   const mutationEdit = useMutation({
     mutationFn: (data) => ScheduleService.editSchedule(data),
     onSuccess: (data) => {
-      Message.success(data.message)
-      handleClose();
+      if (data.status === "OK") {
+        Message.success(data.message)
+        handleClose();
+      } else {
+        Message.error(data.message)
+      }
     },
     onError: (error) => {
       console.error("Error creating bus:", error);

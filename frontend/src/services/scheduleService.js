@@ -53,14 +53,25 @@ export const editSchedule = async (data) => {
 };
 
 export const deleteSchedule = async (id) => {
-  try {
-    const response = await axios.delete(`${API_KEY}/schedule/delete/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error("Failed to edit schedule", error);
-    throw error;
-  }
+    try {
+      const response = await axios.delete(`${API_KEY}/schedule/delete/${id}` );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to edit schedule", error);
+      throw error;
+    }
 };
+
+export const approveAllSchedule = async () => {
+    try {
+      const response = await axios.put(`${API_KEY}/schedule/approve-all` );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to edit schedule", error);
+      throw error;
+    }
+};
+
 export const employeeCheckIn = async (data) => {
   try {
     const response = await axios.post(
@@ -73,3 +84,4 @@ export const employeeCheckIn = async (data) => {
     throw error;
   }
 };
+
