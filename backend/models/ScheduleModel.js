@@ -22,7 +22,6 @@ const scheduleSchema = new mongoose.Schema({
       require: true,
     },
     time_start: { type: String, require: true },
-    time: { type: Number, require: true },
     status: { type: String, default: "Pending", require: true },
     ticket3: { type: Number, require: true, default: 0 },
     ticket7: { type: Number, require: true, default: 0 },
