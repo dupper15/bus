@@ -29,6 +29,8 @@ import { format } from "date-fns";
 import { useMutation } from "react-query";
 import * as IncentiveService from "@/services/incentivesService";
 import * as Message from "@/components/ui/alert";
+import { ClipLoader } from "react-spinners";
+import { useState } from "react";
 
 const formSchema = z.object({
   id: z.string().nonempty({ message: "ID is required." }),
@@ -76,7 +78,7 @@ const FormIncentives = ({
 
   const onSubmit = async () => {
     const isValid = await form.trigger();
-
+    setIsSubmitting(true);
     if (!isValid) {
       console.log("Validation errors:", form.formState.errors); // Log lỗi nếu có
       return; // Dừng lại nếu form có lỗi
@@ -87,6 +89,7 @@ const FormIncentives = ({
     } else {
       mutationEdit.mutate({ data: values });
     }
+    setIsSubmitting(false);
   };
 
   const mutationCreate = useMutation({
@@ -97,12 +100,14 @@ const FormIncentives = ({
       const errorMessage =
         error.response?.data?.message || "An unexpected error occurred.";
       Message.error(errorMessage); // Hiển thị lỗi
+      setIsSubmitting(false);
     },
     onSuccess: (data) => {
       if (data.status === "ERROR") {
         Message.error(data.message); // Hiển thị lỗi từ API
       } else if (data.status === "OK") {
         Message.success(data.message); // Hiển thị thông báo thành công
+        setIsSubmitting(false);
         handleClose();
       }
     },
@@ -115,6 +120,8 @@ const FormIncentives = ({
     onError: (error) => {
       const errorMessage =
         error.response?.data?.message || "An unexpected error occurred.";
+      setIsSubmitting(false);
+
       Message.error(errorMessage); // Hiển thị lỗi
     },
     onSuccess: (data) => {
@@ -122,13 +129,14 @@ const FormIncentives = ({
         Message.error(data.message); // Hiển thị lỗi từ API
       } else if (data.status === "OK") {
         Message.success(data.message); // Hiển thị thông báo thành công
+        setIsSubmitting(false);
         handleClose();
       }
     },
   });
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   return (
-    <div className='absolute inset-0 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
+    <div className='absolute inset-0 p-4 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -268,12 +276,20 @@ const FormIncentives = ({
               onClick={handleClose}
               type='button'
               className='bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400'>
-              Cancel
+              {isSubmitting ? (
+                <ClipLoader size={24} color='#fff' />
+              ) : (
+                <span>Cancel</span>
+              )}
             </button>
             <button
               type='submit'
               className='bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-400'>
-              Submit
+              {isSubmitting ? (
+                <ClipLoader size={24} color='#fff' />
+              ) : (
+                <span>Submit</span>
+              )}
             </button>
           </div>
         </form>

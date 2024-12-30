@@ -26,11 +26,12 @@ import { CiCircleRemove } from "react-icons/ci";
 import * as BillService from "@/services/billService";
 import * as Message from "@/components/ui/alert";
 import { useMutation } from "react-query";
-import { formatToVND } from "@/utils/translateToVND"
+import { formatToVND } from "@/utils/translateToVND";
 import { accountSlice } from "@/redux/accountSlide";
-
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 const MaintenancePage = () => {
-
+  const [isLoading, setIsLoading] = useState(true);
   const ITEMS_PER_PAGE = 10;
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
@@ -40,22 +41,24 @@ const MaintenancePage = () => {
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState("");
-  
+
   const mutationGetAll = useMutation({
     mutationFn: async () => {
       return await BillService.getAllBill();
     },
     onSuccess: (data) => {
       setItems(data.data);
+      setIsLoading(false);
     },
     onError: (error) => {
       console.log(error);
+      setIsLoading(false);
     },
-  })
+  });
 
   const mutaionResolve = useMutation({
     mutationFn: async (data) => {
-      return await BillService.editBill(data)
+      return await BillService.editBill(data);
     },
     onSuccess: () => {
       Message.success("Bill resolved successfully.");
@@ -64,11 +67,11 @@ const MaintenancePage = () => {
     onError: (error) => {
       Message.error("Failed to resolve bill:", error.message || error);
     },
-  })
+  });
 
   useEffect(() => {
     mutationGetAll.mutate();
-  },[refresh])
+  }, [refresh]);
 
   const handleClose = () => {
     setShowForm(false);
@@ -92,7 +95,7 @@ const MaintenancePage = () => {
   };
 
   const handleAction = (id, action) => {
-    mutaionResolve.mutate({id: id, status: action});
+    mutaionResolve.mutate({ id: id, status: action });
     console.log(`${action} request with ID: ${id}`);
   };
   const [showImage, setShowImage] = useState(false);
@@ -111,7 +114,7 @@ const MaintenancePage = () => {
   return (
     <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
       <div className='flex w-full space-x-6'>
-        <div className='flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
+        <div className='flex-1 w-full space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
           <div className='flex items-center gap-4'>
             <Search
               className='flex-grow border border-gray-300 rounded-lg p-2'
@@ -151,72 +154,108 @@ const MaintenancePage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems.map((item, index) => (
-                  <TableRow key={index} onClick={(e) => {
-                    e.preventDefault();
-                    setSelected(item);
-                    setShowForm(true);
-                  }} className='cursor-pointer'>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.id}
-                    </TableCell>
-                    <TableCell className='font-medium text-center py-3 px-4'>
-                      {item.bus.license_plate}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        item.status === "Pending"
-                          ? "bg-yellow-100 text-orange-600"
-                          : item.status === "Rejected" 
-                          ? "bg-red-100 text-red-600"
-                          : "bg-green-100 text-green-600"
-                      }`}>
-                      {item.status}
-                    </span>
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.title}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {new Date(item.start_date).toLocaleDateString("en-GB")}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {new Date(item.end_date).toLocaleDateString("en-GB")}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {formatToVND(item.price)}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4 space-x-4 flex justify-center items-center'>
-                      <button
-                        className='text-sm text-blue-500 hover:underline'
+                {isLoading
+                  ? Array(5)
+                      .fill()
+                      .map((_, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>
+                            <Skeleton height={20} width='50%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='80%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='80%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='80%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='50%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='60%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='40%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='30%' />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                  : currentItems.map((item, index) => (
+                      <TableRow
+                        key={index}
                         onClick={(e) => {
-                          e.stopPropagation();
-                          handleShowImage(item.image)
-                        }}>
-                        Show image
-                      </button>
-                      {(item.status === "Pending") && (
-                        <>
-                        <CiCircleRemove
-                          className='text-4xl text-red-500 cursor-pointer hover:text-red-700 transition-colors duration-200 ease-in-out'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAction(item.id, "Rejected")
-                          }}
-                        />
-                        <TiTick
-                          className='text-4xl text-green-500 cursor-pointer hover:text-green-700 transition-colors duration-200 ease-in-out'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAction(item.id, "Approve")
-                          }}
-                        />
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          e.preventDefault();
+                          setSelected(item);
+                          setShowForm(true);
+                        }}
+                        className='cursor-pointer'>
+                        <TableCell className='text-center py-3 px-4'>
+                          {item.id}
+                        </TableCell>
+                        <TableCell className='font-medium text-center py-3 px-4'>
+                          {item.bus.license_plate}
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4'>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              item.status === "Pending"
+                                ? "bg-yellow-100 text-orange-600"
+                                : item.status === "Rejected"
+                                ? "bg-red-100 text-red-600"
+                                : "bg-green-100 text-green-600"
+                            }`}>
+                            {item.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4'>
+                          {item.title}
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4'>
+                          {new Date(item.start_date).toLocaleDateString(
+                            "en-GB"
+                          )}
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4'>
+                          {new Date(item.end_date).toLocaleDateString("en-GB")}
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4'>
+                          {formatToVND(item.price)}
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4 space-x-4 flex justify-center items-center'>
+                          <button
+                            className='text-sm text-blue-500 hover:underline'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleShowImage(item.image);
+                            }}>
+                            Show image
+                          </button>
+                          {item.status === "Pending" && (
+                            <>
+                              <CiCircleRemove
+                                className='text-4xl text-red-500 cursor-pointer hover:text-red-700 transition-colors duration-200 ease-in-out'
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAction(item.id, "Rejected");
+                                }}
+                              />
+                              <TiTick
+                                className='text-4xl text-green-500 cursor-pointer hover:text-green-700 transition-colors duration-200 ease-in-out'
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAction(item.id, "Approve");
+                                }}
+                              />
+                            </>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
               </TableBody>
             </Table>
           </div>
@@ -256,8 +295,8 @@ const MaintenancePage = () => {
           </Pagination>
         </div>
         {showImage && (
-          <div className='fixed -left-10 inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50'>
-            <div className='bg-white p-4 rounded-lg shadow-lg max-w-lg w-full'>
+          <div className='fixed p-4 -left-10 inset-0  bg-black bg-opacity-50 flex justify-center items-center z-50'>
+            <div className='bg-white ml-2 md:ml-0 p-4  rounded-lg shadow-lg max-w-lg w-full'>
               <div className='flex justify-between items-center mb-4'>
                 <h3 className='text-lg font-semibold'></h3>
                 <button
@@ -277,7 +316,7 @@ const MaintenancePage = () => {
           </div>
         )}
 
-        {showForm &&  (
+        {showForm && (
           <div className='fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform'>
             <MaintenanceDetail
               handleClose={handleClose}

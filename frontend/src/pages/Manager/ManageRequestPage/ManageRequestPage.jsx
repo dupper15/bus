@@ -39,7 +39,9 @@ import { useSearchParams } from "react-router-dom";
 import * as Message from "../../../components/ui/alert";
 import { use } from "react";
 import FormRequest from "@/components/SmallForm/FormRequest";
-
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+import { ClipLoader } from "react-spinners";
 const ManageRequestPage = () => {
   const ITEMS_PER_PAGE = 10;
   const [searchWord, setSearchWord] = useState("");
@@ -47,9 +49,11 @@ const ManageRequestPage = () => {
   const currentPage = parseInt(searchParams.get("page")) || 1;
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState("");
+  const [type, setType] = useState("");
 
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const currentItems = items
@@ -70,18 +74,20 @@ const ManageRequestPage = () => {
     },
     onError: (error) => {
       console.log(error);
+      setIsLoading(false);
     },
   });
-    
+
   const mutationDelele = useMutation({
     mutationFn: (id) => RequestService.deleteRequest(id),
     onSuccess: () => {
       Message.success("Request deleted successfully.");
       setRefresh(!refresh);
+      setLoading(false);
     },
     onError: (error) => {
       Message.error("Failed to delete request:", error.message || error);
-      setIsLoading(false);
+      setLoading(false);
     },
   });
   const handleClose = () => {
@@ -90,6 +96,7 @@ const ManageRequestPage = () => {
 
   // Sử dụng mutate để gọi hàm xóa
   const handleDelete = () => {
+    setLoading(true);
     mutationDelele.mutate(selected._id);
   };
 
@@ -105,7 +112,7 @@ const ManageRequestPage = () => {
   return (
     <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
       <div className='flex w-full space-x-6'>
-        <div className='flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
+        <div className='flex-1 w-full space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
           <div className='flex items-center gap-4'>
             <Search
               className='flex-grow border border-gray-300 rounded-lg p-2'
@@ -290,7 +297,7 @@ const ManageRequestPage = () => {
           </Pagination>
         </div>
       </div>
-      {showForm && (
+      {showForm && type === "view" && (
         <div className='fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform'>
           <FormRequest handleClose={handleClose} request={selected} />
         </div>

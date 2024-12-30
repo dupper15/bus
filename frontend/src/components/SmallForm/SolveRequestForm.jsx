@@ -9,11 +9,14 @@ import { RxCross1 } from "react-icons/rx";
 import { SiTicktick } from "react-icons/si";
 import { useSelector } from "react-redux";
 import * as Message from "@/components/ui/alert";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+import { ClipLoader } from "react-spinners";
 
 const SolveRequestForm = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [requests, setRequests] = useState([]);
-  const containerRef = useRef(null);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const mutationResolvedRequest = useMutation({
     mutationFn: (data) => RequestService.resolvedRequest(data),
     onError: (error) => {
@@ -40,6 +43,7 @@ const SolveRequestForm = () => {
         sentAt: new Date(request.date_requested).toLocaleString(),
       }));
       setRequests(formattedRequests);
+      setIsLoading(false);
     },
   });
 
@@ -47,20 +51,6 @@ const SolveRequestForm = () => {
     mutationGetRequests.mutate();
   }, []);
 
-  useEffect(() => {
-    if (containerRef.current) {
-      setContainerWidth(containerRef.current.offsetWidth);
-    }
-    const handleResize = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
-      }
-    };
-      window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
   const [id, setId] = useState("");
   const [feedback, setFeedback] = useState("");
   const handleTextChange = (e) => {
@@ -69,38 +59,42 @@ const SolveRequestForm = () => {
   const account = useSelector((state) => state.account);
   const manager = account?._id;
   const handleSubmit = (status) => {
+    setIsSubmitting(true);
     mutationResolvedRequest.mutate({
       id: id,
       manager: manager,
       status: status,
       feedback,
     });
+    setIsSubmitting(false);
+    setFeedback("");
+    setIsLoading(true);
+    mutationGetRequests.mutate();
   };
   return (
-    <div
-      ref={containerRef}
-      className='w-full bg-white shadow-lg rounded-xl p-8 border border-gray-300'>
-      <h2 className='text-xl font-bold text-green-500 mb-8 text-center uppercase tracking-wide'>
+    <div className='w-full  bg-white shadow-lg rounded-xl p-4 md:p-8 border border-gray-300 custom-width'>
+      <h2 className='text-xl sm:text-2xl font-bold text-green-500 mb-6 sm:mb-8 text-center uppercase tracking-wide'>
         Pending Requests
       </h2>
-      {containerWidth > 0 && (
+
+      {!isLoading ? (
         <Swiper
           modules={[Navigation]}
           navigation
           spaceBetween={30}
           slidesPerView={1}
-          style={{ width: containerWidth }}
+          className=' w-full lg:w-[300px] block' // Đảm bảo là block và width 100%
           loop={false}>
           {requests.map((request, index) => (
             <SwiperSlide key={index}>
-              <div className='flex flex-col space-y-4 py-8 px-10 border rounded-xl bg-gray-50 shadow-md hover:shadow-lg transition-shadow'>
-                <h3 className='text-xl font-bold text-gray-800'>
+              <div className='flex flex-col w-full space-y-4 py-6 px-8  border rounded-xl bg-gray-50 shadow-md hover:shadow-lg transition-shadow'>
+                <h3 className='text-lg sm:text-xl font-bold text-gray-800'>
                   {request.title}
                 </h3>
-                <p className='text-sm text-gray-600 leading-relaxed'>
+                <p className='text-sm sm:text-base text-gray-600 leading-relaxed'>
                   {request.content}
                 </p>
-                <div className='flex flex-col gap-3 text-sm text-gray-700'>
+                <div className='flex flex-col gap-2 sm:gap-3 text-sm sm:text-base text-gray-700'>
                   <div>
                     <strong>Employee:</strong> {request.employeeName}
                   </div>
@@ -122,24 +116,42 @@ const SolveRequestForm = () => {
                     onChange={handleTextChange}
                     rows={5}
                     placeholder='Type your answer here...'
-                    className='border rounded-lg p-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
+                    className='border rounded-lg p-4 text-sm sm:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
                   />
-                  <div className='flex justify-between gap-4'>
+                  <div className='flex flex-col sm:flex-row justify-between gap-4'>
                     <button
-                      onClick={() => {
-                        handleSubmit("Rejected");
-                      }}
-                      className='flex items-center justify-center w-1/2 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all shadow-md space-x-2'>
-                      <RxCross1 className='text-lg' />
-                      <span>Reject</span>
+                      onClick={() => handleSubmit("Rejected")}
+                      disabled={isSubmitting}
+                      className={`flex items-center justify-center w-full sm:w-1/2 py-2 rounded-lg transition-all shadow-md space-x-2 ${
+                        isSubmitting
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-red-500 hover:bg-red-600 text-white"
+                      }`}>
+                      {isSubmitting ? (
+                        <ClipLoader size={20} color='#fff' />
+                      ) : (
+                        <>
+                          <RxCross1 className='text-lg' />
+                          <span>Reject</span>
+                        </>
+                      )}
                     </button>
                     <button
-                      onClick={() => {
-                        handleSubmit("Approved");
-                      }}
-                      className='flex items-center justify-center w-1/2 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all shadow-md space-x-2'>
-                      <SiTicktick className='text-lg' />
-                      <span>Approve</span>
+                      onClick={() => handleSubmit("Approved")}
+                      disabled={isSubmitting}
+                      className={`flex items-center justify-center w-full sm:w-1/2 py-2 rounded-lg transition-all shadow-md space-x-2 ${
+                        isSubmitting
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-green-500 hover:bg-green-600 text-white"
+                      }`}>
+                      {isSubmitting ? (
+                        <ClipLoader size={20} color='#fff' />
+                      ) : (
+                        <>
+                          <SiTicktick className='text-lg' />
+                          <span>Approve</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -147,6 +159,29 @@ const SolveRequestForm = () => {
             </SwiperSlide>
           ))}
         </Swiper>
+      ) : (
+        <div>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className='flex flex-col space-y-4 py-6 px-8 sm:px-10 border rounded-xl bg-gray-50 shadow-md transition-shadow mb-6'>
+              <Skeleton height={30} />
+              <Skeleton count={3} />
+              <div className='flex flex-col gap-3'>
+                <Skeleton width='60%' />
+                <Skeleton width='50%' />
+                <Skeleton width='70%' />
+              </div>
+              <div className='flex flex-col space-y-6 mt-6'>
+                <Skeleton height={80} />
+                <div className='flex gap-4'>
+                  <Skeleton height={40} width='50%' />
+                  <Skeleton height={40} width='50%' />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

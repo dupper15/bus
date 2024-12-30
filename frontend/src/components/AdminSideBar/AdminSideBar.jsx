@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
+import { LogOut } from "lucide-react";
 import { User } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -27,8 +27,8 @@ export function AdminSideBar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="text-xl font-bold items-center justify-center">
-          <span className="font-extrabold text-2xl text-[#4CAF50]">Busty</span>
+        <div className='text-xl font-bold items-center justify-center'>
+          <span className='font-extrabold text-2xl text-[#4CAF50]'>Busty</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -38,7 +38,7 @@ export function AdminSideBar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="hover:bg-green-200">
+                  <SidebarMenuButton asChild className='hover:bg-green-200'>
                     <Link to={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -51,8 +51,11 @@ export function AdminSideBar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex justify-center">
-          <Link className="font-semibold text-center" to={"/login"}>
+        <div className='flex justify-center'>
+          <Link
+            className='font-semibold flex justify-center items-center text-center hover:underline cursor-pointer hover:text-green-500'
+            to={"/login"}>
+            <LogOut className='mr-2 w-4 h-4' />
             Log out
           </Link>
         </div>
