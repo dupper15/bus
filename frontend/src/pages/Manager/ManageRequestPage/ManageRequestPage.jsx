@@ -89,8 +89,8 @@ const ManageRequestPage = () => {
   };
 
   // Sử dụng mutate để gọi hàm xóa
-  const handleDelete = (id) => {
-    mutationDelele.mutate(id);
+  const handleDelete = () => {
+    mutationDelele.mutate(selected._id);
   };
 
   useEffect(() => {
@@ -240,7 +240,7 @@ const ManageRequestPage = () => {
                                   {
                                     e.stopPropagation();
                                     setShowForm(false); 
-                                    handleDelete(selected._id)
+                                    handleDelete()
                                   }}
                                   className='w-28'
                                   variant='destructive'>

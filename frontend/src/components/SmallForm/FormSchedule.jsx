@@ -21,6 +21,7 @@ import { useMutation } from "@tanstack/react-query";
 import * as ScheduleService from "@/services/scheduleService";
 import { useEffect, useState } from "react";
 import * as Message from "@/components/ui/alert"
+import {convertMinutesToHoursAndMinutes} from "@/utils/translateToVND"
 
 
 const formSchema = z.object({
@@ -46,7 +47,6 @@ const FormSchedule = ({
         driver: "",
         busboy: "",
         time_start: "",
-        time: "",
       }
     : {
         bus: schedule.bus._id,
@@ -54,7 +54,6 @@ const FormSchedule = ({
         driver: schedule.driver._id ,
         busboy: schedule.busboy._id,
         time_start: schedule.time_start,
-        time: schedule.time,
       },
   });
 
@@ -177,7 +176,7 @@ const FormSchedule = ({
                         <SelectContent>
                           {itemsLine.map((item) => (
                             <SelectItem key={item._id} value={item._id}>
-                              {item.name}
+                              {item.name} - Time: {convertMinutesToHoursAndMinutes(item.time)} 
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -204,7 +203,7 @@ const FormSchedule = ({
                         <SelectContent>
                           {itemsDriver.map((item) => (
                             <SelectItem key={item._id} value={item._id}>
-                              {item.name}-{item.id}
+                              {item.name} - {item.id}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -231,7 +230,7 @@ const FormSchedule = ({
                         <SelectContent>
                           {itemsBusboy.map((item) => (
                             <SelectItem key={item._id} value={item._id}>
-                              {item.name}-{item.id}
+                              {item.name} - {item.id}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -249,20 +248,6 @@ const FormSchedule = ({
                 <FormLabel>Time Start</FormLabel>
                 <FormControl>
                   <Input type='time' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='time'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Time</FormLabel>
-                <FormControl>
-                  <Input type='text' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

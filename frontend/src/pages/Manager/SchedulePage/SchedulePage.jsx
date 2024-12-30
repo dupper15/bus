@@ -240,7 +240,7 @@ const SchedulePage = () => {
                       {item.time_start}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
-                      {convertMinutesToHoursAndMinutes(item.time)}
+                      {convertMinutesToHoursAndMinutes(item.line.time)}
                     </TableCell>
                     <TableCell className="text-center py-3 px-4">
                       {item.ticket3}

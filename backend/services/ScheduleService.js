@@ -89,6 +89,52 @@ const createSchedule = async (data) => {
                     message: `Schedule already exists on line ${checkSchedule.line.name} at ${checkSchedule.time_start} with bus ${checkSchedule.bus.license_plate}.`,
                 })
             }
+
+            const lineCheck = await Line.findById(data.line);
+
+            const parseTime = (timeStr) => {
+              const [hours, minutes] = timeStr.split(':').map(Number);
+              return hours * 60 + minutes;
+            };
+
+            const newScheduleStart = parseTime(data.time_start);
+            const newScheduleEnd = newScheduleStart + lineCheck.time;
+
+            const allScheduleBusboy = await Schedule.find({busboy: data.busboy})
+            .populate("busboy", "name").populate("line", "time")
+
+            const allScheduleDriver = await Schedule.find({driver: data.driver})
+            .populate("driver", "name").populate("line", "time")
+
+            for (const schedule of allScheduleBusboy) {
+              const existingStart = parseTime(schedule.time_start);
+              const existingEnd = existingStart + schedule.line.time;
+
+               if ((newScheduleStart > existingEnd) || (newScheduleEnd < existingStart)){
+                continue;
+              } else {
+                  return {
+                      status: "ERROR",
+                      message: `Busboy ${schedule.busboy.name} is already assigned to another schedule from ${schedule.time_start} to ${String(Math.floor(existingEnd / 60)).padStart(2, '0')}:${String(existingEnd % 60).padStart(2, '0')} on line ${schedule.line.name}.`,
+                  };
+              }
+            }
+
+            for (const schedule of allScheduleDriver) {
+              const existingStart = parseTime(schedule.time_start);
+              const existingEnd = existingStart + schedule.time;
+        
+              // Nếu khoảng thời gian bị chồng lấn
+              if ((newScheduleStart > existingEnd) || (newScheduleEnd < existingStart)){
+                continue;
+              } else {
+                  return {
+                      status: "ERROR",
+                      message: `Driver ${schedule.driver.name} is already assigned to another schedule from ${schedule.time_start} to ${String(Math.floor(existingEnd / 60)).padStart(2, '0')}:${String(existingEnd % 60).padStart(2, '0')} on line ${schedule.line.name}.`,
+                  };
+              }
+            }
+      
             // Lấy tất cả ID hiện có và sắp xếp
             const schedules = await Schedule.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
 
@@ -134,7 +180,7 @@ const getAllSchedule = async () => {
     try {
         const allSchedule = await Schedule.find()
             .populate("bus", "_id id license_plate status")
-            .populate("line", "_id id name")
+            .populate("line", "_id id name time")
             .populate("driver", "_id id name status")
             .populate("busboy", "_id id name status");
 
@@ -178,6 +224,9 @@ const getAllSchedule = async () => {
         const minutes = localTime.getUTCMinutes();
 
         allSchedule.forEach(schedule => {
+            if (schedule.status !== "Not start yet") {
+              return; 
+            }
             const [startHours, startMinutes] = schedule.time_start.split(":").map(Number);
             const startTotalMinutes = startHours * 60 + startMinutes;
             const currentTotalMinutes = hours * 60 + minutes;
@@ -209,7 +258,7 @@ const getAllAdd = async () => {
     const bus = await Bus.find({ status: "Active" }).select(
       "_id id license_plate"
     );
-    const line = await Line.find().select("_id id name");
+    const line = await Line.find().select("_id id name time");
     const driver = await Employee.find({
       position: "Driver",
       status: "Enable",
@@ -247,6 +296,51 @@ const updateSchedule = async (data) => {
                     status: "ERROR",
                     message: `Schedule already exists on line ${checkSchedule.line.name} at ${checkSchedule.time_start} with bus ${checkSchedule.bus.license_plate}.`,
                 })
+            }
+
+            const lineCheck = await Line.findById(data.line);
+
+            const parseTime = (timeStr) => {
+              const [hours, minutes] = timeStr.split(':').map(Number);
+              return hours * 60 + minutes;
+            };
+
+            const newScheduleStart = parseTime(data.time_start);
+            const newScheduleEnd = newScheduleStart + lineCheck.time;
+
+            const allScheduleBusboy = await Schedule.find({busboy: data.busboy,_id: { $ne: data._id}})
+            .populate("busboy", "name").populate("line", "time")
+
+            const allScheduleDriver = await Schedule.find({driver: data.driver, _id: { $ne: data._id}})
+            .populate("driver", "name").populate("line", "time")
+
+            for (const schedule of allScheduleBusboy) {
+              const existingStart = parseTime(schedule.time_start);
+              const existingEnd = existingStart + schedule.line.time;
+
+               if ((newScheduleStart > existingEnd) || (newScheduleEnd < existingStart)){
+                continue;
+              } else {
+                  return {
+                      status: "ERROR",
+                      message: `Busboy ${schedule.busboy.name} is already assigned to another schedule from ${schedule.time_start} to ${String(Math.floor(existingEnd / 60)).padStart(2, '0')}:${String(existingEnd % 60).padStart(2, '0')} on line ${schedule.line.name}.`,
+                  };
+              }
+            }
+
+            for (const schedule of allScheduleDriver) {
+              const existingStart = parseTime(schedule.time_start);
+              const existingEnd = existingStart + schedule.time;
+        
+              // Nếu khoảng thời gian bị chồng lấn
+              if ((newScheduleStart > existingEnd) || (newScheduleEnd < existingStart)){
+                continue;
+              } else {
+                  return {
+                      status: "ERROR",
+                      message: `Driver ${schedule.driver.name} is already assigned to another schedule from ${schedule.time_start} to ${String(Math.floor(existingEnd / 60)).padStart(2, '0')}:${String(existingEnd % 60).padStart(2, '0')} on line ${schedule.line.name}.`,
+                  };
+              }
             }
 
             const updatedSchedule = await Schedule.findByIdAndUpdate(
@@ -304,33 +398,20 @@ const getDetailSchedule = (ScheduleId) => {
   });
 };
 
-const deleteSchedule = (ScheduleId) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const schedule = await Schedule.findOne({
-        _id: ScheduleId,
-      });
-      if (schedule === null) {
-        resolve({
-          status: "ERROR",
-          message: "No schedule found with the provided ID.",
-        });
-        return;
-      }
-
+const deleteSchedule = async (ScheduleId) => {
+    try {  
       await Schedule.findByIdAndDelete(ScheduleId);
-      resolve({
+      return({
         status: "OK",
         message: "Schedule deleted successfully.",
       });
     } catch (e) {
-      reject({
+      return({
         status: "ERROR",
         message: "An error occurred while deleting the schedule.",
         error: e,
       });
     }
-  });
 };
 const employeeCheckIn = async (data) => {
   try {
