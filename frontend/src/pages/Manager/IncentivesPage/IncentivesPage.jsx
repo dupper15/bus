@@ -40,8 +40,10 @@ import FormIncentives from "@/components/SmallForm/FormIncentives";
 import * as IncentivesService from "@/services/incentivesService";
 import * as Message from "@/components/ui/alert";
 import { useMutation } from "react-query";
-
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 const IncentivesPage = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const ITEMS_PER_PAGE = 10;
   const [items, setItems] = useState([]);
   const [refresh, setRefresh] = useState(false);
@@ -59,6 +61,7 @@ const IncentivesPage = () => {
     },
     onSuccess: (data) => {
       setItems(data.data);
+      setIsLoading(false);
     },
   });
 
@@ -143,7 +146,7 @@ const IncentivesPage = () => {
   return (
     <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
       <div className='flex w-full space-x-6'>
-        <div className='flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
+        <div className='flex-1 w-full space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
           <div className='flex items-center gap-4'>
             <Search
               className='flex-grow border border-gray-300 rounded-lg p-2'
@@ -176,60 +179,88 @@ const IncentivesPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems.map((item, index) => (
-                  <TableRow key={index} onClick={() => setSelected(item)}>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.id}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.employee.name}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      <span
-                        className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
-                          item.type === "Reward"
-                            ? "bg-green-100 text-green-600"
-                            : "bg-red-100 text-red-600"
-                        }`}>
-                        {item.type}
-                      </span>
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.content}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {new Date(item.date).toLocaleDateString("en-GB")}
-                    </TableCell>
-                    <TableCell className='text-center py-3 px-4'>
-                      {item.price}
-                    </TableCell>
-                    <TableCell className='text-center flex justify-center items-center py-3 px-4'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <EllipsisVertical className='mb-2 ' />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setId(item.id);
-                              setName(item.employee.name);
-                              setType(item.type);
-                              setContent(item.content);
-                              setDate(item.date);
-                              setPrice(item.price);
-                              handleEditClick();
-                            }}>
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDialogOpen("delete")}>
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {isLoading
+                  ? Array(5)
+                      .fill()
+                      .map((_, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>
+                            <Skeleton height={20} width='50%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='80%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='80%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='50%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='60%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='40%' />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton height={20} width='30%' />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                  : currentItems.map((item, index) => (
+                      <TableRow key={index} onClick={() => setSelected(item)}>
+                        <TableCell className='text-center py-3 px-4'>
+                          {item.id}
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4'>
+                          {item.employee.name}
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4'>
+                          <span
+                            className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
+                              item.type === "Reward"
+                                ? "bg-green-100 text-green-600"
+                                : "bg-red-100 text-red-600"
+                            }`}>
+                            {item.type}
+                          </span>
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4'>
+                          {item.content}
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4'>
+                          {new Date(item.date).toLocaleDateString("en-GB")}
+                        </TableCell>
+                        <TableCell className='text-center py-3 px-4'>
+                          {item.price}
+                        </TableCell>
+                        <TableCell className='text-center flex justify-center items-center py-3 px-4'>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger>
+                              <EllipsisVertical className='mb-2 ' />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setId(item.id);
+                                  setName(item.employee.name);
+                                  setType(item.type);
+                                  setContent(item.content);
+                                  setDate(item.date);
+                                  setPrice(item.price);
+                                  handleEditClick();
+                                }}>
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDialogOpen("delete")}>
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
               </TableBody>
             </Table>
           </div>
