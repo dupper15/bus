@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,8 @@ import {
 } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import * as Message from "../../../components/ui/alert"
+import * as Message from "../../../components/ui/alert";
+import { ClipLoader } from "react-spinners";
 
 const formSchema = z
   .object({
@@ -61,7 +62,7 @@ const formSchema = z
       .regex(/^\d{10}$/, { message: "Phone number must contain only digits." }),
     salary: z
       .string()
-      .length(7, { message: "Salary must be at least 1 000 000 VND." }),
+      .min(7, { message: "Salary must be at least 1 000 000 VND." }),
     id_card: z
       .string()
       .length(12, { message: "National ID must be exactly 12 digits." })
@@ -76,14 +77,10 @@ const formSchema = z
       .refine((value) => value === "Bus boy" || value === "Driver", {
         message: "Please select a position.",
       }),
-    hire_date: z
-      .date()
-      .refine((date) => date <= new Date(), {
-        message: "Hire date must be a valid date and cannot be in the future.",
-      }),
-    license: z
-      .string()
-      .optional(), // License là trường optional cho mọi người không phải Driver 
+    hire_date: z.date().refine((date) => date <= new Date(), {
+      message: "Hire date must be a valid date and cannot be in the future.",
+    }),
+    license: z.string().optional(), // License là trường optional cho mọi người không phải Driver
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords must match",
@@ -105,10 +102,10 @@ const formSchema = z
     }
   );
 
-
 const AddEmployeePage = () => {
   const navigate = useNavigate();
-  const [isDriver, setIsDriver] = useState(false); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDriver, setIsDriver] = useState(false);
   const mutation = useMutation({
     mutationFn: async ({ data }) => {
       return await EmployeeService.addEmployee(data);
@@ -127,7 +124,7 @@ const AddEmployeePage = () => {
       }
     },
   });
-  
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -145,6 +142,7 @@ const AddEmployeePage = () => {
   });
 
   const onCreate = async () => {
+    setIsSubmitting(true);
     const isValid = await form.trigger();
 
     if (!isValid) {
@@ -153,16 +151,14 @@ const AddEmployeePage = () => {
     }
     const values = form.getValues();
     mutation.mutate({ data: values });
-    
+    setIsSubmitting(false);
   };
-
 
   const onCancel = () => {
     navigate(-1);
   };
 
   return (
-    
     <div className='justify-center pt-4 px-10'>
       <Card>
         <CardHeader className='flex justify-center items-center bg-green-500 h-12 rounded-t-lg mb-8'>
@@ -221,7 +217,7 @@ const AddEmployeePage = () => {
                       <Select
                         onValueChange={(value) => {
                           field.onChange(value);
-                          setIsDriver(value === "Driver"); 
+                          setIsDriver(value === "Driver");
                         }}
                         value={field.value}>
                         <FormControl>
@@ -366,7 +362,7 @@ const AddEmployeePage = () => {
                       </FormItem>
                     )}
                   />
-                )}  
+                )}
               </div>
 
               {/* Cancel and Create buttons */}

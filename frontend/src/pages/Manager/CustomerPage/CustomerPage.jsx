@@ -40,12 +40,14 @@ import {
 } from "@/components/ui/pagination";
 import { useMutation } from "react-query";
 import * as CustomerService from "../../../services/customerService";
-import * as Message from "../../../components/ui/alert"
-
+import * as Message from "../../../components/ui/alert";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 const ITEMS_PER_PAGE = 10;
 
 const CustomerPage = () => {
   const [items, setItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [refresh, setRefresh] = useState(false);
 
   const mutation = useMutation({
@@ -57,11 +59,12 @@ const CustomerPage = () => {
     },
     onSuccess: (data) => {
       setItems(data.data);
+      setIsLoading(false);
     },
   });
 
   const mutationDelete = useMutation({
-    mutationFn: ({_id}) => {
+    mutationFn: ({ _id }) => {
       return CustomerService.deleteCustomer(_id);
     },
     onError: (error) => {
@@ -78,7 +81,7 @@ const CustomerPage = () => {
   });
 
   const mutationChangeStatus = useMutation({
-    mutationFn: ({_id}) => {
+    mutationFn: ({ _id }) => {
       return CustomerService.changeStatus(_id);
     },
     onError: (error) => {
@@ -109,7 +112,6 @@ const CustomerPage = () => {
     mutation.mutate();
   };
 
-
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
@@ -120,18 +122,17 @@ const CustomerPage = () => {
       item.name.toLowerCase().includes(searchWord.toLowerCase())
     )
     .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  
-  const [selectedEmployee, setSelectedEmployee] = useState('');
+
+  const [selectedEmployee, setSelectedEmployee] = useState("");
 
   // Query id employee into url
   const currentParams = new URLSearchParams(window.location.search);
-  currentParams.set('id', selectedEmployee._id);
+  currentParams.set("id", selectedEmployee._id);
   window.history.pushState(
     {},
-    '',
+    "",
     `${window.location.pathname}?${currentParams.toString()}`
   );
-
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -144,7 +145,7 @@ const CustomerPage = () => {
   };
   return (
     <div className='flex justify-center min-h-screen w-full p-6 bg-gray-100'>
-      <div className='space-y-8 w-full max-w-7xl bg-white shadow-lg rounded-xl p-8 border border-gray-300'>
+      <div className='space-y-8 w-full  bg-white shadow-lg rounded-xl p-8 border border-gray-300'>
         {/* Header Section */}
         <div className='flex justify-between items-center mb-8'>
           <Search
@@ -187,92 +188,124 @@ const CustomerPage = () => {
             </TableHeader>
 
             <TableBody>
-              {currentItems.map((item, index) => (
-                <TableRow key={index} className='border-b hover:bg-gray-100'>
-                  <TableCell className='text-center py-4'>{item.id}</TableCell>
-                  <TableCell className='text-center py-4'>
-                    <Avatar className='mx-auto'>
-                      <AvatarImage
-                        src={item.avatar}
-                        alt={`${item.name} avatar`}
-                      />
-                      <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className='text-center font-medium py-4'>
-                    {item.name}
-                  </TableCell>
-                  <TableCell className='text-center py-4'>
-                    {item.id_card}
-                  </TableCell>
-                  <TableCell className='text-center py-4'>
-                    {item.phone}
-                  </TableCell>
-                  <TableCell className='text-center py-4'>
-                    {item.username}
-                  </TableCell>
-                  <TableCell className='text-center py-4'>
-                  <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        item.status === "Disable"
-                          ? "bg-red-100 text-red-600"
-                          : "bg-green-100 text-green-600"
-                      }`}>
-                      {item.status}
-                    </span>
-                  </TableCell>
-                  {/* Action Section */}
-                  <TableCell className='text-center py-4'>
-                     <Dialog>
-                                            <DropdownMenu>
-                                              <DropdownMenuTrigger>
-                                                <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
-                                              </DropdownMenuTrigger>
-                                              <DropdownMenuContent className='bg-white shadow-md rounded-lg'>
-                                                <DropdownMenuItem
-                                                  onClick={() => handleDisable(item._id)}>
-                                                  {item.status === "Disable" ? "Enable" : "Disable"}
-                                                </DropdownMenuItem>
-                                                <DialogTrigger asChild>
-                                                  <DropdownMenuItem>
-                                                    <span>Delete</span>
-                                                  </DropdownMenuItem>
-                                                </DialogTrigger>
-                                              </DropdownMenuContent>
-                                            </DropdownMenu>
-                                            <DialogContent className='p-4'>
-                                              <DialogHeader>
-                                                <DialogTitle className='text-center text-lg font-semibold'>
-                                                  Are you sure you want to delete?
-                                                </DialogTitle>
-                                                <DialogDescription className='text-gray-600'>
-                                                  This action cannot be undone. This will
-                                                  permanently delete your customer and remove your
-                                                  data from our servers.
-                                                </DialogDescription>
-                                                <div className='flex items-center justify-center gap-4 pt-4'>
-                                                  <DialogClose asChild>
-                                                    <Button variant='outline' className='w-28 '>
-                                                      Cancel
-                                                    </Button>
-                                                  </DialogClose>
-                                                  <DialogClose asChild>
-                                                    <Button
-                                                      onClick={() =>
-                                                        handleDelete(item._id)
-                                                      }
-                                                      className='w-28'
-                                                      variant='destructive'>
-                                                      Confirm
-                                                    </Button>
-                                                  </DialogClose>
-                                                </div>
-                                              </DialogHeader>
-                                            </DialogContent>
-                                          </Dialog>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {isLoading
+                ? Array(5)
+                    .fill()
+                    .map((_, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton circle={true} height={40} width={40} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='80%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='60%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='40%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='30%' />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                : currentItems.map((item, index) => (
+                    <TableRow
+                      key={index}
+                      className='border-b hover:bg-gray-100'>
+                      <TableCell className='text-center py-4'>
+                        {item.id}
+                      </TableCell>
+                      <TableCell className='text-center py-4'>
+                        <Avatar className='mx-auto'>
+                          <AvatarImage
+                            src={item.avatar}
+                            alt={`${item.name} avatar`}
+                          />
+                          <AvatarFallback>CN</AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell className='text-center font-medium py-4'>
+                        {item.name}
+                      </TableCell>
+                      <TableCell className='text-center py-4'>
+                        {item.id_card}
+                      </TableCell>
+                      <TableCell className='text-center py-4'>
+                        {item.phone}
+                      </TableCell>
+                      <TableCell className='text-center py-4'>
+                        {item.username}
+                      </TableCell>
+                      <TableCell className='text-center py-4'>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            item.status === "Disable"
+                              ? "bg-red-100 text-red-600"
+                              : "bg-green-100 text-green-600"
+                          }`}>
+                          {item.status}
+                        </span>
+                      </TableCell>
+                      {/* Action Section */}
+                      <TableCell className='text-center py-4'>
+                        <Dialog>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger>
+                              <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className='bg-white shadow-md rounded-lg'>
+                              <DropdownMenuItem
+                                onClick={() => handleDisable(item._id)}>
+                                {item.status === "Disable"
+                                  ? "Enable"
+                                  : "Disable"}
+                              </DropdownMenuItem>
+                              <DialogTrigger asChild>
+                                <DropdownMenuItem>
+                                  <span>Delete</span>
+                                </DropdownMenuItem>
+                              </DialogTrigger>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <DialogContent className='p-4'>
+                            <DialogHeader>
+                              <DialogTitle className='text-center text-lg font-semibold'>
+                                Are you sure you want to delete?
+                              </DialogTitle>
+                              <DialogDescription className='text-gray-600'>
+                                This action cannot be undone. This will
+                                permanently delete your customer and remove your
+                                data from our servers.
+                              </DialogDescription>
+                              <div className='flex items-center justify-center gap-4 pt-4'>
+                                <DialogClose asChild>
+                                  <Button variant='outline' className='w-28 '>
+                                    Cancel
+                                  </Button>
+                                </DialogClose>
+                                <DialogClose asChild>
+                                  <Button
+                                    onClick={() => handleDelete(item._id)}
+                                    className='w-28'
+                                    variant='destructive'>
+                                    Confirm
+                                  </Button>
+                                </DialogClose>
+                              </div>
+                            </DialogHeader>
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
             </TableBody>
           </Table>
         </div>

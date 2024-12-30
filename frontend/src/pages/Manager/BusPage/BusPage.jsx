@@ -29,7 +29,8 @@ import { FaRegCalendarMinus } from "react-icons/fa";
 import FormBus from "../../../components/SmallForm/FormBus";
 import avatar from "../../../assets/default-profile-icon.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import { useSearchParams } from "react-router-dom";
 import {
   Pagination,
@@ -44,6 +45,7 @@ import * as BusService from "../../../services/busService";
 import * as Message from "../../../components/ui/alert";
 
 const BusPage = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const ITEMS_PER_PAGE = 10;
   const [items, setItems] = useState([]);
   const [refresh, setRefresh] = useState(false);
@@ -58,9 +60,11 @@ const BusPage = () => {
     },
     onSuccess: (data) => {
       setItems(data.data);
+      setIsLoading(false);
     },
     onError: (error) => {
       console.log(error);
+      setIsLoading(false);
     },
   });
 
@@ -176,68 +180,99 @@ const BusPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentItems.map((item, index) => (
-                <TableRow key={index} onClick={() => setSelectedBus(item)}>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.id}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.type}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.manufacture_year}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    <Avatar className='w-10 h-10 border-2 mx-auto border-green-500'>
-                      <AvatarImage src={item.image ? item.image : avatar} />
-                      <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.license_plate}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.count_seat}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    <span
-                      className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
-                        item.status === "Unactive"
-                          ? "bg-slate-200 text-gray-800"
-                          : item.status === "Maintenance"
-                          ? "bg-yellow-100 text-orange-600"
-                          : "bg-green-100 text-green-600"
-                      }`}>
-                      {item.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className='text-center flex justify-center items-center py-3 px-4'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger>
-                        <EllipsisVertical className='mb-2 ' />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setType(item.type);
-                            setManufactureYear(item.manufacture_year);
-                            setImage(item.image);
-                            setLicensePlate(item.license_plate);
-                            setCountSeat(item.count_seat);
-                            setStatus(item.status);
-                            handleEditClick();
-                          }}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDialogOpen("delete")}>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {isLoading
+                ? Array(5)
+                    .fill()
+                    .map((_, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton circle={true} height={40} width={40} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='80%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='60%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='30%' />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                : currentItems.map((item, index) => (
+                    <TableRow key={index} onClick={() => setSelectedBus(item)}>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.id}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.type}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.manufacture_year}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        <Avatar className='w-10 h-10 border-2 mx-auto border-green-500'>
+                          <AvatarImage src={item.image ? item.image : avatar} />
+                          <AvatarFallback>CN</AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.license_plate}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.count_seat}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        <span
+                          className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
+                            item.status === "Unactive"
+                              ? "bg-slate-200 text-gray-800"
+                              : item.status === "Maintenance"
+                              ? "bg-yellow-100 text-orange-600"
+                              : "bg-green-100 text-green-600"
+                          }`}>
+                          {item.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className='text-center flex justify-center items-center py-3 px-4'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger>
+                            <EllipsisVertical className='mb-2 ' />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setType(item.type);
+                                setManufactureYear(item.manufacture_year);
+                                setImage(item.image);
+                                setLicensePlate(item.license_plate);
+                                setCountSeat(item.count_seat);
+                                setStatus(item.status);
+                                handleEditClick();
+                              }}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDialogOpen("delete")}>
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
             </TableBody>
           </Table>
         </div>
