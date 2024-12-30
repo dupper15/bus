@@ -75,14 +75,14 @@ const FormManager = ({
   };
 
   return (
-    <div className='absolute inset-0 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
+    <div className='absolute inset-0 p-2 py-10 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
       <Form {...form}>
         <form
           onSubmit={(e) => {
             onCreate();
             e.preventDefault();
           }}
-          className='w-full max-w-2xl bg-white shadow-lg border rounded-lg p-6 space-y-6'>
+          className='w-full max-w-2xl h-full overflow-y-auto bg-white shadow-lg border rounded-lg p-6 space-y-6'>
           <h1 className='text-2xl font-bold text-green-500 text-center'>
             Add New Manager
           </h1>

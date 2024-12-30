@@ -1,15 +1,16 @@
-import { Button } from "antd";
+import { Button, Skeleton } from "antd";
 import React, { useEffect, useState } from "react";
 import CreateMaintenance from "@/components/SmallForm/CreateMaintenance";
 import { useMutation } from "react-query";
 import * as BillService from "@/services/billService";
 import { useSelector } from "react-redux";
-import { formatToVND } from "@/utils/translateToVND"
+import { formatToVND } from "@/utils/translateToVND";
 
 const RequestPage = () => {
   const [showRequest, setShowRequest] = useState(false);
   const [items, setItems] = useState([]);
   const [refresh, setRefresh] = useState(false);
+  const [loading, setLoading] = useState(true);
   const account = useSelector((state) => state.account);
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -19,14 +20,16 @@ const RequestPage = () => {
     },
     onSuccess: (data) => {
       setItems(data.data);
-      console.log("item", items)
+      setLoading(false);
     },
     onError: (error) => {
       console.log(error);
+      setLoading(false);
     },
   });
 
   useEffect(() => {
+    setLoading(true);
     mutateGetAll.mutate(account?._id);
   }, [refresh]);
 
@@ -46,66 +49,78 @@ const RequestPage = () => {
       </div>
 
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8'>
-        {itemArray
-          .slice()
-          .reverse()
-          .map((item, index) => (
-            <div
-              key={item.id}
-              className={`p-6 rounded-lg flex flex-col justify-between shadow-lg transition-transform transform hover:scale-105 ${
-                item.status === "Pending"
-                  ? "bg-yellow-100 border-l-4 border-yellow-500"
-                  : item.status === "Approved"
-                  ? "bg-green-100 border-l-4 border-green-500"
-                  : "bg-red-100 border-l-4 border-red-500"
-              }`}>
-              <div>
-                <h2 className='text-xl font-semibold text-gray-800 mb-2'>
-                  {item.title}
-                </h2>
-                <p className='text-gray-600 mt-2'>{item.content}</p>
-                <p className='text-sm text-gray-500'>
-                  <strong>ID:</strong> {item.id}
-                </p>
-                <p className='text-sm text-gray-500'>
-                  <strong>License Plate:</strong> {item?.bus?.license_plate}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-500 mt-4'>
-                  <strong>Start Date:</strong> {new Date(item.start_date).toLocaleDateString("en-GB")}
-                </p>
-                <p className='text-sm text-gray-500'>
-                  <strong>End Date:</strong> {new Date(item.end_date).toLocaleDateString("en-GB")}
-                </p>
-                <p className='text-sm text-gray-500'>
-                  <strong>Price:</strong> {formatToVND(item.price)}
-                </p>
-                <p
-                  className={`text-sm font-semibold mt-2 ${
-                    item.status === "Pending"
-                      ? "text-yellow-600"
-                      : item.status === "Approved"
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }`}>
-                  Status: {item.status}
-                </p>
-              </div>
-              <div>
-              <img
-                style={{
-                  backgroundSize: "100% 100%",
-                }}
-                src={item.image}
-                alt='Example'
-                className='mt-4 rounded-md shadow-md object-cover h-32 w-full cursor-pointer'
-                onClick={() => setSelectedImage(item.image)}
+        {loading
+          ? Array.from({ length: 8 }).map((_, index) => (
+              <Skeleton
+                key={index}
+                active
+                paragraph={{ rows: 4 }}
+                className='p-6 rounded-lg shadow-lg bg-white'
               />
-              </div>
-            </div>
-          ))}
+            ))
+          : itemArray
+              .slice()
+              .reverse()
+              .map((item, index) => (
+                <div
+                  key={item.id}
+                  className={`p-6 rounded-lg flex flex-col justify-between shadow-lg transition-transform transform hover:scale-105 ${
+                    item.status === "Pending"
+                      ? "bg-yellow-100 border-l-4 border-yellow-500"
+                      : item.status === "Approved"
+                      ? "bg-green-100 border-l-4 border-green-500"
+                      : "bg-red-100 border-l-4 border-red-500"
+                  }`}>
+                  <div>
+                    <h2 className='text-xl font-semibold text-gray-800 mb-2'>
+                      {item.title}
+                    </h2>
+                    <p className='text-gray-600 mt-2'>{item.content}</p>
+                    <p className='text-sm text-gray-500'>
+                      <strong>ID:</strong> {item.id}
+                    </p>
+                    <p className='text-sm text-gray-500'>
+                      <strong>License Plate:</strong> {item?.bus?.license_plate}
+                    </p>
+                  </div>
+                  <div>
+                    <p className='text-sm text-gray-500 mt-4'>
+                      <strong>Start Date:</strong>{" "}
+                      {new Date(item.start_date).toLocaleDateString("en-GB")}
+                    </p>
+                    <p className='text-sm text-gray-500'>
+                      <strong>End Date:</strong>{" "}
+                      {new Date(item.end_date).toLocaleDateString("en-GB")}
+                    </p>
+                    <p className='text-sm text-gray-500'>
+                      <strong>Price:</strong> {formatToVND(item.price)}
+                    </p>
+                    <p
+                      className={`text-sm font-semibold mt-2 ${
+                        item.status === "Pending"
+                          ? "text-yellow-600"
+                          : item.status === "Approved"
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}>
+                      Status: {item.status}
+                    </p>
+                  </div>
+                  <div>
+                    <img
+                      style={{
+                        backgroundSize: "100% 100%",
+                      }}
+                      src={item.image}
+                      alt='Example'
+                      className='mt-4 rounded-md shadow-md object-cover h-32 w-full cursor-pointer'
+                      onClick={() => setSelectedImage(item.image)}
+                    />
+                  </div>
+                </div>
+              ))}
       </div>
+
       {selectedImage && (
         <div
           className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50'
