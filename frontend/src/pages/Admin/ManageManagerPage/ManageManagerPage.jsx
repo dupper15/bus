@@ -28,7 +28,8 @@ import {
 import FormManager from "../../../components/SmallForm/FormManager";
 import avatar from "../../../assets/default-profile-icon.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import { useSearchParams } from "react-router-dom";
 import {
   Pagination,
@@ -52,7 +53,7 @@ const ManageManagerPage = () => {
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page")) || 1;
-
+  const [isLoading, setIsLoading] = useState(true);
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const currentItems = items
     .filter((item) =>
@@ -74,9 +75,11 @@ const ManageManagerPage = () => {
     mutationFn: () => getAllManager(),
     onSuccess: (data) => {
       setItems(data.data);
+      setIsLoading(false);
     },
     onError: (error) => {
       console.log(error);
+      setIsLoading(false);
     },
   });
 
@@ -111,6 +114,7 @@ const ManageManagerPage = () => {
   }, []);
 
   const getAll = () => {
+    setIsLoading(true);
     mutationGetAll.mutate();
   };
   const [showForm, setShowForm] = useState(false);
@@ -153,8 +157,8 @@ const ManageManagerPage = () => {
             +
           </Button>
         </div>
-        <div className='overflow-x-auto'>
-          <Table className='overflow-hidden rounded-lg border  border-gray-300 '>
+        <div className='overflow-x-auto  rounded-lg border bg-white shadow-md  border-gray-300 '>
+          <Table className='overflow-hidden'>
             <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
               <TableRow>
                 {[
@@ -175,61 +179,89 @@ const ManageManagerPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentItems.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.id}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.name}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.phone}
-                  </TableCell>
-                  <TableCell className=' py-3 px-4'>
-                    <Avatar className='w-10 h-10 border-2 mx-auto border-green-500'>
-                      <AvatarImage src={item.image ? item.image : avatar} />
-                      <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.id_card}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    <span
-                      className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
-                        item.status === "Disable"
-                          ? "bg-slate-200 text-gray-800"
-                          : "bg-green-100 text-green-600"
-                      }`}>
-                      {item.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className='text-center flex justify-center items-center py-3 px-4'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger>
-                        <EllipsisVertical className='mb-2 ' />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            set_Id(item._id);
-                            handleDialogOpen("edit");
-                          }}>
-                          {item.status === "Disable" ? "Enable" : "Disable"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            set_Id(item._id);
-                            handleDialogOpen("delete");
-                          }}>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {isLoading
+                ? Array(5)
+                    .fill()
+                    .map((_, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='80%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='80%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton circle={true} height={40} width={40} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='60%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='60%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='30%' />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                : currentItems.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.id}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.name}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.phone}
+                      </TableCell>
+                      <TableCell className=' py-3 px-4'>
+                        <Avatar className='w-10 h-10 border-2 mx-auto border-green-500'>
+                          <AvatarImage src={item.image ? item.image : avatar} />
+                          <AvatarFallback>CN</AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.id_card}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        <span
+                          className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
+                            item.status === "Disable"
+                              ? "bg-slate-200 text-gray-800"
+                              : "bg-green-100 text-green-600"
+                          }`}>
+                          {item.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className='text-center flex justify-center items-center py-3 px-4'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger>
+                            <EllipsisVertical className='mb-2 ' />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                set_Id(item._id);
+                                handleDialogOpen("edit");
+                              }}>
+                              {item.status === "Disable" ? "Enable" : "Disable"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                set_Id(item._id);
+                                handleDialogOpen("delete");
+                              }}>
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
             </TableBody>
           </Table>
         </div>

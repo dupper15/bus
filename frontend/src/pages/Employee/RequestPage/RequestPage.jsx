@@ -1,15 +1,15 @@
-import { Button, Input } from "antd";
+import { Button, Skeleton, Card } from "antd";
 import React, { useEffect, useState } from "react";
 import RequestForm from "@/components/SmallForm/RequestForm";
 import { useMutation } from "react-query";
 import * as RequestService from "@/services/requestService";
 import { useSelector } from "react-redux";
-import { set } from "date-fns";
 
 const RequestPage = () => {
   const [showRequest, setShowRequest] = useState(false);
   const [items, setItems] = useState([]);
   const [refresh, setRefresh] = useState(false);
+  const [loading, setLoading] = useState(true); // Thêm state loading
   const account = useSelector((state) => state.account);
 
   const mutateGetAll = useMutation({
@@ -18,16 +18,19 @@ const RequestPage = () => {
     },
     onSuccess: (data) => {
       setItems(data.data);
+      setLoading(false); // Dừng loading khi có dữ liệu
     },
     onError: (error) => {
       console.log(error);
+      setLoading(false); // Dừng loading nếu xảy ra lỗi
     },
   });
 
   useEffect(() => {
+    setLoading(true); // Bắt đầu loading khi refresh
     mutateGetAll.mutate(account?._id);
   }, [refresh]);
-  
+
   const itemArray = Array.isArray(items) ? items : [items];
 
   return (
@@ -44,67 +47,79 @@ const RequestPage = () => {
       </div>
 
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
-        {itemArray
-          .slice()
-          .reverse()
-          .map((item, index) => (
-            <div
-              key={item.id}
-              className={`p-4 rounded-lg flex flex-col justify-between shadow-lg ${
-                item.status === "Approved"
-                  ? "bg-green-100 border-l-4 border-green-500"
-                  : item.status === "Rejected"
-                  ? "bg-red-100 border-l-4 border-red-500"
-                  : "bg-yellow-100 border-l-4 border-yellow-500"
-              }`}>
-              <div>
-                <h2 className='text-lg font-semibold text-gray-800'>
-                  {item.title}
-                </h2>
-                <p className='text-gray-600 mt-2'>{item.content}</p>
-              </div>
-              <div>
-                <div className='relative mt-4'>
-                  <p className='text-sm text-gray-500'>
-                    <strong>ID:</strong> {item.id}
-                  </p>
-                  <p className='text-sm text-gray-500'>
-                    <strong>Sent: </strong>
-                    {new Date(item.date_requested).toLocaleDateString("en-GB")}
-                  </p>
-                  <p
-                    className={`text-sm font-semibold mt-2 ${
-                      item.status === "Approved"
-                        ? "text-green-600"
-                        : item.status === "Rejected"
-                        ? "text-red-600"
-                        : "text-yellow-600"
-                    }`}>
-                    Status: {item.status}
-                  </p>
-                </div>
-              </div>
-              {item.feedback && (
-                <div className='mt-4 bg-blue-100 p-3 rounded'>
-                  <h3 className='text-blue-600 font-semibold'>Feedback</h3>
-                  <p className='text-gray-700'>
-                    {item.feedback || "No feedback provided."}
-                  </p>
-                  <div className='mt-2 text-sm text-gray-500'>
-                    <p className='text-sm text-gray-500'>
-                      <strong>Receiver:</strong> {item?.manager?.name}
-                    </p>
-                    <p>
-                      <p className='text-sm text-gray-500'>
-                        <strong>Feedback Received:</strong>{" "}
-                        {new Date(item.date_resolved).toLocaleDateString("en-GB")}
-                      </p>
-                    </p>
+        {loading
+          ? Array.from({ length: 8 }).map((_, index) => (
+              <Card
+                key={index}
+                className='p-4 rounded-lg flex flex-col justify-between shadow-lg'>
+                <Skeleton active />
+              </Card>
+            ))
+          : itemArray
+              .slice()
+              .reverse()
+              .map((item, index) => (
+                <div
+                  key={item.id}
+                  className={`p-4 rounded-lg flex flex-col justify-between shadow-lg ${
+                    item.status === "Approved"
+                      ? "bg-green-100 border-l-4 border-green-500"
+                      : item.status === "Rejected"
+                      ? "bg-red-100 border-l-4 border-red-500"
+                      : "bg-yellow-100 border-l-4 border-yellow-500"
+                  }`}>
+                  <div>
+                    <h2 className='text-lg font-semibold text-gray-800'>
+                      {item.title}
+                    </h2>
+                    <p className='text-gray-600 mt-2'>{item.content}</p>
                   </div>
+                  <div>
+                    <div className='relative mt-4'>
+                      <p className='text-sm text-gray-500'>
+                        <strong>ID:</strong> {item.id}
+                      </p>
+                      <p className='text-sm text-gray-500'>
+                        <strong>Sent: </strong>
+                        {new Date(item.date_requested).toLocaleDateString(
+                          "en-GB"
+                        )}
+                      </p>
+                      <p
+                        className={`text-sm font-semibold mt-2 ${
+                          item.status === "Approved"
+                            ? "text-green-600"
+                            : item.status === "Rejected"
+                            ? "text-red-600"
+                            : "text-yellow-600"
+                        }`}>
+                        Status: {item.status}
+                      </p>
+                    </div>
+                  </div>
+                  {item.feedback && (
+                    <div className='mt-4 bg-blue-100 p-3 rounded'>
+                      <h3 className='text-blue-600 font-semibold'>Feedback</h3>
+                      <p className='text-gray-700'>
+                        {item.feedback || "No feedback provided."}
+                      </p>
+                      <div className='mt-2 text-sm text-gray-500'>
+                        <p className='text-sm text-gray-500'>
+                          <strong>Receiver:</strong> {item?.manager?.name}
+                        </p>
+                        <p>
+                          <p className='text-sm text-gray-500'>
+                            <strong>Feedback Received:</strong>{" "}
+                            {new Date(item.date_resolved).toLocaleDateString(
+                              "en-GB"
+                            )}
+                          </p>
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+              ))}
       </div>
       {showRequest && (
         <>
