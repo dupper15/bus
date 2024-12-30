@@ -147,7 +147,6 @@ const ManageRequestPage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         setSelected(item);
-
                         setShowForm(true);
                       }}>
                       <TableCell

@@ -71,7 +71,6 @@ const TaskPage = () => {
       return ScheduleService.getEmployeeTask(data);
     },
     onSuccess: (data) => {
-      console.log("Data received:", data);
       if (Array.isArray(data)) {
         setTaskItems(data);
       } else {
@@ -85,10 +84,8 @@ const TaskPage = () => {
   });
   useEffect(() => {
     mutation.mutate(userId);
-  }, []);
-  useEffect(() => {
-    console.log("2", taskItems);
-  }, [taskItems]);
+  }, [user]);
+
   const ITEMS_PER_PAGE = 10;
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
