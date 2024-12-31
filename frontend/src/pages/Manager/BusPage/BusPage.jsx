@@ -145,8 +145,8 @@ const BusPage = () => {
   const [countSeat, setCountSeat] = useState("");
   const [status, setStatus] = useState("");
   return (
-    <div className='flex justify-center min-h-screen w-full p-4'>
-      <div className='space-y-6 w-full max-w-6xl'>
+    <div className='flex justify-center min-h-screen w-full bg-gray-100 p-4'>
+      <div className='space-y-6 w-full max-w-6xl bg-white border border-gray-300 rounded-xl p-6'>
         <div className='flex items-center gap-4'>
           <Search
             className='flex-grow border border-gray-300 rounded-lg p-2'
@@ -157,8 +157,8 @@ const BusPage = () => {
             +
           </Button>
         </div>
-        <div className='overflow-x-auto'>
-          <Table className='overflow-hidden rounded-lg border border-gray-300 '>
+        <div className='overflow-x-auto rounded-lg bg-white shadow-md border border-gray-300'>
+          <Table className='overflow-hidden rounded-t-lg '>
             <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
               <TableRow>
                 {[

@@ -44,11 +44,11 @@ import {
 import { CalendarIcon } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "react-query";
-import { convertMinutesToHoursAndMinutes } from "@/utils/translateToVND"
+import { convertMinutesToHoursAndMinutes } from "@/utils/translateToVND";
 import * as ScheduleService from "@/services/scheduleService";
 import * as Message from "@/components/ui/alert";
 import { format } from "date-fns";
-import dayjs from 'dayjs';
+import dayjs from "dayjs";
 
 const SchedulePage = () => {
   const ITEMS_PER_PAGE = 10;
@@ -61,7 +61,7 @@ const SchedulePage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
   const [refresh, setRefresh] = useState(false);
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState("");
   const [date, setDate] = useState(new Date());
   const handleAddClick = () => {
     setDialogType("add");
@@ -87,14 +87,14 @@ const SchedulePage = () => {
   };
 
   const handleDelete = () => {
-    mutationDelete.mutate(selected._id)
+    mutationDelete.mutate(selected._id);
     setShowForm(false);
     setShowDialog(false);
-  }
+  };
 
   const handleApproveAll = () => {
     mutationApproveAll.mutate();
-  }
+  };
 
   const handleDateChange = (selectedDate) => {
     setDate(selectedDate); // Chuyển đổi ngày
@@ -129,7 +129,7 @@ const SchedulePage = () => {
     mutationFn: () => ScheduleService.getAllSchedule(),
     onSuccess: (data) => {
       const today = dayjs().startOf("day"); // Lấy thời điểm đầu ngày hôm nay
-      const filteredSchedules = data.data.filter((schedule) => 
+      const filteredSchedules = data.data.filter((schedule) =>
         dayjs(schedule.date).isSame(today, "day")
       );
       setItems(filteredSchedules);
@@ -137,7 +137,7 @@ const SchedulePage = () => {
     onError: (error) => {
       console.error("Error creating schedule:", error);
     },
-  })
+  });
 
   const mutationDelete = useMutation({
     mutationFn: (id) => ScheduleService.deleteSchedule(id),
@@ -148,7 +148,7 @@ const SchedulePage = () => {
     onError: (error) => {
       console.error("Error deleting schedule:", error);
     },
-  })
+  });
 
   const mutationApproveAll = useMutation({
     mutationFn: () => ScheduleService.approveAllSchedule(),
@@ -159,114 +159,118 @@ const SchedulePage = () => {
     onError: (error) => {
       console.error("Error approving schedule:", error);
     },
-  })
+  });
 
   useEffect(() => {
     mutationGetAll.mutate();
-  }, [refresh])
+  }, [refresh]);
 
-  const allNotPending = items.every(schedule => schedule.status !== "Pending");
-
+  const allNotPending = items.every(
+    (schedule) => schedule.status !== "Pending"
+  );
+  const [startPage, setStartPage] = useState(1);
+  const maxPages = 6; // Số trang tối đa hiển thị cùng lúc
 
   return (
-    <div className="flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4 ">
-      <div className="flex w-full space-x-6">
-        <div className="flex-1 basis-2/3 space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300">
-          <div className="flex items-center gap-4">
-            <Search
-              className="flex-grow border border-gray-300 rounded-lg p-2"
-              onChange={handleSearchChanged}
-              text="Type line id..."
-            />
+    <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
+      <div className='flex-1 w-full space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
+        <div className='flex items-center flex-col xl:flex-row gap-4'>
+          <Search
+            className=' border border-gray-300 rounded-lg p-2'
+            onChange={handleSearchChanged}
+            text='Type line id...'
+          />
+
+          <div className='flex gap-4'>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="text-left font-normal">
+                <Button variant='outline' className='text-left font-normal'>
                   {date ? format(date, "PPP") : "Pick a date"}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                  <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className='w-auto p-0' align='start'>
                 <Calendar
-                  mode="single"
+                  mode='single'
                   selected={date}
                   onSelect={handleDateChange} // Cập nhật giá trị khi chọn ngày mới
                 />
               </PopoverContent>
             </Popover>
-            <Button onClick={handleApproveAll} disabled={allNotPending}>Approve All</Button>
-            <Button onClick={handleAddClick} className="flex-shrink-0">
+            <Button onClick={handleApproveAll} disabled={allNotPending}>
+              Approve All
+            </Button>
+            <Button onClick={handleAddClick} className=''>
               +
             </Button>
           </div>
-          
-          <div className="overflow-x-auto rounded-lg bg-white shadow-md">
-            <Table className="overflow-hidden rounded-t-lg border border-gray-300">
-              <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
-                <TableRow>
-                  {[
-                    "Schedule ID",
-                    "Bus",
-                    "Line",
-                    "Driver",
-                    "Bus boy",
-                    "Time start",
-                    "Time",
-                    "Ticket 3k",
-                    "Ticket 7k",
-                    "Status",
-                    "Action",
-                  ].map((header, idx) => (
-                    <TableHead
-                      key={idx}
-                      className="text-center text-white text-base py-3 px-4">
-                      {header}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentItems.map((item, index) => (
-                  <TableRow 
-                    key={index} 
-                    onClick={() => setSelected(item)}
-                    className={`${
-                      item.bus.status !== "Active" || 
-                      item.driver.status !== "Enable" || 
-                      item.busboy.status !== "Enable"
+        </div>
+
+        <div className='overflow-x-auto rounded-lg border border-gray-300 bg-white shadow-md'>
+          <Table className='overflow-hidden rounded-t-lg '>
+            <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
+              <TableRow>
+                {[
+                  "Schedule ID",
+                  "Bus",
+                  "Line",
+                  "Driver",
+                  "Bus boy",
+                  "Time start",
+                  "Time",
+                  "Ticket 3k",
+                  "Ticket 7k",
+                  "Status",
+                  "Action",
+                ].map((header, idx) => (
+                  <TableHead
+                    key={idx}
+                    className='text-center text-white text-base py-3 px-4'>
+                    {header}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentItems.map((item, index) => (
+                <TableRow
+                  key={index}
+                  onClick={() => setSelected(item)}
+                  className={`${
+                    item.bus.status !== "Active" ||
+                    item.driver.status !== "Enable" ||
+                    item.busboy.status !== "Enable"
                       ? "bg-red-100 hover:bg-red-300" // Màu nền cảnh báo và màu khi hover
                       : "hover:bg-gray-100" // Màu nền khi hover nếu không có cảnh báo
-                    }`}
-                    >
-                    <TableCell className="text-center py-3 px-4">
-                      {item.id}
-                    </TableCell>
-                    <TableCell className="text-center py-3 px-4">
-                      {item.bus.license_plate}
-                    </TableCell>
-                    <TableCell className="text-center py-3 px-4">
-                      {item.line.name}
-                    </TableCell>
-                    <TableCell className="text-center py-3 px-4">
-                      {item.driver.name}
-                    </TableCell>
-                    <TableCell className="text-center py-3 px-4">
-                      {item.busboy.name}
-                    </TableCell>
-                    <TableCell className="text-center py-3 px-4">
-                      {item.time_start}
-                    </TableCell>
-                    <TableCell className="text-center py-3 px-4">
-                      {convertMinutesToHoursAndMinutes(item.line.time)}
-                    </TableCell>
-                    <TableCell className="text-center py-3 px-4">
-                      {item.ticket3}
-                    </TableCell>
-                    <TableCell className="text-center py-3 px-4">
-                      {item.ticket7}
-                    </TableCell>
-                    <TableCell className="text-center py-3 px-4">
+                  }`}>
+                  <TableCell className='text-center py-3 px-4'>
+                    {item.id}
+                  </TableCell>
+                  <TableCell className='text-center py-3 px-4'>
+                    {item.bus.license_plate}
+                  </TableCell>
+                  <TableCell className='text-center py-3 px-4'>
+                    {item.line.name}
+                  </TableCell>
+                  <TableCell className='text-center py-3 px-4'>
+                    {item.driver.name}
+                  </TableCell>
+                  <TableCell className='text-center py-3 px-4'>
+                    {item.busboy.name}
+                  </TableCell>
+                  <TableCell className='text-center py-3 px-4'>
+                    {item.time_start}
+                  </TableCell>
+                  <TableCell className='text-center py-3 px-4'>
+                    {convertMinutesToHoursAndMinutes(item.line.time)}
+                  </TableCell>
+                  <TableCell className='text-center py-3 px-4'>
+                    {item.ticket3}
+                  </TableCell>
+                  <TableCell className='text-center py-3 px-4'>
+                    {item.ticket7}
+                  </TableCell>
+                  <TableCell className='text-center py-3 px-4'>
                     <span
                       className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
                         item.status === "Pending"
@@ -276,19 +280,18 @@ const SchedulePage = () => {
                           : item.status === "In Progress"
                           ? "bg-blue-100 text-blue-600"
                           : "bg-green-100 text-green-600"
-                      }`}
-                    >
+                      }`}>
                       {item.status}
                     </span>
-                    </TableCell>
-                    {item.status === "Pending" && (
-                      <TableCell className="text-center flex justify-center items-center py-3 px-4">
+                  </TableCell>
+                  {item.status === "Pending" && (
+                    <TableCell className='text-center flex justify-center items-center py-3 px-4'>
                       <DropdownMenu>
                         <DropdownMenuTrigger>
-                          <EllipsisVertical className="mb-2 " />
+                          <EllipsisVertical className='mb-2 ' />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          <DropdownMenuItem  onClick={() => handleEditClick()}>
+                          <DropdownMenuItem onClick={() => handleEditClick()}>
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -298,89 +301,98 @@ const SchedulePage = () => {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <Pagination className="flex justify-center items-center gap-4">
-            <PaginationContent className="flex gap-2">
-              <PaginationItem>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <Pagination className='flex justify-center items-center gap-4'>
+          <PaginationContent className='flex gap-2'>
+            <PaginationItem>
+              {startPage > 1 && (
                 <PaginationPrevious
-                  href="#"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  className="text-green-500 hover:text-green-700">
+                  href='#'
+                  onClick={() => setStartPage(startPage - maxPages)}
+                  className='text-green-500 hover:text-green-700'>
                   Previous
                 </PaginationPrevious>
+              )}
+            </PaginationItem>
+            {Array.from(
+              { length: Math.min(maxPages, totalPages - startPage + 1) },
+              (_, index) => startPage + index
+            ).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  href='#'
+                  onClick={() => handlePageChange(page)}
+                  className={`px-4 py-2 rounded-full transition ${
+                    page === currentPage
+                      ? "bg-green-500 text-white"
+                      : "hover:bg-gray-200"
+                  }`}>
+                  {page}
+                </PaginationLink>
               </PaginationItem>
-              {[...Array(totalPages)].map((_, index) => (
-                <PaginationItem key={index}>
-                  <PaginationLink
-                    href="#"
-                    onClick={() => handlePageChange(index + 1)}
-                    className={`px-4 py-2 rounded-full transition ${
-                      index + 1 === currentPage
-                        ? "bg-green-500 text-white"
-                        : "hover:bg-gray-200"
-                    }`}>
-                    {index + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
+            ))}
+            <PaginationItem>
+              {startPage + maxPages <= totalPages && (
                 <PaginationNext
-                  href="#"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  className="text-green-500 hover:text-green-700">
+                  href='#'
+                  onClick={() => setStartPage(startPage + maxPages)}
+                  className='text-green-500 hover:text-green-700'>
                   Next
                 </PaginationNext>
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-          {showForm && (
-            <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
-              {dialogType === "add" && (
-                <FormSchedule handleClose={handleClose} isAdd="true" />
               )}
-              {dialogType === "edit" && selected?.status === "Pending" && (
-                <FormSchedule
-                  handleClose={handleClose}
-                  isAdd="false"
-                  schedule={selected}
-                />
-              )}
-            </div>
-          )}
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
 
-          {showDialog && dialogType === "delete" && (
-            <Dialog open={showDialog} onOpenChange={handleClose}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle className="text-center">
-                    Are you sure you want to delete?
-                  </DialogTitle>
-                  <DialogDescription>
-                    This action cannot be undone. This will permanently delete the
-                    schedule.
-                  </DialogDescription>
-                  <div className="flex items-center justify-center gap-2 pt-4">
-                    <Button
-                      variant="outline"
-                      className="w-[120px]"
-                      onClick={handleClose}>
-                      Cancel
-                    </Button>
-                    <Button variant="destructive" className="w-[120px]" onClick={handleDelete}>
-                      Confirm
-                    </Button>
-                  </div>
-                </DialogHeader>
-              </DialogContent>
-            </Dialog>
-          )}
+        {showForm && (
+          <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
+            {dialogType === "add" && (
+              <FormSchedule handleClose={handleClose} isAdd='true' />
+            )}
+            {dialogType === "edit" && selected?.status === "Pending" && (
+              <FormSchedule
+                handleClose={handleClose}
+                isAdd='false'
+                schedule={selected}
+              />
+            )}
+          </div>
+        )}
 
-        </div>
+        {showDialog && dialogType === "delete" && (
+          <Dialog open={showDialog} onOpenChange={handleClose}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className='text-center'>
+                  Are you sure you want to delete?
+                </DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. This will permanently delete the
+                  schedule.
+                </DialogDescription>
+                <div className='flex items-center justify-center gap-2 pt-4'>
+                  <Button
+                    variant='outline'
+                    className='w-[120px]'
+                    onClick={handleClose}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    className='w-[120px]'
+                    onClick={handleDelete}>
+                    Confirm
+                  </Button>
+                </div>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   );

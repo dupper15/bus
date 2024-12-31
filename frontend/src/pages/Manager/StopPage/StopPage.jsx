@@ -50,7 +50,12 @@ const StopPage = () => {
   const [dialogType, setDialogType] = useState("");
   const [showMap, setShowMap] = useState(false);
   const [selectedStopCoordinates, setSelectedStopCoordinates] = useState(null);
-
+  const getId = (index, currentPage) => {
+    const calculatedIndex = (currentPage - 1) * 10 + index;
+    if (calculatedIndex < 10) return "S00" + calculatedIndex;
+    else if (calculatedIndex < 100) return "S0" + calculatedIndex;
+    else return "S" + calculatedIndex;
+  };
   const fetchStops = useCallback(async () => {
     try {
       const response = await StopService.getStops();
@@ -175,8 +180,8 @@ const StopPage = () => {
               +
             </Button>
           </div>
-          <div className='overflow-x-auto rounded-lg bg-white shadow-md'>
-            <Table className='overflow-hidden rounded-t-lg border border-gray-300'>
+          <div className='overflow-x-auto rounded-lg border border-gray-300 bg-white shadow-md'>
+            <Table className='overflow-hidden rounded-t-lg '>
               <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
                 <TableRow>
                   {[
@@ -190,7 +195,7 @@ const StopPage = () => {
                   ].map((header, idx) => (
                     <TableHead
                       key={idx}
-                      className='text-center text-white text-base py-3 px-4'>
+                      className='text-center  text-white text-base py-3 px-4'>
                       {header}
                     </TableHead>
                   ))}
@@ -225,10 +230,10 @@ const StopPage = () => {
                           </TableCell>
                         </TableRow>
                       ))
-                  : currentItems.map((item) => (
+                  : currentItems.map((item, index) => (
                       <TableRow key={item.id}>
                         <TableCell className='text-center py-3 px-4'>
-                          {item.id}
+                          {getId(index + 1, currentPage)}
                         </TableCell>
                         <TableCell className='text-center py-3 px-4'>
                           {item.name}
