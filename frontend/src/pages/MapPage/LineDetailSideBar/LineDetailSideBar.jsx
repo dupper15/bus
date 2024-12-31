@@ -21,26 +21,45 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
     };
 
     return (
-        <aside className="w-1/4 bg-gradient-to-b from-gray-50 to-white shadow-xl p-6 border-r border-gray-300 h-full flex flex-col">
-            <button
-                className="mb-6 text-sm text-blue-600 hover:text-blue-800 transition-colors self-start"
-                onClick={onBack}
-            >
-                &larr; Back
-            </button>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">{line.name}</h2>
+        <aside className="w-full bg-white border-r border-gray-200 h-full flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b border-gray-200">
+                <button
+                    className="flex items-center text-sm text-gray-600 hover:text-green-500 transition-colors mb-3"
+                    onClick={onBack}
+                >
+                    <svg className="w-4 h-4 mr-1" fill="none" strokeWidth="2" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back
+                </button>
+                <h2 className="text-lg font-semibold text-gray-900">{line.name}</h2>
+            </div>
+
+            {/* Tabs */}
             <TabSwitch tabs={tabs} onTabSelect={handleTabSelect} />
-            <div className="flex-1 overflow-y-auto mt-4">
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
                 {activeTab === "details" && (
-                    <div className="space-y-3 text-gray-700">
-                        <p><strong>Start Place:</strong> {line.start_place.name}</p>
-                        <p><strong>End Place:</strong> {line.end_place.name}</p>
-                        <p><strong>Time:</strong> {line.time} minutes</p>
+                    <div className="p-4 space-y-3">
+                        <div className="space-y-2">
+                            <h3 className="text-sm font-medium text-gray-500">Start Place</h3>
+                            <p className="text-gray-900">{line.start_place.name}</p>
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-sm font-medium text-gray-500">End Place</h3>
+                            <p className="text-gray-900">{line.end_place.name}</p>
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-sm font-medium text-gray-500">Duration</h3>
+                            <p className="text-gray-900">{line.time} minutes</p>
+                        </div>
                     </div>
                 )}
+
                 {activeTab === "outbound" && (
-                    <div>
-                        <h3 className="text-xl font-medium text-gray-800 mb-3">Outbound Stops:</h3>
+                    <div className="py-2">
                         <StopList
                             stops={line.arr_stop.map(stop => stop.name)}
                             selectedStop={selectedStop}
@@ -48,9 +67,9 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
                         />
                     </div>
                 )}
+
                 {activeTab === "inbound" && (
-                    <div>
-                        <h3 className="text-xl font-medium text-gray-800 mb-3">Inbound Stops:</h3>
+                    <div className="py-2">
                         <StopList
                             stops={line.arr_stop.map(stop => stop.name).reverse()}
                             selectedStop={selectedStop}
@@ -63,6 +82,8 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
     );
 };
 
+export default LineDetailSideBar;
+
 LineDetailSideBar.propTypes = {
     line: linePropTypes.isRequired,
     onBack: PropTypes.func.isRequired,
@@ -71,4 +92,3 @@ LineDetailSideBar.propTypes = {
     onTabSelect: PropTypes.func.isRequired,
 };
 
-export default LineDetailSideBar;
