@@ -21,7 +21,7 @@ import img from "../../assets/bus.jpeg";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import * as AccountService from "@/services/accountService"
+import * as AccountService from "@/services/accountService";
 import * as Message from "@/components/ui/alert";
 import { useMutation } from "react-query";
 import { useSelector } from "react-redux";
@@ -38,17 +38,17 @@ const formSchema = z
 
 const ChangePassword = ({ closeForm }) => {
   const form = useForm({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-          password: "",
-          new_password: "",
-          confirm_password: "",
-        },
-      });
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      password: "",
+      new_password: "",
+      confirm_password: "",
+    },
+  });
 
   const account = useSelector((state) => state.account);
 
-  const onChange = async() => {
+  const onChange = async () => {
     const isValid = await form.trigger();
 
     if (!isValid) {
@@ -83,73 +83,81 @@ const ChangePassword = ({ closeForm }) => {
     },
   });
 
-  return (   
-      <Card className="shadow-lg rounded-lg w-[500px] bg-white relative">
+  return (
+    <Card className='shadow-lg rounded-lg w-[500px] bg-white relative'>
       <button
         onClick={closeForm}
-        className="absolute top-2 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl">
+        className='absolute top-2 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl'>
         ×
       </button>
-          <CardHeader className="flex justify-center items-center">
-            <CardTitle className="font-semibold p-3 text-5xl text-transparent bg-gradient-to-r from-green-400 to-green-600 bg-clip-text">
-              Change password
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center px-6">
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onChange)}
-                className="space-y-6 w-full">
-                            <FormField
-                              control={form.control}
-                              name="password"
-                              render={({ field }) => (
-                                <FormItem className="flex-1">
-                                  <FormLabel>Password</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" placeholder="Passowrd" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="new_password"
-                              render={({ field }) => (
-                                <FormItem className="flex-1">
-                                  <FormLabel>New password</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" placeholder="New password" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                             />
-                            <FormField
-                              control={form.control}
-                              name="confirm_password"
-                              render={({ field }) => (
-                                <FormItem className="flex-1">
-                                  <FormLabel>Confirm password</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" placeholder="Confirm password" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                             />
-                    <div className="flex justify-center col-span-2 pt-5">
-                      <Button
-                        type="submit"
-                        className="bg-green-500 text-white hover:bg-green-600 px-10 py-3">
-                        Save
-                      </Button>
-                    </div>            
-                    </form>
-                </Form> 
-          </CardContent>
-        </Card>
+      <CardHeader className='flex justify-center items-center'>
+        <CardTitle className='font-semibold p-3 text-3xl text-transparent bg-gradient-to-r from-green-400 to-green-600 bg-clip-text'>
+          Change password
+        </CardTitle>
+      </CardHeader>
+      <CardContent className='flex flex-col items-center px-6'>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onChange)}
+            className='space-y-6 w-full'>
+            <FormField
+              control={form.control}
+              name='password'
+              render={({ field }) => (
+                <FormItem className='flex-1'>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type='password' placeholder='Passowrd' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='new_password'
+              render={({ field }) => (
+                <FormItem className='flex-1'>
+                  <FormLabel>New password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder='New password'
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='confirm_password'
+              render={({ field }) => (
+                <FormItem className='flex-1'>
+                  <FormLabel>Confirm password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder='Confirm password'
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className='flex justify-center col-span-2 pt-5'>
+              <Button
+                type='submit'
+                className='bg-green-500 text-white hover:bg-green-600 px-10 py-3'>
+                Save
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 };
 

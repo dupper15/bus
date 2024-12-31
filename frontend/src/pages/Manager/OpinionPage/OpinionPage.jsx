@@ -213,33 +213,33 @@ const OpinionPage = () => {
   };
 
   return (
-    <div className='flex flex-col md:flex-row justify-center min-h-screen w-full p-6 bg-gray-100 space-x-6 py-4'>
-      <div className='w-full md:basis-3/5 space-y-6 flex flex-col bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
+    <div className='flex flex-col md:flex-row justify-center min-h-screen w-full p-4 bg-gray-100 gap-6'>
+      <div className='w-full md:basis-3/5 space-y-6 flex flex-col bg-white shadow-lg rounded-xl p-4 border border-gray-300'>
         <div className='flex flex-wrap justify-between items-center gap-4'>
-          <div className='flex items-center gap-2 basis-1/5'>
+          <div className='flex items-center gap-2 w-full sm:w-auto'>
             <label className='text-gray-700'>Status:</label>
             <select
               onChange={(e) => setSelectedStatus(e.target.value)}
               value={selectedStatus}
-              className='border border-gray-300 rounded-lg px-3 py-2 text-gray-700'>
+              className='border border-gray-300 rounded-lg px-3 py-2 text-gray-700 w-full sm:w-auto'>
               <option value=''>All</option>
               <option value='Pending'>Pending</option>
               <option value='Resolved'>Resolved</option>
             </select>
           </div>
-          <div className='basis-2/5'>
+          <div className='w-full sm:basis-2/5'>
             <Search
-              className=' border border-gray-300 rounded-lg p-2'
+              className='border border-gray-300 rounded-lg p-2 w-full'
               onChange={handleSearchChanged}
               text='Type title...'
             />
           </div>
-          <div className='flex items-center gap-2 basis-1/5'>
+          <div className='flex items-center gap-2 w-full sm:w-auto'>
             <label className='text-gray-700'>Time:</label>
             <select
               onChange={(e) => setSelectedTime(e.target.value)}
               value={selectedTime}
-              className='border border-gray-300 rounded-lg px-3 py-2 text-gray-700'>
+              className='border border-gray-300 rounded-lg px-3 py-2 text-gray-700 w-full sm:w-auto'>
               <option value='All'>All Time</option>
               <option value='Today'>Today</option>
               <option value='This Week'>This Week</option>
@@ -252,16 +252,16 @@ const OpinionPage = () => {
           <Table>
             <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
               <TableRow>
-                <TableHead className=' text-base text-center text-white'>
+                <TableHead className='text-base text-center text-white'>
                   Opinion ID
                 </TableHead>
-                <TableHead className=' text-base text-center text-white py-3 px-4'>
+                <TableHead className='text-base text-center text-white py-3 px-4'>
                   Title
                 </TableHead>
                 <TableHead className='text-base text-center text-white py-3 px-4'>
                   Customer ID
                 </TableHead>
-                <TableHead className=' text-base text-center text-white py-3 px-4'>
+                <TableHead className='text-base text-center text-white py-3 px-4'>
                   Sender
                 </TableHead>
                 <TableHead className='text-base text-center text-white py-3 px-4'>
@@ -314,7 +314,7 @@ const OpinionPage = () => {
                         setCurrentFeedback(item.feedback);
                         setSelected(item);
                       }}>
-                      <TableCell className='text-center' py-3 px-4>
+                      <TableCell className='text-center py-3 px-4'>
                         {item.id}
                       </TableCell>
                       <TableCell className='font-medium text-center py-3 px-4'>
@@ -384,15 +384,15 @@ const OpinionPage = () => {
           </PaginationContent>
         </Pagination>
       </div>
-      <div className='w-full md:basis-2/5 flex flex-col ml-0 md:pr-10 gap-6 mt-6 md:mt-0'>
-        <Card className='flex md:w-max md:h-max flex-col -ml-6 mr-6 md:ml-0 md:mr-0'>
+      <div className='w-full md:basis-2/5 flex flex-col gap-6'>
+        <Card className='flex flex-col w-full'>
           <CardHeader className='items-center pb-0'>
-            <CardTitle>Status chart</CardTitle>
+            <CardTitle>Status Chart</CardTitle>
           </CardHeader>
           <CardContent className='flex-1 pb-0'>
             <ChartContainer
               config={chartConfig}
-              className='mx-auto aspect-square max-h-[250px]'>
+              className='mx-auto aspect-square max-w-[250px]'>
               <PieChart>
                 <ChartTooltip
                   cursor={false}
@@ -435,17 +435,17 @@ const OpinionPage = () => {
             </ChartContainer>
           </CardContent>
         </Card>
-        <div className='bg-white w-[250px] shadow-lg rounded-xl p-6 border -ml-6 mr-6 md:ml-0 border-gray-300'>
+        <div className='bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
           <div className='text-lg font-semibold text-gray-700 mb-4'>
             Summary
           </div>
-          <div className='grid grid-cols-2 w-96 space-y-2'>
-            <div className='text-xl font-semibold pt-2 text-red-600'>
+          <div className='grid grid-cols-2 gap-4'>
+            <div className='text-xl font-semibold text-red-600'>
               Pending Opinions:
             </div>
             <div className='text-xl font-semibold text-red-600'>
               {countPending}
-            </div>{" "}
+            </div>
             <div className='text-xl font-semibold text-green-600'>
               Resolved Opinions:
             </div>
@@ -460,7 +460,7 @@ const OpinionPage = () => {
         </div>
       </div>
       {showForm && (
-        <div className='fixed inset-0 w-full h-full z-10 -left-10 flex justify-center items-center transition-transform'>
+        <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center'>
           <Feedback
             childCloseFormRequest={() => {
               setShowForm(false);

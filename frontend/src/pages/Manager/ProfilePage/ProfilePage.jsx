@@ -161,14 +161,14 @@ const ProfilePage = () => {
   }, [account]);
 
   return (
-    <div className='flex flex-col h-full overflow-y-auto bg-white'>
-      <div className='flex flex-grow'>
+    <div className='flex flex-col w-full h-full overflow-y-auto bg-white'>
+      <div className='flex flex-grow w-full'>
         <div className='flex flex-col w-full overflow-y-auto gap-4 ps-14 pe-20 scrollbar-hide text-black'>
           <span className='font-bold text-xl md:text-3xl mt-6 text-slate-900 pointer-events-none'>
             My Profile
           </span>
           <div>
-            <span className='font-semibold text-xl text-slate-900 pointer-events-none'>
+            <span className='font-semibold text-xl mb-2 text-slate-900 pointer-events-none'>
               Avatar
             </span>
             <div className='flex items-center justify-between'>
@@ -270,12 +270,18 @@ const ProfilePage = () => {
               </div>
               <Button
                 onClick={handleChangePassword}
-                className='bg-green-500 hover:bg-green-600 text-white'>
+                className='bg-green-500 hover:bg-green-600 p-1 ml-2 sm:p-4 text-white'>
                 Change password
               </Button>
               {isChangePassword && (
-                <div className='fixed top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%]'>
-                  <ChangePassword closeForm={() => setChangePassword(false)} />
+                <div className='fixed inset-0 w-full h-full z-10  flex justify-center items-center transition-transform'>
+                  <div className='absolute inset-0 bg-black bg-opacity-50 w-screen h-screen backdrop-blur-sm flex justify-center items-center'>
+                    <div className='fixed  top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%]'>
+                      <ChangePassword
+                        closeForm={() => setChangePassword(false)}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

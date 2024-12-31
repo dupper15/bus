@@ -20,7 +20,7 @@ const MainPage = () => {
     <div className='flex h-screen'>
       {/* Render CustomerNavbar only when it's not hidden */}
       {!hideNavbar && <CustomerNavbar />}
-      <div className={`h-screen ${hideNavbar ? "basis-full" : "basis-5/6"}`}>
+      <div className={`h-screen ${hideNavbar ? "basis-full" : "basis-full"}`}>
         <Routes>
           <Route index element={<TicketFare />} />
           <Route path='busroute' element={<BusRoute />} />
