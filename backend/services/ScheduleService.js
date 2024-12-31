@@ -66,6 +66,7 @@ const getEmployeeTask = async (employeeId) => {
 
     // Chuyển đổi dữ liệu sang dạng dễ sử dụng
     const formattedData = sortedSchedules.map((schedule) => ({
+      _id: schedule._id,
       scheduleId: schedule.id,
       name: schedule.line?.name || "Unknown Line",
       station: schedule.line?.start_place?.name || "Unknown Station",
@@ -113,10 +114,10 @@ const createSchedule = async (data) => {
             const newScheduleEnd = newScheduleStart + lineCheck.time;
 
             const allScheduleBusboy = await Schedule.find({busboy: data.busboy})
-            .populate("busboy", "name").populate("line", "time")
+            .populate("busboy", "name").populate("line", "time name")
 
             const allScheduleDriver = await Schedule.find({driver: data.driver})
-            .populate("driver", "name").populate("line", "time")
+            .populate("driver", "name").populate("line", "time name")
 
             for (const schedule of allScheduleBusboy) {
               const existingStart = parseTime(schedule.time_start);
@@ -134,7 +135,7 @@ const createSchedule = async (data) => {
 
             for (const schedule of allScheduleDriver) {
               const existingStart = parseTime(schedule.time_start);
-              const existingEnd = existingStart + schedule.time;
+              const existingEnd = existingStart + schedule.line.time;
         
               // Nếu khoảng thời gian bị chồng lấn
               if ((newScheduleStart > existingEnd) || (newScheduleEnd < existingStart)){
@@ -323,10 +324,10 @@ const updateSchedule = async (data) => {
             const newScheduleEnd = newScheduleStart + lineCheck.time;
 
             const allScheduleBusboy = await Schedule.find({busboy: data.busboy,_id: { $ne: data._id}})
-            .populate("busboy", "name").populate("line", "time")
+            .populate("busboy", "name").populate("line", "time name")
 
             const allScheduleDriver = await Schedule.find({driver: data.driver, _id: { $ne: data._id}})
-            .populate("driver", "name").populate("line", "time")
+            .populate("driver", "name").populate("line", "time name")
 
             for (const schedule of allScheduleBusboy) {
               const existingStart = parseTime(schedule.time_start);
@@ -344,7 +345,7 @@ const updateSchedule = async (data) => {
 
             for (const schedule of allScheduleDriver) {
               const existingStart = parseTime(schedule.time_start);
-              const existingEnd = existingStart + schedule.time;
+              const existingEnd = existingStart + schedule.line.time;
         
               // Nếu khoảng thời gian bị chồng lấn
               if ((newScheduleStart > existingEnd) || (newScheduleEnd < existingStart)){
@@ -429,8 +430,6 @@ const deleteSchedule = async (ScheduleId) => {
 };
 const employeeCheckIn = async (data) => {
   try {
-    // In ra dữ liệu để debug (nếu cần)
-    console.log("data", data);
 
     // Tìm schedule theo ID được cung cấp trong data
     const checkSchedule = await Schedule.findOne({ _id: data.scheduleId });
@@ -455,7 +454,6 @@ const employeeCheckIn = async (data) => {
     const updatedSchedule = await Schedule.findByIdAndUpdate(
       data.scheduleId,
       {
-        status: "Completed", // Cập nhật trạng thái
         ticket3: data.ticket3, // Cập nhật ticket3
         ticket7: data.ticket7, // Cập nhật ticket7
       },
