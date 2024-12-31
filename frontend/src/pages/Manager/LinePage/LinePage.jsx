@@ -138,7 +138,12 @@ const LinePage = () => {
     setShowDialog(true);
     setShowForm(false);
   };
-
+  const getId = (index, currentPage) => {
+    const calculatedIndex = (currentPage - 1) * 10 + index;
+    if (calculatedIndex < 10) return "L00" + calculatedIndex;
+    else if (calculatedIndex < 100) return "L0" + calculatedIndex;
+    else return "L" + calculatedIndex;
+  };
   const handleFormSubmit = async (values) => {
     try {
       console.log("Form values:", values);
@@ -231,10 +236,10 @@ const LinePage = () => {
                           </TableCell>
                         </TableRow>
                       ))
-                  : currentItems.map((line) => (
+                  : currentItems.map((line, index) => (
                       <TableRow key={line._id} className='hover:bg-gray-100'>
                         <TableCell className='text-sm text-center py-2 px-3'>
-                          {line._id}
+                          {getId(index + 1, currentPage)}
                         </TableCell>
                         <TableCell className='text-sm text-center py-2 px-3'>
                           {line.name}
