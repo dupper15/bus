@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { FaMapMarkerAlt, FaRegArrowAltCircleDown } from "react-icons/fa";
+import { FaMapMarkerAlt } from "react-icons/fa";
 import { FiMapPin } from "react-icons/fi";
+import { FaArrowsUpDown } from "react-icons/fa6";
 import useNavigationViewModel from "./NavigationViewModel";
-import {FaArrowsUpDown} from "react-icons/fa6";
 
 const NavigationTab = ({
                            onFindPath,
@@ -32,15 +32,11 @@ const NavigationTab = ({
     const [endClicked, setEndClicked] = useState(false);
 
     useEffect(() => {
-        if (startCoordinates) {
-            handleStartChange(startCoordinates);
-        }
+        if (startCoordinates) handleStartChange(startCoordinates);
     }, [startCoordinates]);
 
     useEffect(() => {
-        if (endCoordinates) {
-            handleEndChange(endCoordinates);
-        }
+        if (endCoordinates) handleEndChange(endCoordinates);
     }, [endCoordinates]);
 
     const handleStartInputChange = (value) => {
@@ -55,9 +51,7 @@ const NavigationTab = ({
 
     useEffect(() => {
         if (error) {
-            const timer = setTimeout(() => {
-                setError(null);
-            }, 3000);
+            const timer = setTimeout(() => setError(null), 3000);
             return () => clearTimeout(timer);
         }
     }, [error]);
@@ -76,39 +70,39 @@ const NavigationTab = ({
     };
 
     return (
-        <div className="p-4 bg-white border border-gray-300 rounded-lg">
-            <div className="flex items-start gap-4 flex-row">
-                {/* Icon Column */}
-                <div className="flex flex-col items-center pt-4">
-                    <FiMapPin className="text-green-500 mb-4"/>
-                    <div className="h-6 border-l-2 border-gray-300"></div>
-                    <FaMapMarkerAlt className="text-red-500 mt-4"/>
+        <div className="p-4">
+            <div className="flex items-start gap-3">
+                {/* Icons Column */}
+                <div className="flex flex-col items-center pt-3">
+                    <FiMapPin className="text-green-500 text-lg"/>
+                    <div className="h-8 border-l border-gray-300 my-1"></div>
+                    <FaMapMarkerAlt className="text-green-500 text-lg"/>
                 </div>
 
-                {/* Input Fields */}
-                <div className="flex flex-col items-center">
+                {/* Input Fields Column */}
+                <div className="flex-1 flex flex-col gap-4">
+                    {/* Start Input */}
                     <div className="relative">
                         <input
                             type="text"
-                            placeholder="Choose starting point, or click on the map..."
+                            placeholder="Choose starting point..."
                             value={start.name || ""}
                             onChange={(e) => handleStartInputChange(e.target.value)}
                             onFocus={() => onInputFocus("start")}
-                            className="w-full mb-4 p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+                            className="w-full px-3 py-2 text-sm border rounded-md
+                                     focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500
+                                     placeholder:text-gray-400"
                         />
                         {!startClicked && startSuggestions.length > 0 && (
-                            <ul
-                                className="absolute z-10 bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto"
-                                style={{width: 'calc(100% - 2px)', marginTop: '4px'}}
-                            >
+                            <ul className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
                                 {startSuggestions.map((suggestion, index) => (
                                     <li
                                         key={index}
-                                        className="p-2 hover:bg-gray-200 cursor-pointer"
                                         onClick={() => {
                                             handleStartSuggestionClick(suggestion);
                                             setStartClicked(true);
                                         }}
+                                        className="px-3 py-2 text-sm hover:bg-green-50 cursor-pointer"
                                     >
                                         {suggestion.name}
                                     </li>
@@ -116,6 +110,8 @@ const NavigationTab = ({
                             </ul>
                         )}
                     </div>
+
+                    {/* End Input */}
                     <div className="relative">
                         <input
                             type="text"
@@ -123,21 +119,20 @@ const NavigationTab = ({
                             value={end.name || ""}
                             onChange={(e) => handleEndInputChange(e.target.value)}
                             onFocus={() => onInputFocus("end")}
-                            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+                            className="w-full px-3 py-2 text-sm border rounded-md
+                                     focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500
+                                     placeholder:text-gray-400"
                         />
                         {!endClicked && endSuggestions.length > 0 && (
-                            <ul
-                                className="absolute z-10 bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto"
-                                style={{width: 'calc(100% - 2px)', marginTop: '4px'}}
-                            >
+                            <ul className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
                                 {endSuggestions.map((suggestion, index) => (
                                     <li
                                         key={index}
-                                        className="p-2 hover:bg-gray-200 cursor-pointer"
                                         onClick={() => {
                                             handleEndSuggestionClick(suggestion);
                                             setEndClicked(true);
                                         }}
+                                        className="px-3 py-2 text-sm hover:bg-green-50 cursor-pointer"
                                     >
                                         {suggestion.name}
                                     </li>
@@ -147,25 +142,30 @@ const NavigationTab = ({
                     </div>
                 </div>
 
-
                 {/* Swap Button */}
                 <button
                     onClick={handleSwap}
-                    className="p-3 bg-gray-200 rounded-full hover:bg-gray-300 focus:outline-none transition self-center"
+                    className="p-2 hover:bg-green-50 rounded-md transition-colors mt-auto mb-auto"
                 >
-                    <FaArrowsUpDown className="text-gray-700" />
+                    <FaArrowsUpDown className="text-green-500" />
                 </button>
             </div>
+
+            {/* Error Message */}
             {error && (
-                <p className="text-center text-red-500 bg-red-100 p-3 rounded-lg mt-4">
-                    {error}
-                </p>
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-600">{error}</p>
+                </div>
             )}
+
+            {/* Find Path Button */}
             <button
                 onClick={handleFindPath}
-                className="w-full mt-4 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition"
+                className="w-full mt-4 py-2 bg-green-500 text-white text-sm font-medium rounded-md
+                         hover:bg-green-600 transition-colors focus:outline-none focus:ring-2
+                         focus:ring-offset-2 focus:ring-green-500"
             >
-                Find Path
+                Find Route
             </button>
         </div>
     );

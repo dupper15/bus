@@ -29,7 +29,12 @@ const useBusLinesViewModel = () => {
         try {
             const response = await LineService.getLines();
             const rawLines = response.data;
-            const sortedLines = rawLines.map(transformLine).sort((a, b) => a.name.localeCompare(b.name));
+            const sortedLines = rawLines.map(transformLine).sort((a, b) => {
+                // Extract numbers from line names and compare them numerically
+                const numA = parseInt(a.name.match(/\d+/)[0]);
+                const numB = parseInt(b.name.match(/\d+/)[0]);
+                return numA - numB;
+            });
             setLines(sortedLines);
         } catch (error) {
             console.error("Error fetching lines:", error);
@@ -126,7 +131,18 @@ const useBusLinesViewModel = () => {
     }, [selectedLine, viewMode]);
 
     // Filter lines based on search query
-    const filteredLines = lines.filter((line) => line.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredLines = lines.filter((line) => {
+        const searchLower = searchQuery.toLowerCase();
+        const lineName = line.name.toLowerCase();
+
+        // If searching for a number, match it exactly
+        if (/^\d+$/.test(searchQuery)) {
+            return lineName.includes(`line ${searchQuery}`) ||
+                lineName.includes(`line${searchQuery}`);
+        }
+
+        return lineName.includes(searchLower);
+    });
 
     return {
         lines: filteredLines,
@@ -154,6 +170,7 @@ const useBusLinesViewModel = () => {
         endCoordinates,
         viewMode,
         setViewMode,
+        setError,
     };
 };
 

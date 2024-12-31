@@ -21,13 +21,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ChevronUp, ChevronDown, X } from "lucide-react";
+import { ChevronUp, ChevronDown, X, AlertCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import StopService from "@/services/StopService.js";
 
 mapboxgl.accessToken =
   "pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg";
 
-// Form schema remains the same
 const formSchema = z.object({
   name: z.string().nonempty({ message: "Name is required." }),
   start_place: z
@@ -61,6 +66,21 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const [stops, setStops] = useState([]);
+  const [validationErrors, setValidationErrors] = useState([]);
+
+  const isStopValid = (stop, index, values) => {
+    if (!stop) return true; // Skip validation for empty stops
+
+    if (index === 0) {
+      return values.start_place && stop._id === values.start_place._id;
+    }
+
+    if (index === values.arr_stop.length - 1) {
+      return values.end_place && stop._id === values.end_place._id;
+    }
+
+    return true;
+  };
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -74,9 +94,36 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
     },
   });
 
-  // Function to move a stop up in the array
+  const validateRouteConnections = () => {
+    const errors = [];
+    const values = form.getValues();
+    const arrStopIds = values.arr_stop.map((stop) => stop?._id);
+
+    // Check if start place is in array
+    if (values.start_place && arrStopIds[0] !== values.start_place._id) {
+      errors.push("Start place should be the first stop");
+    }
+
+    // Check if end place is in array
+    if (
+      values.end_place &&
+      arrStopIds[arrStopIds.length - 1] !== values.end_place._id
+    ) {
+      errors.push("End place should be the last stop");
+    }
+
+    // Check for duplicate stops
+    const stopSet = new Set(arrStopIds);
+    if (stopSet.size !== arrStopIds.length) {
+      errors.push("Duplicate stops found in the route");
+    }
+
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
   const moveStopUp = (index) => {
-    if (index <= 0) return; // Can't move up if first item
+    if (index <= 0) return;
     const arr_stop = form.getValues("arr_stop");
     const newStops = [...arr_stop];
     [newStops[index - 1], newStops[index]] = [
@@ -86,10 +133,9 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
     form.setValue("arr_stop", newStops);
   };
 
-  // Function to move a stop down in the array
   const moveStopDown = (index) => {
     const arr_stop = form.getValues("arr_stop");
-    if (index >= arr_stop.length - 1) return; // Can't move down if last item
+    if (index >= arr_stop.length - 1) return;
     const newStops = [...arr_stop];
     [newStops[index], newStops[index + 1]] = [
       newStops[index + 1],
@@ -133,33 +179,14 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
   }, []);
 
   useEffect(() => {
-    if (!mapRef.current && mapContainerRef.current) {
-      mapRef.current = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: "mapbox://styles/mapbox/streets-v11",
-        center: [106.6297, 10.8231],
-        zoom: 12,
-      });
-
-      mapRef.current.addControl(new mapboxgl.NavigationControl());
-
-      // Add load event handler
-      mapRef.current.on("load", () => {
-        // Set a flag or state to indicate map is ready
-        mapRef.current.isStyleLoaded = true;
-      });
-    }
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, []);
+    validateRouteConnections();
+  }, [
+    form.watch("start_place"),
+    form.watch("end_place"),
+    form.watch("arr_stop"),
+  ]);
 
   useEffect(() => {
-    // Return early if map isn't initialized or style isn't loaded
     if (!mapRef.current || !mapRef.current.isStyleLoaded) return;
 
     const markers = document.getElementsByClassName("mapboxgl-marker");
@@ -217,7 +244,6 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
           if (data.routes && data.routes[0]) {
             const route = data.routes[0].geometry;
 
-            // Additional check before adding source and layer
             if (!mapRef.current || !mapRef.current.isStyleLoaded) return;
             if (mapRef.current.getSource("route")) {
               mapRef.current.removeLayer("route");
@@ -251,11 +277,7 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
             coordinates.forEach((coord) => bounds.extend(coord));
             mapRef.current.fitBounds(bounds, { padding: 50 });
           }
-        } catch (error) {
-          // if (error.detail !== 'Style is not done loading') {
-          //     console.error('Error fetching route:', error);
-          // }
-        }
+        } catch (error) {}
       };
 
       fetchRoute();
@@ -265,8 +287,19 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
     form.watch("end_place"),
     form.watch("arr_stop"),
   ]);
+
   const handleSubmit = async (values) => {
     try {
+      const arrStopIds = values.arr_stop.map((stop) => stop?._id);
+      const isValid =
+        (!values.start_place || arrStopIds[0] === values.start_place._id) &&
+        (!values.end_place ||
+          arrStopIds[arrStopIds.length - 1] === values.end_place._id) &&
+        new Set(arrStopIds).size === arrStopIds.length;
+
+      if (!isValid) {
+        return;
+      }
       await onSubmit(values);
       handleClose();
     } catch (error) {
@@ -277,20 +310,20 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
   return (
     <div className='absolute inset-0 px-2 py-8 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
       <div className='w-full max-w-4xl overflow-y-auto scrollbar-hide h-full bg-white shadow-lg border rounded-lg p-4 mx-4 mb-4'>
-        <h1 className='text-xl font-bold text-green-500 text-center mb-4'>
+        <h1 className='text-lg font-bold text-green-500 text-center mb-2'>
           {isAdd ? "Add New Line" : "Edit Line"}
         </h1>
 
-        <div className='grid grid-cols-2 gap-4'>
-          <div>
+        <div className='grid grid-cols-5 gap-4'>
+          <div className='col-span-2'>
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(handleSubmit)}
-                className='space-y-4'>
+                className='space-y-2'>
                 {!isAdd && (
                   <div className='flex flex-col space-y-1'>
-                    <FormLabel>ID:</FormLabel>
-                    <div className='text-gray-700 bg-gray-100 p-1 rounded border'>
+                    <FormLabel className='text-sm'>ID:</FormLabel>
+                    <div className='text-gray-700 bg-gray-100 p-1 rounded border text-sm'>
                       {form.getValues("_id")}
                     </div>
                   </div>
@@ -301,9 +334,13 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
                   name='name'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel className='text-sm'>Name</FormLabel>
                       <FormControl>
-                        <Input placeholder='Enter Line Name' {...field} />
+                        <Input
+                          className='h-8 text-sm'
+                          placeholder='Enter Line Name'
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -315,14 +352,34 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
                   name='start_place'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Place</FormLabel>
+                      <FormLabel className='text-sm'>
+                        Start Place
+                        {form.watch("arr_stop")[0]?._id !==
+                          field.value?._id && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <AlertCircle className='h-4 w-4 text-amber-500' />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>End place should be the last stop</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </FormLabel>
                       <Select
                         value={field.value?._id}
                         onValueChange={(value) => {
                           const stop = stops.find((s) => s._id === value);
                           field.onChange(stop);
                         }}>
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={`h-8 text-sm ${
+                            form.watch("arr_stop")[0]?._id !== field.value?._id
+                              ? "border-red-500 ring-red-200"
+                              : ""
+                          }`}>
                           <SelectValue placeholder='Select start stop' />
                         </SelectTrigger>
                         <SelectContent>
@@ -338,100 +395,116 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
                   )}
                 />
 
-                <div className='space-y-3 h-48 overflow-y-auto border rounded p-2'>
-                  {form.watch("arr_stop").map((stop, index) => (
-                    <div
-                      key={stop?._id || index}
-                      className='flex items-center gap-2 bg-gray-50 p-2 rounded'>
-                      <div className='flex flex-col'>
+                <div className='space-y-2 h-40 overflow-y-auto border rounded p-1'>
+                  {form.watch("arr_stop").map((stop, index) => {
+                    const isValid = isStopValid(stop, index, form.getValues());
+                    return (
+                      <div
+                        key={stop?._id || index}
+                        className='flex items-center gap-1 bg-gray-50 p-1 rounded'>
+                        <div className='flex flex-col'>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='icon'
+                            className='h-6 w-6'
+                            onClick={() => moveStopUp(index)}
+                            disabled={index === 0}>
+                            <ChevronUp className='h-4 w-4' />
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='icon'
+                            className='h-6 w-6'
+                            onClick={() => moveStopDown(index)}
+                            disabled={
+                              index === form.watch("arr_stop").length - 1
+                            }>
+                            <ChevronDown className='h-4 w-4' />
+                          </Button>
+                        </div>
+                        <Select
+                          value={stop?._id}
+                          onValueChange={(value) => {
+                            const newStop = stops.find((s) => s._id === value);
+                            const arr_stop = form.getValues("arr_stop");
+                            arr_stop[index] = newStop;
+                            form.setValue("arr_stop", arr_stop);
+                          }}>
+                          <SelectTrigger
+                            className={`h-8 text-sm flex-1 ${
+                              !isValid ? "border-red-500 ring-red-200" : ""
+                            }`}>
+                            <SelectValue
+                              placeholder={`Select stop ${index + 1}`}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {stops.map((s) => (
+                              <SelectItem key={s._id} value={s._id}>
+                                {s.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <Button
-                          type='button'
                           variant='ghost'
                           size='icon'
-                          className='h-6 w-6'
-                          onClick={() => moveStopUp(index)}
-                          disabled={index === 0}>
-                          <ChevronUp className='h-4 w-4' />
-                        </Button>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='icon'
-                          className='h-6 w-6'
-                          onClick={() => moveStopDown(index)}
-                          disabled={
-                            index === form.watch("arr_stop").length - 1
-                          }>
-                          <ChevronDown className='h-4 w-4' />
+                          className='h-8 w-8'
+                          onClick={() => {
+                            const arr_stop = form.getValues("arr_stop");
+                            form.setValue(
+                              "arr_stop",
+                              arr_stop.filter((_, i) => i !== index)
+                            );
+                          }}>
+                          <X className='h-4 w-4' />
                         </Button>
                       </div>
-                      <Select
-                        value={stop?._id}
-                        onValueChange={(value) => {
-                          const newStop = stops.find((s) => s._id === value);
-                          const arr_stop = form.getValues("arr_stop");
-                          arr_stop[index] = newStop;
-                          form.setValue("arr_stop", arr_stop);
-                        }}>
-                        <SelectTrigger className='flex-1'>
-                          <SelectValue
-                            placeholder={`Select stop ${index + 1}`}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {stops.map((s) => (
-                            <SelectItem key={s._id} value={s._id}>
-                              {s.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        onClick={() => {
-                          const arr_stop = form.getValues("arr_stop");
-                          form.setValue(
-                            "arr_stop",
-                            arr_stop.filter((_, i) => i !== index)
-                          );
-                        }}>
-                        <X className='h-4 w-4' />
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
-
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
-                    const arr_stop = form.getValues("arr_stop");
-                    form.setValue("arr_stop", [...arr_stop, null]);
-                  }}>
-                  Add Stop
-                </Button>
 
                 <FormField
                   control={form.control}
                   name='end_place'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Place</FormLabel>
+                      <FormLabel className='text-sm'>
+                        End Place
+                        {form.watch("arr_stop").slice(-1)[0]?._id !==
+                          field.value?._id && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <AlertCircle className='h-4 w-4 text-amber-500' />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>End place should be the last stop</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </FormLabel>
                       <Select
                         value={field.value?._id}
                         onValueChange={(value) => {
                           const stop = stops.find((s) => s._id === value);
                           field.onChange(stop);
                         }}>
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={`h-8 text-sm ${
+                            form.watch("arr_stop").slice(-1)[0]?._id !==
+                            field.value?._id
+                              ? "border-red-500 ring-red-200"
+                              : ""
+                          }`}>
                           <SelectValue placeholder='Select end stop' />
                         </SelectTrigger>
                         <SelectContent>
                           {stops.map((stop) => (
                             <SelectItem key={stop._id} value={stop._id}>
-                              {" "}
-                              {/* Changed from stop.id to stop._id */}
                               {stop.name}
                             </SelectItem>
                           ))}
@@ -447,11 +520,12 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
                   name='time'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Time (minutes)</FormLabel>
+                      <FormLabel className='text-sm'>Time (minutes)</FormLabel>
                       <FormControl>
                         <Input
                           type='number'
                           min='0'
+                          className='h-8 text-sm'
                           {...field}
                           onChange={(e) =>
                             field.onChange(Number(e.target.value))
@@ -463,13 +537,16 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
                   )}
                 />
 
-                <div className='flex justify-end gap-3'>
-                  <Button variant='outline' onClick={handleClose}>
+                <div className='flex justify-end gap-2'>
+                  <Button
+                    variant='outline'
+                    onClick={handleClose}
+                    className='h-8 text-sm'>
                     Cancel
                   </Button>
                   <Button
                     type='submit'
-                    className='bg-green-500 hover:bg-green-600'>
+                    className='h-8 text-sm bg-green-500 hover:bg-green-600'>
                     Submit
                   </Button>
                 </div>
@@ -477,7 +554,7 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
             </Form>
           </div>
 
-          <div className='relative'>
+          <div className='col-span-3 relative'>
             <div ref={mapContainerRef} className='h-full rounded-lg border' />
           </div>
         </div>
