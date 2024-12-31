@@ -28,214 +28,16 @@ import {
   CartesianGrid,
   Tooltip as ChartTooltip,
   Legend as ChartLegend,
-  AreaChart,
   Area,
+  Bar,
+  BarChart,
+  Rectangle,
+  Pie, PieChart
 } from "recharts";
+import { TrendingUp } from "lucide-react"
 import { useEffect, useState } from "react";
 import { useMutation } from "react-query";
 import * as DashboardService from "@/services/dashboardService";
-
-const chartData = [
-  { date: "2024-04-01", desktop: 222, mobile: 150 },
-  { date: "2024-04-02", desktop: 97, mobile: 180 },
-  { date: "2024-04-03", desktop: 167, mobile: 120 },
-  { date: "2024-04-04", desktop: 242, mobile: 260 },
-  { date: "2024-04-05", desktop: 373, mobile: 290 },
-  { date: "2024-04-06", desktop: 301, mobile: 340 },
-  { date: "2024-04-07", desktop: 245, mobile: 180 },
-  { date: "2024-04-08", desktop: 409, mobile: 320 },
-  { date: "2024-04-09", desktop: 59, mobile: 110 },
-  { date: "2024-04-10", desktop: 261, mobile: 190 },
-  { date: "2024-04-11", desktop: 327, mobile: 350 },
-  { date: "2024-04-12", desktop: 292, mobile: 210 },
-  { date: "2024-04-13", desktop: 342, mobile: 380 },
-  { date: "2024-04-14", desktop: 137, mobile: 220 },
-  { date: "2024-04-15", desktop: 120, mobile: 170 },
-  { date: "2024-04-16", desktop: 138, mobile: 190 },
-  { date: "2024-04-17", desktop: 446, mobile: 360 },
-  { date: "2024-04-18", desktop: 364, mobile: 410 },
-  { date: "2024-04-19", desktop: 243, mobile: 180 },
-  { date: "2024-04-20", desktop: 89, mobile: 150 },
-  { date: "2024-04-21", desktop: 137, mobile: 200 },
-  { date: "2024-04-22", desktop: 224, mobile: 170 },
-  { date: "2024-04-23", desktop: 138, mobile: 230 },
-  { date: "2024-04-24", desktop: 387, mobile: 290 },
-  { date: "2024-04-25", desktop: 215, mobile: 250 },
-  { date: "2024-04-26", desktop: 75, mobile: 130 },
-  { date: "2024-04-27", desktop: 383, mobile: 420 },
-  { date: "2024-04-28", desktop: 122, mobile: 180 },
-  { date: "2024-04-29", desktop: 315, mobile: 240 },
-  { date: "2024-04-30", desktop: 454, mobile: 380 },
-  { date: "2024-05-01", desktop: 165, mobile: 220 },
-  { date: "2024-05-02", desktop: 293, mobile: 310 },
-  { date: "2024-05-03", desktop: 247, mobile: 190 },
-  { date: "2024-05-04", desktop: 385, mobile: 420 },
-  { date: "2024-05-05", desktop: 481, mobile: 390 },
-  { date: "2024-05-06", desktop: 498, mobile: 520 },
-  { date: "2024-05-07", desktop: 388, mobile: 300 },
-  { date: "2024-05-08", desktop: 149, mobile: 210 },
-  { date: "2024-05-09", desktop: 227, mobile: 180 },
-  { date: "2024-05-10", desktop: 293, mobile: 330 },
-  { date: "2024-05-11", desktop: 335, mobile: 270 },
-  { date: "2024-05-12", desktop: 197, mobile: 240 },
-  { date: "2024-05-13", desktop: 197, mobile: 160 },
-  { date: "2024-05-14", desktop: 448, mobile: 490 },
-  { date: "2024-05-15", desktop: 473, mobile: 380 },
-  { date: "2024-05-16", desktop: 338, mobile: 400 },
-  { date: "2024-05-17", desktop: 499, mobile: 420 },
-  { date: "2024-05-18", desktop: 315, mobile: 350 },
-  { date: "2024-05-19", desktop: 235, mobile: 180 },
-  { date: "2024-05-20", desktop: 177, mobile: 230 },
-  { date: "2024-05-21", desktop: 82, mobile: 140 },
-  { date: "2024-05-22", desktop: 81, mobile: 120 },
-  { date: "2024-05-23", desktop: 252, mobile: 290 },
-  { date: "2024-05-24", desktop: 294, mobile: 220 },
-  { date: "2024-05-25", desktop: 201, mobile: 250 },
-  { date: "2024-05-26", desktop: 213, mobile: 170 },
-  { date: "2024-05-27", desktop: 420, mobile: 460 },
-  { date: "2024-05-28", desktop: 233, mobile: 190 },
-  { date: "2024-05-29", desktop: 78, mobile: 130 },
-  { date: "2024-05-30", desktop: 340, mobile: 280 },
-  { date: "2024-05-31", desktop: 178, mobile: 230 },
-  { date: "2024-06-01", desktop: 178, mobile: 200 },
-  { date: "2024-06-02", desktop: 470, mobile: 410 },
-  { date: "2024-06-03", desktop: 103, mobile: 160 },
-  { date: "2024-06-04", desktop: 439, mobile: 380 },
-  { date: "2024-06-05", desktop: 88, mobile: 140 },
-  { date: "2024-06-06", desktop: 294, mobile: 250 },
-  { date: "2024-06-07", desktop: 323, mobile: 370 },
-  { date: "2024-06-08", desktop: 385, mobile: 320 },
-  { date: "2024-06-09", desktop: 438, mobile: 480 },
-  { date: "2024-06-10", desktop: 155, mobile: 200 },
-  { date: "2024-06-11", desktop: 92, mobile: 150 },
-  { date: "2024-06-12", desktop: 492, mobile: 420 },
-  { date: "2024-06-13", desktop: 81, mobile: 130 },
-  { date: "2024-06-14", desktop: 426, mobile: 380 },
-  { date: "2024-06-15", desktop: 307, mobile: 350 },
-  { date: "2024-06-16", desktop: 371, mobile: 310 },
-  { date: "2024-06-17", desktop: 475, mobile: 520 },
-  { date: "2024-06-18", desktop: 107, mobile: 170 },
-  { date: "2024-06-19", desktop: 341, mobile: 290 },
-  { date: "2024-06-20", desktop: 408, mobile: 450 },
-  { date: "2024-06-21", desktop: 169, mobile: 210 },
-  { date: "2024-06-22", desktop: 317, mobile: 270 },
-  { date: "2024-06-23", desktop: 480, mobile: 530 },
-  { date: "2024-06-24", desktop: 132, mobile: 180 },
-  { date: "2024-06-25", desktop: 141, mobile: 190 },
-  { date: "2024-06-26", desktop: 434, mobile: 380 },
-  { date: "2024-06-27", desktop: 448, mobile: 490 },
-  { date: "2024-06-28", desktop: 149, mobile: 200 },
-  { date: "2024-06-29", desktop: 103, mobile: 160 },
-  { date: "2024-06-30", desktop: 446, mobile: 400 },
-];
-
-const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  desktop: {
-    label: "Desktop",
-    color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(var(--chart-2))",
-  },
-};
-
-const chartReportData = [
-  { date: "2024-04-01", revenue: 222, cost: 150, profit: 123 },
-  { date: "2024-04-02", revenue: 97, cost: 180, profit: 123 },
-  { date: "2024-04-03", revenue: 167, cost: 120, profit: 123 },
-  { date: "2024-04-04", revenue: 242, cost: 260, profit: 123 },
-  { date: "2024-04-05", revenue: 373, cost: 290, profit: 123 },
-  { date: "2024-04-06", revenue: 301, cost: 340, profit: 123 },
-  { date: "2024-04-07", revenue: 245, cost: 180, profit: 123 },
-  { date: "2024-04-08", revenue: 409, cost: 320, profit: 123 },
-  { date: "2024-04-09", revenue: 59, cost: 110, profit: 123 },
-  { date: "2024-04-10", revenue: 261, cost: 190, profit: 123 },
-  { date: "2024-04-11", revenue: 327, cost: 350, profit: 123 },
-  { date: "2024-04-12", revenue: 292, cost: 210, profit: 123 },
-  { date: "2024-04-13", revenue: 342, cost: 380, profit: 123 },
-  { date: "2024-04-14", revenue: 137, cost: 220, profit: 123 },
-  { date: "2024-04-15", revenue: 120, cost: 170, profit: 123 },
-  { date: "2024-04-16", revenue: 138, cost: 190, profit: 123 },
-  { date: "2024-04-17", revenue: 446, cost: 360, profit: 123 },
-  { date: "2024-04-18", revenue: 364, cost: 410, profit: 123 },
-  { date: "2024-04-19", revenue: 243, cost: 180, profit: 123 },
-  { date: "2024-04-20", revenue: 89, cost: 150, profit: 123 },
-  { date: "2024-04-21", revenue: 137, cost: 200, profit: 123 },
-  { date: "2024-04-22", revenue: 224, cost: 170, profit: 123 },
-  { date: "2024-04-23", revenue: 138, cost: 230, profit: 123 },
-  { date: "2024-04-24", revenue: 387, cost: 290, profit: 123 },
-  { date: "2024-04-25", revenue: 215, cost: 250, profit: 123 },
-  { date: "2024-04-26", revenue: 75, cost: 130, profit: 123 },
-  { date: "2024-04-27", revenue: 383, cost: 420, profit: 123 },
-  { date: "2024-04-28", revenue: 122, cost: 180, profit: 123 },
-  { date: "2024-04-29", revenue: 315, cost: 240, profit: 123 },
-  { date: "2024-04-30", revenue: 454, cost: 380, profit: 123 },
-  { date: "2024-05-01", revenue: 165, cost: 220, profit: 123 },
-  { date: "2024-05-02", revenue: 293, cost: 310, profit: 123 },
-  { date: "2024-05-03", revenue: 247, cost: 190, profit: 123 },
-  { date: "2024-05-04", revenue: 385, cost: 420, profit: 123 },
-  { date: "2024-05-05", revenue: 481, cost: 390, profit: 123 },
-  { date: "2024-05-06", revenue: 498, cost: 520, profit: 123 },
-  { date: "2024-05-07", revenue: 388, cost: 300, profit: 123 },
-  { date: "2024-05-08", revenue: 149, cost: 210, profit: 123 },
-  { date: "2024-05-09", revenue: 227, cost: 180, profit: 123 },
-  { date: "2024-05-10", revenue: 293, cost: 330, profit: 123 },
-  { date: "2024-05-11", revenue: 335, cost: 270, profit: 123 },
-  { date: "2024-05-12", revenue: 197, cost: 240, profit: 123 },
-  { date: "2024-05-13", revenue: 197, cost: 160, profit: 123 },
-  { date: "2024-05-14", revenue: 448, cost: 490, profit: 123 },
-  { date: "2024-05-15", revenue: 473, cost: 380, profit: 123 },
-  { date: "2024-05-16", revenue: 338, cost: 400, profit: 123 },
-  { date: "2024-05-17", revenue: 499, cost: 420, profit: 123 },
-  { date: "2024-05-18", revenue: 315, cost: 350, profit: 123 },
-  { date: "2024-05-19", revenue: 235, cost: 180, profit: 123 },
-  { date: "2024-05-20", revenue: 177, cost: 230, profit: 123 },
-  { date: "2024-05-21", revenue: 82, cost: 140, profit: 123 },
-  { date: "2024-05-22", revenue: 81, cost: 120, profit: 123 },
-  { date: "2024-05-23", revenue: 252, cost: 290, profit: 123 },
-  { date: "2024-05-24", revenue: 294, cost: 220, profit: 123 },
-  { date: "2024-05-25", revenue: 201, cost: 250, profit: 123 },
-  { date: "2024-05-26", revenue: 213, cost: 170, profit: 123 },
-  { date: "2024-05-27", revenue: 420, cost: 460, profit: 123 },
-  { date: "2024-05-28", revenue: 233, cost: 190, profit: 123 },
-  { date: "2024-05-29", revenue: 78, cost: 130, profit: 123 },
-  { date: "2024-05-30", revenue: 340, cost: 280, profit: 123 },
-  { date: "2024-05-31", revenue: 178, cost: 230, profit: 123 },
-  { date: "2024-06-01", revenue: 178, cost: 200, profit: 123 },
-  { date: "2024-06-02", revenue: 470, cost: 410, profit: 123 },
-  { date: "2024-06-03", revenue: 103, cost: 160, profit: 123 },
-  { date: "2024-06-04", revenue: 439, cost: 380, profit: 123 },
-  { date: "2024-06-05", revenue: 88, cost: 140, profit: 123 },
-  { date: "2024-06-06", revenue: 294, cost: 250, profit: 123 },
-  { date: "2024-06-07", revenue: 323, cost: 370, profit: 123 },
-  { date: "2024-06-08", revenue: 385, cost: 320, profit: 123 },
-  { date: "2024-06-09", revenue: 438, cost: 480, profit: 123 },
-  { date: "2024-06-10", revenue: 155, cost: 200, profit: 123 },
-  { date: "2024-06-11", revenue: 92, cost: 150, profit: 123 },
-  { date: "2024-06-12", revenue: 492, cost: 420, profit: 123 },
-  { date: "2024-06-13", revenue: 81, cost: 130, profit: 123 },
-  { date: "2024-06-14", revenue: 426, cost: 380, profit: 123 },
-  { date: "2024-06-15", revenue: 307, cost: 350, profit: 123 },
-  { date: "2024-06-16", revenue: 371, cost: 310, profit: 123 },
-  { date: "2024-06-17", revenue: 475, cost: 520, profit: 123 },
-  { date: "2024-06-18", revenue: 107, cost: 170, profit: 123 },
-  { date: "2024-06-19", revenue: 341, cost: 290, profit: 123 },
-  { date: "2024-06-20", revenue: 408, cost: 450, profit: 123 },
-  { date: "2024-06-21", revenue: 169, cost: 210, profit: 123 },
-  { date: "2024-06-22", revenue: 317, cost: 270, profit: 123 },
-  { date: "2024-06-23", revenue: 480, cost: 530, profit: 123 },
-  { date: "2024-06-24", revenue: 132, cost: 180, profit: 123 },
-  { date: "2024-06-25", revenue: 141, cost: 190, profit: 123 },
-  { date: "2024-06-26", revenue: 434, cost: 380, profit: 123 },
-  { date: "2024-06-27", revenue: 448, cost: 490, profit: 123 },
-  { date: "2024-06-28", revenue: 149, cost: 200, profit: 123 },
-  { date: "2024-06-29", revenue: 103, cost: 160, profit: 123 },
-  { date: "2024-06-30", revenue: 446, cost: 400, profit: 123 },
-];
 
 const chartReportConfig = {
   revenue: {
@@ -252,8 +54,41 @@ const chartReportConfig = {
   },
 };
 
+const chartData = [
+  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
+  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
+  { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" },
+  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
+  { browser: "other", visitors: 90, fill: "var(--color-other)" },
+]
+const chartConfig = {
+  visitors: {
+    label: "Visitors",
+  },
+  chrome: {
+    label: "Chrome",
+    color: "hsl(var(--chart-1))",
+  },
+  safari: {
+    label: "Safari",
+    color: "hsl(var(--chart-2))",
+  },
+  firefox: {
+    label: "Firefox",
+    color: "hsl(var(--chart-3))",
+  },
+  edge: {
+    label: "Edge",
+    color: "hsl(var(--chart-4))",
+  },
+  other: {
+    label: "Other",
+    color: "hsl(var(--chart-5))",
+  },
+}
+
 const DashboardPage = () => {
-  const [timeRange, setTimeRange] = useState("90d");
+  const [timeRange, setTimeRange] = useState("7d");
   const [items, setItems] = useState([
     {
       title: "Total Employees",
@@ -284,6 +119,21 @@ const DashboardPage = () => {
       iconColor: "text-amber-700",
     },
   ]);
+  const [chartReportData, setChartReportData] = useState([]);
+  const [chartLineData, setChartLineData] = useState([]);
+  const [chartLineConfig, setChartLineConfig] = useState({
+    visitors: {
+      label: "Visitors",
+    },
+  });
+  const [chartBusData, setChartBusData] = useState([]);
+  const [chartBusConfig, setChartBusConfig] = useState({
+    trips: {
+      label: "trips",
+    },
+  });
+  const [ratioLine, setRatioLine] = useState("");
+  const [ratioBus, setRatioBus] = useState("");
 
   const mutation = useMutation({
     mutationFn: DashboardService.getSumary,
@@ -310,35 +160,108 @@ const DashboardPage = () => {
     },
   });
 
+  const mutationRevenue = useMutation({
+    mutationFn: DashboardService.getRevenue,
+    onSuccess: (data) => {
+      setChartReportData(data.data);
+    },
+    onError: (error) => {
+      console.error("Error fetching summary:", error);
+    },
+  })
+
+  const mutaionLine = useMutation({
+    mutationFn: DashboardService.getLine,
+    onSuccess: (data) => {
+      const updatedData = data.data;
+      const ratio = updatedData[0]?.totalVisitors / updatedData[1]?.totalVisitors;
+      setRatioLine(ratio);
+      let newChartLineConfig = { ...chartLineConfig }; 
+      let newChartLineData = []; 
+      if (updatedData[0]?.lineData && Array.isArray(updatedData[0].lineData)) {
+        updatedData[0].lineData.forEach((item, index) => {
+          const lineKey = `Line${index + 1}`; 
+          const lineName = item.lineName; 
+          const lineColor = `hsl(var(--chart-${index + 1}))`; 
+  
+          newChartLineConfig[lineKey] = {
+            label: lineName,
+            color: lineColor,
+            visitors: item.visitors,
+          };  
+          newChartLineData.push({
+            name: lineName, 
+            visitors: item.visitors, 
+            fill: lineColor
+          });
+        });
+      }
+  
+      setChartLineConfig(newChartLineConfig);
+      setChartLineData(newChartLineData); 
+    },
+    onError: (error) => {
+      console.error("Error fetching summary:", error);
+    },
+  });
+
+  const mutaionBus = useMutation({
+    mutationFn: DashboardService.getBus,
+    onSuccess: (data) => {
+      const updatedData = data.data;
+
+      const ratio = updatedData[0]?.totalTrip / updatedData[1]?.totalTrip;
+      setRatioBus(ratio);
+  
+      let newChartBusConfig = { ...chartBusConfig }; 
+      let newChartBusData = []; 
+  
+      if (updatedData[0]?.busData && Array.isArray(updatedData[0].busData)) {
+        updatedData[0].busData.forEach((item, index) => {
+          const busKey = `Bus${index + 1}`; 
+          const busName = item.license_plate; 
+          const busColor = `hsl(var(--chart-${index + 1}))`;
+
+          newChartBusConfig[busKey] = {
+            label: busName,
+            color: busColor,
+            total: item.total,
+          };  
+      
+          newChartBusData.push({
+            name: busName, 
+            totalTrip: item.total, 
+            fill: busColor
+          });
+        });
+      }
+  
+      setChartBusConfig(newChartBusConfig);
+      setChartBusData(newChartBusData); 
+    },
+    onError: (error) => {
+      console.error("Error fetching summary:", error);
+    },
+  });
+
   useEffect(() => {
     mutation.mutate();
+    mutationRevenue.mutate();
+    mutaionLine.mutate();
+    mutaionBus.mutate();
   }, []);
-
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date);
-    const referenceDate = new Date("2024-06-30");
-    let daysToSubtract = 90;
-    if (timeRange === "30d") {
-      daysToSubtract = 30;
-    } else if (timeRange === "7d") {
-      daysToSubtract = 7;
-    }
-    const startDate = new Date(referenceDate);
-    startDate.setDate(startDate.getDate() - daysToSubtract);
-    return date >= startDate;
-  });
 
   const filteredReportData = chartReportData.filter((item) => {
     const date = new Date(item.date);
-    const referenceDate = new Date("2024-06-30");
+    const currentDate = new Date();
     let daysToSubtract = 90;
     if (timeRange === "30d") {
       daysToSubtract = 30;
     } else if (timeRange === "7d") {
       daysToSubtract = 7;
     }
-    const startDate = new Date(referenceDate);
-    startDate.setDate(startDate.getDate() - daysToSubtract);
+    const startDate = new Date(currentDate);
+    startDate.setDate(currentDate.getDate() - daysToSubtract);
     return date >= startDate;
   });
 
@@ -365,18 +288,18 @@ const DashboardPage = () => {
             ))}
           </div>
 
-          {/* Chart */}
+          {/* Chart Revenue */}
           <Card>
             <CardHeader className='flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row'>
               <div className='grid flex-1 gap-1 text-center sm:text-left'>
-                <CardTitle>Area Chart - Interactive</CardTitle>
+                <CardTitle>Area Chart - Financial report</CardTitle>
                 <CardDescription>
                   Showing financial report for last{" "}
-                  {timeRange == "90d"
-                    ? "3 months."
+                  {timeRange == "7d"
+                    ? "7 days."
                     : timeRange == "30d"
                     ? "30 days."
-                    : "7 days."}
+                    : "3 months."}
                 </CardDescription>
               </div>
               <Select value={timeRange} onValueChange={setTimeRange}>
@@ -397,103 +320,6 @@ const DashboardPage = () => {
                   </SelectItem>
                 </SelectContent>
               </Select>
-            </CardHeader>
-            <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
-              <ChartContainer
-                config={chartConfig}
-                className='aspect-auto h-[250px] w-full'>
-                <AreaChart data={filteredData}>
-                  <defs>
-                    <linearGradient
-                      id='fillDesktop'
-                      x1='0'
-                      y1='0'
-                      x2='0'
-                      y2='1'>
-                      <stop
-                        offset='5%'
-                        stopColor='var(--color-desktop)'
-                        stopOpacity={0.8}
-                      />
-                      <stop
-                        offset='95%'
-                        stopColor='var(--color-desktop)'
-                        stopOpacity={0.1}
-                      />
-                    </linearGradient>
-                    <linearGradient id='fillMobile' x1='0' y1='0' x2='0' y2='1'>
-                      <stop
-                        offset='5%'
-                        stopColor='var(--color-mobile)'
-                        stopOpacity={0.8}
-                      />
-                      <stop
-                        offset='95%'
-                        stopColor='var(--color-mobile)'
-                        stopOpacity={0.1}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey='date'
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    minTickGap={32}
-                    tickFormatter={(value) => {
-                      const date = new Date(value);
-                      return date.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      });
-                    }}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={
-                      <ChartTooltipContent
-                        labelFormatter={(value) => {
-                          return new Date(value).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          });
-                        }}
-                        indicator='dot'
-                      />
-                    }
-                  />
-                  <Area
-                    dataKey='mobile'
-                    type='natural'
-                    fill='url(#fillMobile)'
-                    stroke='var(--color-mobile)'
-                    stackId='a'
-                  />
-                  <Area
-                    dataKey='desktop'
-                    type='natural'
-                    fill='url(#fillDesktop)'
-                    stroke='var(--color-desktop)'
-                    stackId='a'
-                  />
-                  <ChartLegend content={<ChartLegendContent />} />
-                </AreaChart>
-              </ChartContainer>
-            </CardContent>
-
-            <CardHeader className='flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row'>
-              <div className='grid flex-1 gap-1 text-center sm:text-left'>
-                <CardTitle>Area Chart - Financial report</CardTitle>
-                <CardDescription>
-                  Showing financial report for last{" "}
-                  {timeRange == "90d"
-                    ? "3 months."
-                    : timeRange == "30d"
-                    ? "30 days."
-                    : "7 days."}
-                </CardDescription>
-              </div>
             </CardHeader>
             <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
               <ChartContainer
@@ -621,6 +447,98 @@ const DashboardPage = () => {
               </ChartContainer>
             </CardContent>
           </Card>
+          <div className="flex gap-4">
+           {/* Chart Line */}
+          <Card className="flex-1">
+            <CardHeader>
+              <CardTitle>Bar Chart - Active</CardTitle>
+              <CardDescription>January 2025</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartLineConfig}>
+                <BarChart accessibilityLayer data={chartLineData}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tickLine={false}
+                    tickMargin={10}
+                    axisLine={false}
+                    tickFormatter={(index) => {
+                      if (chartLineConfig[index]) {
+                        return chartLineConfig[index].label && chartLineConfig[index].color;
+                      }
+                      return index; 
+                    }}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel />}
+                  />
+                  <Bar
+                    dataKey="visitors"
+                    strokeWidth={2}
+                    radius={8}
+                    activeIndex={2}
+                    activeBar={({ ...props }) => {
+                      return (
+                        <Rectangle
+                          {...props}
+                          fillOpacity={0.8}
+                          strokeDasharray={4}
+                          strokeDashoffset={4}
+                        />
+                      )
+                    }}
+                  >
+                 </Bar>
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+            <CardFooter className="flex-col items-center gap-2 text-sm">
+              <div className="flex gap-2 font-medium leading-none">
+                Trending up by {ratioLine}% this month <TrendingUp className="h-4 w-4" />
+              </div>
+              <div className="leading-none text-muted-foreground">
+                Showing total visitors for this month
+              </div>
+            </CardFooter>
+          </Card>
+
+          {/* Chart Bus */}
+          <Card className="flex flex-col">
+            <CardHeader className="items-center pb-0">
+              <CardTitle>Pie Chart - Separator None</CardTitle>
+              <CardDescription>January 2025</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 pb-0">
+              <ChartContainer
+                config={chartBusConfig}
+                className="mx-auto aspect-square max-h-[250px]"
+              >
+                <PieChart>
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel />}
+                  />
+                  <Pie
+                    data={chartBusData}
+                    dataKey="totalTrip"
+                    nameKey="name"
+                    stroke="0"
+                  />
+                </PieChart>
+              </ChartContainer>
+            </CardContent>
+            <CardFooter className="flex-col gap-2 text-sm">
+              <div className="flex items-center gap-2 font-medium leading-none">
+                Trending up by {ratioBus}% this month <TrendingUp className="h-4 w-4" />
+              </div>
+              <div className="leading-none text-muted-foreground">
+                Showing total visitors for this month
+              </div>
+            </CardFooter>
+          </Card>
+          </div>
         </div>
       </div>
     </div>
