@@ -120,192 +120,150 @@ const ManageRequestPage = () => {
               text='Search by title...'
             />
           </div>
-
-          <div className='overflow-x-auto rounded-lg bg-white shadow-md'>
-            <Table className='overflow-hidden rounded-t-lg border border-gray-300'>
-              <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
-                <TableRow>
-                  {[
-                    "Request ID",
-                    "Title",
-                    "Sender",
-                    "Sent At",
-                    "Status",
-                    "Receiver",
-                    "Resolve at",
-                    "Action",
-                  ].map((header, idx) => (
-                    <TableHead
-                      key={idx}
-                      className='text-center text-white text-base py-3 px-4'>
-                      {header}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading
-                  ? Array(5)
-                      .fill()
-                      .map((_, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell>
-                            <Skeleton height={20} width='50%' />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton circle={true} height={40} width={40} />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton height={20} width='80%' />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton height={20} width='50%' />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton height={20} width='60%' />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton height={20} width='40%' />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton height={20} width='30%' />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton height={20} width='30%' />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton height={20} width='30%' />
-                          </TableCell>
-                        </TableRow>
-                      ))
-                  : currentItems.map((item, index) => (
-                      <TableRow
-                        key={index}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setSelected(item);
-                          setShowForm(true);
-                        }}>
-                        <TableCell
-                          onClick={() => {
-                            setType("view");
-                          }}
-                          className='text-center font-semibold py-3 px-4'>
-                          {item.id}
-                        </TableCell>
-                        <TableCell
-                          onClick={() => {
-                            setType("view");
-                          }}
-                          className='text-center font-semibold py-3 px-4'>
-                          {item.title}
-                        </TableCell>
-                        <TableCell
-                          onClick={() => {
-                            setType("view");
-                          }}
-                          className='text-center py-3 px-4'>
-                          {item?.employee?.name}
-                        </TableCell>
-                        <TableCell
-                          onClick={() => {
-                            setType("view");
-                          }}
-                          className='text-center py-3 px-4'>
-                          {new Date(item.date_requested).toLocaleDateString(
-                            "en-GB"
-                          )}
-                        </TableCell>
-                        <TableCell
-                          onClick={() => {
-                            setType("view");
-                          }}
-                          className='text-center py-3 px-4'>
-                          <span
-                            className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
-                              item.status === "Rejected"
-                                ? "bg-red-100 text-red-600"
-                                : item.status === "Pending"
-                                ? "bg-yellow-100 text-orange-600"
-                                : "bg-green-100 text-green-600"
-                            }`}>
-                            {item.status}
-                          </span>
-                        </TableCell>
-                        <TableCell
-                          onClick={() => {
-                            setType("view");
-                          }}
-                          className='text-center py-3 px-4'>
-                          {item?.manager?.name}
-                        </TableCell>
-                        <TableCell
-                          onClick={() => {
-                            setType("view");
-                          }}
-                          className='text-center py-3 px-4'>
-                          {new Date(item.date_resolved).toLocaleDateString(
-                            "en-GB"
-                          )}
-                        </TableCell>
-                        <TableCell className='text-center flex justify-center items-center py-3 px-4'>
-                          <Dialog>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger>
-                                <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                onClick={(e) => e.stopPropagation()}
-                                className='bg-white shadow-md rounded-lg'>
-                                <DialogTrigger asChild>
-                                  <DropdownMenuItem>
-                                    <span>Delete</span>
-                                  </DropdownMenuItem>
-                                </DialogTrigger>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            <DialogContent className='p-4'>
-                              <DialogHeader>
-                                <DialogTitle className='text-center text-lg font-semibold'>
-                                  Are you sure you want to delete?
-                                </DialogTitle>
-                                <DialogDescription className='text-gray-600'>
-                                  This action cannot be undone. This will
-                                  permanently delete the request and remove your
-                                  data from our servers.
-                                </DialogDescription>
-                                <div className='flex items-center justify-center gap-4 pt-4'>
-                                  <DialogClose asChild>
-                                    <Button
-                                      onClick={(e) => e.stopPropagation()}
-                                      variant='outline'
-                                      className='w-28 '>
-                                      Cancel
-                                    </Button>
-                                  </DialogClose>
-                                  <DialogClose asChild>
-                                    <Button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setShowForm(false);
-                                        handleDelete();
-                                      }}
-                                      className='w-28'
-                                      variant='destructive'>
-                                      Confirm
-                                    </Button>
-                                  </DialogClose>
-                                </div>
-                              </DialogHeader>
-                            </DialogContent>
-                          </Dialog>
-                        </TableCell>
-                      </TableRow>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <p>Loading...</p>
+            </div>
+          ) : (
+            <div className='overflow-x-auto rounded-lg bg-white shadow-md'>
+              <Table className='overflow-hidden rounded-t-lg border border-gray-300'>
+                <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
+                  <TableRow>
+                    {[
+                      "Request ID",
+                      "Title",
+                      "Sender",
+                      "Sent At",
+                      "Status",
+                      "Receiver",
+                      "Resolve at",
+                      "Action",
+                    ].map((header, idx) => (
+                      <TableHead
+                        key={idx}
+                        className='text-center text-white text-base py-3 px-4'>
+                        {header}
+                      </TableHead>
                     ))}
-              </TableBody>
-            </Table>
-          </div>
-
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {currentItems.map((item, index) => (
+                    <TableRow
+                      key={index}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSelected(item);
+                        setShowForm(true);
+                      }}>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center font-semibold py-3 px-4'>
+                        {item.id}
+                      </TableCell>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center font-semibold py-3 px-4'>
+                        {item.title}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item?.employee?.name}
+                      </TableCell>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
+                        {new Date(item.date_requested).toLocaleDateString(
+                          "en-GB"
+                        )}
+                      </TableCell>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
+                        <span
+                          className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
+                            item.status === "Rejected"
+                              ? "bg-red-100 text-red-600"
+                              : item.status === "Pending"
+                              ? "bg-yellow-100 text-orange-600"
+                              : "bg-green-100 text-green-600"
+                          }`}>
+                          {item.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item?.manager?.name}
+                      </TableCell>
+                      <TableCell
+                        onClick={() => {
+                          setType("view");
+                        }}
+                        className='text-center py-3 px-4'>
+                        {new Date(item.date_resolved).toLocaleDateString(
+                          "en-GB"
+                        )}
+                      </TableCell>
+                      <TableCell className='text-center flex justify-center items-center py-3 px-4'>
+                      <Dialog>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger>
+                            <EllipsisVertical className='text-gray-500 hover:text-gray-700 transition' />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent  onClick={(e) => e.stopPropagation()} className='bg-white shadow-md rounded-lg'>
+                            <DialogTrigger asChild>
+                              <DropdownMenuItem>
+                                <span>Delete</span>
+                              </DropdownMenuItem>
+                            </DialogTrigger>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <DialogContent className='p-4'>
+                          <DialogHeader>
+                            <DialogTitle className='text-center text-lg font-semibold'>
+                              Are you sure you want to delete?
+                            </DialogTitle>
+                            <DialogDescription className='text-gray-600'>
+                              This action cannot be undone. This will
+                              permanently delete the request and remove your
+                              data from our servers.
+                            </DialogDescription>
+                            <div className='flex items-center justify-center gap-4 pt-4'>
+                              <DialogClose asChild>
+                                <Button onClick={(e) => e.stopPropagation()} variant='outline' className='w-28 '>
+                                  Cancel
+                                </Button>
+                              </DialogClose>
+                              <DialogClose asChild>
+                                <Button
+                                  onClick={(e) =>
+                                  {
+                                    e.stopPropagation();
+                                    setShowForm(false); 
+                                    handleDelete()
+                                  }}
+                                  className='w-28'
+                                  variant='destructive'>
+                                  Confirm
+                                </Button>
+                              </DialogClose>
+                            </div>
+                          </DialogHeader>
+                        </DialogContent>
+                      </Dialog>
+                    </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
           <Pagination className='flex justify-center items-center gap-4'>
             <PaginationContent className='flex gap-2'>
               <PaginationItem>

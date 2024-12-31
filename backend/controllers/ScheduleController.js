@@ -127,7 +127,6 @@ const deleteSchedule = async (req, res) => {
 const employeeCheckIn = async (req, res) => {
   try {
     const data = req.body;
-    console.log(data, "here");
     const response = await ScheduleService.employeeCheckIn(data);
     return res.status(200).json(response);
   } catch (e) {

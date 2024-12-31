@@ -48,7 +48,7 @@ import { convertMinutesToHoursAndMinutes } from "@/utils/translateToVND"
 import * as ScheduleService from "@/services/scheduleService";
 import * as Message from "@/components/ui/alert";
 import { format } from "date-fns";
-
+import dayjs from 'dayjs';
 
 const SchedulePage = () => {
   const ITEMS_PER_PAGE = 10;
@@ -58,8 +58,11 @@ const SchedulePage = () => {
   const [dialogType, setDialogType] = useState("");
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentPage = parseInt(searchParams.get("page")) || 1;
+  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const [refresh, setRefresh] = useState(false);
+  const [selected, setSelected] = useState('');
+  const [date, setDate] = useState(new Date());
   const handleAddClick = () => {
     setDialogType("add");
     setShowForm(true);
@@ -93,9 +96,24 @@ const SchedulePage = () => {
     mutationApproveAll.mutate();
   }
 
-  const currentItems = items
-    .filter((item) => item.line.name.toLowerCase().includes(searchWord.toLowerCase()))
-    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const handleDateChange = (selectedDate) => {
+    setDate(selectedDate); // Chuyển đổi ngày
+    setCurrentPage(1); // Quay về trang đầu khi lọc
+  };
+
+  const filteredItems = items.filter((item) => {
+    const matchesDate =
+      date === null || dayjs(item.date).startOf("day").isSame(date);
+    const matchesSearch = item.line.name
+      .toLowerCase()
+      .includes(searchWord.toLowerCase());
+    return matchesDate && matchesSearch;
+  });
+
+  const currentItems = filteredItems.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -107,14 +125,14 @@ const SchedulePage = () => {
     setSearchParams({ page: 1 });
   };
 
-  const [refresh, setRefresh] = useState(false);
-  const [selected, setSelected] = useState('');
-  const [date, setDate] = useState(new Date());
-
   const mutationGetAll = useMutation({
     mutationFn: () => ScheduleService.getAllSchedule(),
     onSuccess: (data) => {
-      setItems(data.data);
+      const today = dayjs().startOf("day"); // Lấy thời điểm đầu ngày hôm nay
+      const filteredSchedules = data.data.filter((schedule) => 
+        dayjs(schedule.date).isSame(today, "day")
+      );
+      setItems(filteredSchedules);
     },
     onError: (error) => {
       console.error("Error creating schedule:", error);
@@ -173,7 +191,7 @@ const SchedulePage = () => {
                 <Calendar
                   mode="single"
                   selected={date}
-                  onSelect={setDate} // Cập nhật giá trị khi chọn ngày mới
+                  onSelect={handleDateChange} // Cập nhật giá trị khi chọn ngày mới
                 />
               </PopoverContent>
             </Popover>

@@ -3,23 +3,23 @@ const Employee = require("../models/EmployeeModel");
 const Line = require("../models/LineModel");
 const Schedule = require("../models/ScheduleModel");
 const Stop = require("../models/StopModel");
+
 const getEmployeeTask = async (employeeId) => {
   try {
     // Tìm kiếm các lịch trình mà nhân viên là busboy hoặc driver
     const schedules = await Schedule.find({
       $or: [{ busboy: employeeId }, { driver: employeeId }],
     })
-      // Populates các thông tin liên quan, bao gồm line và start_place (bắt buộc phải là 'Stop')
       .populate({
         path: "line",
         populate: {
-          path: "start_place", // Thông tin bắt buộc từ Stop
+          path: "start_place",
           model: "Stop", // Chỉ rõ model là 'Stop'
         },
       })
-      .populate("bus"); // Populates bus
+      .populate("bus");
 
-    // Kiểm tra nếu không có dữ liệu
+    // Nếu không tìm thấy lịch trình nào
     if (!schedules || schedules.length === 0) {
       return {
         status: "ERROR",
@@ -28,13 +28,20 @@ const getEmployeeTask = async (employeeId) => {
       };
     }
 
-    // Lọc các lịch trình có thời gian là hôm nay và loại bỏ các lịch trình có trạng thái Pending
+    // Lấy ngày hiện tại
     const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0)); // Lấy thời gian bắt đầu ngày hôm nay
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999)); // Lấy thời gian kết thúc ngày hôm nay
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
+    // Lọc các lịch trình
     const filteredSchedules = schedules.filter((schedule) => {
-      const scheduleTime = new Date(schedule.time_start);
+      // Chuyển đổi chuỗi time_start thành đối tượng Date
+      if (!schedule.time_start) return false; // Bỏ qua lịch trình không có thời gian bắt đầu
+      const [hours, minutes] = schedule.time_start.split(":").map(Number);
+      const scheduleTime = new Date();
+      scheduleTime.setHours(hours, minutes, 0, 0);
+
+      // Lọc theo thời gian và trạng thái
       return (
         scheduleTime >= startOfDay &&
         scheduleTime <= endOfDay &&
@@ -42,26 +49,32 @@ const getEmployeeTask = async (employeeId) => {
       );
     });
 
-    // Sắp xếp lịch trình theo trạng thái và thời gian (Completed ở dưới cùng)
+    // Sắp xếp lịch trình theo trạng thái và thời gian
     const sortedSchedules = filteredSchedules.sort((a, b) => {
-      // Sắp xếp theo trạng thái Completed ở dưới cùng
+      // Đưa trạng thái "Completed" xuống dưới cùng
       if (a.status === "Completed" && b.status !== "Completed") return 1;
       if (a.status !== "Completed" && b.status === "Completed") return -1;
 
-      // Sắp xếp các lịch trình còn lại theo thời gian từ sớm đến muộn
-      return new Date(a.time_start) - new Date(b.time_start);
+      // Sắp xếp theo thời gian từ sớm đến muộn
+      const [aHours, aMinutes] = a.time_start.split(":").map(Number);
+      const [bHours, bMinutes] = b.time_start.split(":").map(Number);
+      const aTime = new Date().setHours(aHours, aMinutes, 0, 0);
+      const bTime = new Date().setHours(bHours, bMinutes, 0, 0);
+
+      return aTime - bTime;
     });
 
     // Chuyển đổi dữ liệu sang dạng dễ sử dụng
     const formattedData = sortedSchedules.map((schedule) => ({
-      scheduleId: schedule._id,
-      name: schedule.line?.name, // Lấy tên line
-      station: schedule.line?.start_place?.name || "Unknown", // Lấy tên start_place từ line
+      _id: schedule._id,
+      scheduleId: schedule.id,
+      name: schedule.line?.name || "Unknown Line",
+      station: schedule.line?.start_place?.name || "Unknown Station",
       time: schedule.time_start,
       status: schedule.status,
-      license_plate: schedule.bus?.license_plate,
-      ticket3: schedule.ticket3,
-      ticket7: schedule.ticket7, // Lấy biển số xe
+      license_plate: schedule.bus?.license_plate || "Unknown License Plate",
+      ticket3: schedule.ticket3 || 0,
+      ticket7: schedule.ticket7 || 0,
     }));
 
     return {
@@ -69,11 +82,11 @@ const getEmployeeTask = async (employeeId) => {
       message: "Schedules retrieved successfully.",
       data: formattedData,
     };
-  } catch (e) {
+  } catch (error) {
     return {
       status: "ERROR",
       message: "An error occurred while retrieving the schedules.",
-      error: e.message || e,
+      error: error.message || error,
     };
   }
 };
@@ -101,10 +114,10 @@ const createSchedule = async (data) => {
             const newScheduleEnd = newScheduleStart + lineCheck.time;
 
             const allScheduleBusboy = await Schedule.find({busboy: data.busboy})
-            .populate("busboy", "name").populate("line", "time")
+            .populate("busboy", "name").populate("line", "time name")
 
             const allScheduleDriver = await Schedule.find({driver: data.driver})
-            .populate("driver", "name").populate("line", "time")
+            .populate("driver", "name").populate("line", "time name")
 
             for (const schedule of allScheduleBusboy) {
               const existingStart = parseTime(schedule.time_start);
@@ -122,7 +135,7 @@ const createSchedule = async (data) => {
 
             for (const schedule of allScheduleDriver) {
               const existingStart = parseTime(schedule.time_start);
-              const existingEnd = existingStart + schedule.time;
+              const existingEnd = existingStart + schedule.line.time;
         
               // Nếu khoảng thời gian bị chồng lấn
               if ((newScheduleStart > existingEnd) || (newScheduleEnd < existingStart)){
@@ -223,6 +236,7 @@ const getAllSchedule = async () => {
         const hours = localTime.getUTCHours();
         const minutes = localTime.getUTCMinutes();
 
+
         allSchedule.forEach(schedule => {
             if (schedule.status !== "Not start yet") {
               return; 
@@ -230,13 +244,14 @@ const getAllSchedule = async () => {
             const [startHours, startMinutes] = schedule.time_start.split(":").map(Number);
             const startTotalMinutes = startHours * 60 + startMinutes;
             const currentTotalMinutes = hours * 60 + minutes;
-            const finishTotalMinutes = startTotalMinutes + schedule.time;
+            const finishTotalMinutes = startTotalMinutes + schedule.line.time;
 
             if (finishTotalMinutes <= currentTotalMinutes) {
                 schedule.status = "Completed";
             } else if (startTotalMinutes <= currentTotalMinutes) {
                 schedule.status = "In Progress";
             }
+            schedule.save();
         });
 
         return ({
@@ -309,10 +324,10 @@ const updateSchedule = async (data) => {
             const newScheduleEnd = newScheduleStart + lineCheck.time;
 
             const allScheduleBusboy = await Schedule.find({busboy: data.busboy,_id: { $ne: data._id}})
-            .populate("busboy", "name").populate("line", "time")
+            .populate("busboy", "name").populate("line", "time name")
 
             const allScheduleDriver = await Schedule.find({driver: data.driver, _id: { $ne: data._id}})
-            .populate("driver", "name").populate("line", "time")
+            .populate("driver", "name").populate("line", "time name")
 
             for (const schedule of allScheduleBusboy) {
               const existingStart = parseTime(schedule.time_start);
@@ -330,7 +345,7 @@ const updateSchedule = async (data) => {
 
             for (const schedule of allScheduleDriver) {
               const existingStart = parseTime(schedule.time_start);
-              const existingEnd = existingStart + schedule.time;
+              const existingEnd = existingStart + schedule.line.time;
         
               // Nếu khoảng thời gian bị chồng lấn
               if ((newScheduleStart > existingEnd) || (newScheduleEnd < existingStart)){
@@ -415,8 +430,6 @@ const deleteSchedule = async (ScheduleId) => {
 };
 const employeeCheckIn = async (data) => {
   try {
-    // In ra dữ liệu để debug (nếu cần)
-    console.log("data", data);
 
     // Tìm schedule theo ID được cung cấp trong data
     const checkSchedule = await Schedule.findOne({ _id: data.scheduleId });
@@ -441,7 +454,6 @@ const employeeCheckIn = async (data) => {
     const updatedSchedule = await Schedule.findByIdAndUpdate(
       data.scheduleId,
       {
-        status: "Completed", // Cập nhật trạng thái
         ticket3: data.ticket3, // Cập nhật ticket3
         ticket7: data.ticket7, // Cập nhật ticket7
       },

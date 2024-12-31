@@ -71,7 +71,6 @@ const TaskPage = () => {
       return ScheduleService.getEmployeeTask(data);
     },
     onSuccess: (data) => {
-      console.log("Data received:", data);
       if (Array.isArray(data)) {
         setTaskItems(data);
       } else {
@@ -83,12 +82,7 @@ const TaskPage = () => {
       console.log(error);
     },
   });
-  useEffect(() => {
-    mutation.mutate(userId);
-  }, []);
-  useEffect(() => {
-    console.log("2", taskItems);
-  }, [taskItems]);
+
   const ITEMS_PER_PAGE = 10;
   const [searchWord, setSearchWord] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
@@ -118,6 +112,10 @@ const TaskPage = () => {
     setCurrentScheduleId(scheduleId);
     setShowCheckIn(true);
   };
+
+  useEffect(() => {
+    mutation.mutate(userId);
+  }, [user, showCheckIn]);
 
   return (
     <div className='flex flex-wrap gap-8 bg-gray-100 p-8 h-full w-full'>
@@ -250,7 +248,7 @@ const TaskPage = () => {
               <div className='mt-4 text-right'>
                 <button
                   onClick={() => {
-                    handleCheckIn(item.scheduleId);
+                    handleCheckIn(item._id);
                   }}
                   className={`px-4 py-2 rounded-md ${
                     item.ticket3 || item.ticket7
