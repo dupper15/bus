@@ -10,12 +10,16 @@ const TabSwitch = ({ tabs, onTabSelect }) => {
     };
 
     return (
-        <div className="flex border-b border-gray-200 mb-4">
+        <div className="flex border-b border-gray-200">
             {tabs.map((tab) => (
                 <button
                     key={tab.key}
                     onClick={() => handleTabClick(tab.key)}
-                    className={`pr-4 pl-4 pb-4 focus:outline-none ${activeTab === tab.key ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+                    className={`flex-1 py-4 px-6 text-sm font-medium transition-colors
+                        ${activeTab === tab.key
+                        ? 'text-green-500 border-b-2 border-green-500'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
                 >
                     {tab.label}
                 </button>

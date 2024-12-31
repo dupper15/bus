@@ -2,27 +2,19 @@ import PropTypes from "prop-types";
 
 const StopList = ({ stops, selectedStop, onSelectStop }) => {
     return (
-        <ul className="list-none p-0 space-y-2">
+        <ul className="space-y-1 px-2">
             {stops.map((stop, index) => (
-                <li key={index} className="group">
-                    <label
-                        className={`flex items-center p-3 rounded-lg cursor-pointer transition 
-                            ${
-                            selectedStop === stop
-                                ? "bg-blue-100 text-blue-600 font-medium"
-                                : "bg-gray-50 hover:bg-gray-100"
+                <li key={index}>
+                    <button
+                        onClick={() => onSelectStop(stop)}
+                        className={`w-full text-left px-3 py-2 rounded-md transition-colors
+                            ${selectedStop === stop
+                            ? 'bg-green-50 text-green-600 font-medium'
+                            : 'hover:bg-gray-50 text-gray-700'
                         }`}
                     >
-                        <input
-                            type="radio"
-                            name="stop"
-                            value={stop}
-                            checked={selectedStop === stop}
-                            onChange={() => onSelectStop(stop)}
-                            className="hidden"
-                        />
-                        <span className="flex-grow">{stop}</span>
-                    </label>
+                        {stop}
+                    </button>
                 </li>
             ))}
         </ul>
