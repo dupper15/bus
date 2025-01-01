@@ -12,6 +12,7 @@ const Sidebar = ({
                      onInputFocus,
                      startCoordinates,
                      endCoordinates,
+                     onClearPath,
                  }) => {
     const [activeTab, setActiveTab] = useState("lines");
     const [searchTerm, setSearchTerm] = useState("");
@@ -21,7 +22,12 @@ const Sidebar = ({
         { key: "pathfinding", label: "Navigation" },
     ];
 
-    const handleTabSelect = (key) => setActiveTab(key);
+    const handleTabSelect = (key) => {
+        if (activeTab === "pathfinding" && key === "lines") {
+            onClearPath();
+        }
+        setActiveTab(key);
+    };
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
@@ -131,6 +137,7 @@ Sidebar.propTypes = {
     onInputFocus: PropTypes.func.isRequired,
     startCoordinates: PropTypes.string,
     endCoordinates: PropTypes.string,
+    onClearPath: PropTypes.func.isRequired,
 };
 
 export default Sidebar;

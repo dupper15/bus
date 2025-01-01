@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import MapView from "@/pages/MapPage/MapView/MapView.jsx";
 import useBusLinesViewModel from "@/pages/MapPage/ViewModel/BusLinesViewModel/BusLinesViewModel.js";
 import Header from "@/components/Header/Header.jsx";
-import Footer from "@/components/Footer/Footer.jsx";
 import Sidebar from "@/pages/MapPage/Sidebar/Sidebar.jsx";
 import LineDetailSideBar from "@/pages/MapPage/LineDetailSideBar/LineDetailSideBar.jsx";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
@@ -30,26 +29,30 @@ const MapPage = () => {
         startCoordinates,
         endCoordinates,
         viewMode,
-        setViewMode
+        setViewMode,
+        setPath, // Make sure this is exposed from your ViewModel
     } = useBusLinesViewModel();
 
     const toggleMap = () => setIsMapExpanded(!isMapExpanded);
+
+    const handleClearPath = () => {
+        setPath([]); // Clear the path
+    };
+
     useEffect(() => {
         if (error) {
             const timer = setTimeout(() => setError(null), 3000);
             return () => clearTimeout(timer);
         }
     }, [error, setError]);
+
     return (
         <div className="flex flex-col h-screen">
             <div className="flex-none">
                 <Header />
             </div>
 
-
-
             <div className="flex-1 relative bg-white">
-                {/* Map Container - Full width and height */}
                 <div className="absolute inset-0">
                     <MapView
                         stops={stops}
@@ -62,15 +65,12 @@ const MapPage = () => {
                     />
                 </div>
 
-                {/* Floating Sidebar with improved positioning */}
-                <div
-                    className={`
-                        absolute top-0 left-0 h-full pb-4
-                        ${isMapExpanded ? 'w-0 -translate-x-full' : 'w-[360px] translate-x-0'}
-                        transition-all duration-300 ease-in-out
-                        bg-white shadow-xl z-10
-                    `}
-                >
+                <div className={`
+                    absolute top-0 left-0 h-full pb-4
+                    ${isMapExpanded ? 'w-0 -translate-x-full' : 'w-[360px] translate-x-0'}
+                    transition-all duration-300 ease-in-out
+                    bg-white shadow-xl z-10
+                `}>
                     <div className="h-full overflow-y-auto w-full">
                         {!selectedLine ? (
                             <Sidebar
@@ -83,6 +83,7 @@ const MapPage = () => {
                                 startCoordinates={startCoordinates}
                                 endCoordinates={endCoordinates}
                                 busLines={busLines}
+                                onClearPath={handleClearPath}
                             />
                         ) : (
                             <LineDetailSideBar
@@ -102,7 +103,6 @@ const MapPage = () => {
                     ${isMapExpanded ? 'left-4' : 'left-96'}
                     flex items-center gap-2 z-20
                 `}>
-                    {/* Toggle Button */}
                     <button
                         onClick={toggleMap}
                         className="flex items-center justify-center w-10 h-10 bg-white text-green-500 rounded-lg shadow-md hover:bg-green-50 transition-colors"
@@ -110,13 +110,11 @@ const MapPage = () => {
                         {isMapExpanded ? <IoIosArrowBack /> : <IoIosArrowForward />}
                     </button>
 
-                    {/* Map Icon */}
                     <div className="flex items-center justify-center w-10 h-10 bg-green-50 text-green-500 rounded-lg shadow-sm">
                         <CiMap className="text-2xl" />
                     </div>
                 </div>
 
-                {/* Error Notification */}
                 {error && (
                     <div
                         className="absolute bottom-4 left-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg shadow-md z-30"

@@ -20,10 +20,6 @@ const useBusLinesViewModel = () => {
     const [endCoordinates, setEndCoordinates] = useState("");
     const [viewMode, setViewMode] = useState("outbound");
 
-    useEffect(() => {
-        console.log("checker", path);
-    }, [path]);
-    
     // Fetch lines
     const fetchLines = useCallback(async () => {
         try {
@@ -171,6 +167,7 @@ const useBusLinesViewModel = () => {
         viewMode,
         setViewMode,
         setError,
+        setPath
     };
 };
 
