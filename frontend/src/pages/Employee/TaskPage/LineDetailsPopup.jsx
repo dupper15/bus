@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -9,6 +9,14 @@ const LineDetailsPopup = ({ line, onClose }) => {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
     const markersRef = useRef([]);
+
+    const flyToLocation = (pointX, pointY) => {
+        mapRef.current.flyTo({
+            center: [pointX, pointY],
+            zoom: 15,
+            duration: 2000
+        });
+    };
 
     useEffect(() => {
         if (!mapRef.current && mapContainerRef.current) {
@@ -37,11 +45,9 @@ const LineDetailsPopup = ({ line, onClose }) => {
         if (!map || !line) return;
 
         const setupMap = () => {
-            // Clear existing markers
             markersRef.current.forEach(marker => marker.remove());
             markersRef.current = [];
 
-            // Clear existing layers and sources
             const layers = map.getStyle().layers;
             if (layers) {
                 layers.forEach((layer) => {
@@ -52,14 +58,12 @@ const LineDetailsPopup = ({ line, onClose }) => {
                 });
             }
 
-            // Create array of all stops including start, intermediate stops, and end
             const allStops = [
                 line.start_place,
                 ...(line.arr_stop || []),
                 line.end_place
             ].filter(stop => stop && stop.pointX && stop.pointY);
 
-            // Add markers for all stops
             markersRef.current = allStops.map((stop, index) => {
                 const color = index === 0 ? "#22c55e" :
                     index === allStops.length - 1 ? "#ef4444" :
@@ -73,12 +77,10 @@ const LineDetailsPopup = ({ line, onClose }) => {
                 return marker;
             });
 
-            // Create waypoints string for the Mapbox Directions API
             const waypoints = allStops
                 .map(stop => `${stop.pointX},${stop.pointY}`)
                 .join(';');
 
-            // Fetch and draw route
             const fetchAndDrawRoute = async () => {
                 try {
                     const response = await fetch(
@@ -112,7 +114,6 @@ const LineDetailsPopup = ({ line, onClose }) => {
                             }
                         });
 
-                        // Fit bounds to show all stops
                         const bounds = allStops.reduce(
                             (bounds, stop) => bounds.extend([stop.pointX, stop.pointY]),
                             new mapboxgl.LngLatBounds([allStops[0].pointX, allStops[0].pointY], [allStops[0].pointX, allStops[0].pointY])
@@ -130,7 +131,6 @@ const LineDetailsPopup = ({ line, onClose }) => {
             fetchAndDrawRoute();
         };
 
-        // Check if the map style is loaded
         if (map.isStyleLoaded()) {
             setupMap();
         } else {
@@ -159,13 +159,20 @@ const LineDetailsPopup = ({ line, onClose }) => {
                             </div>
                             <div>
                                 <label className="font-semibold text-sm text-gray-600">Start Place</label>
-                                <p className="mt-1">{line.start_place?.name}</p>
+                                <p className="mt-1 cursor-pointer hover:text-green-600"
+                                   onClick={() => flyToLocation(line.start_place.pointX, line.start_place.pointY)}>
+                                    {line.start_place?.name}
+                                </p>
                             </div>
                             <div>
                                 <label className="font-semibold text-sm text-gray-600">Stops</label>
-                                <div className="mt-1 space-y-2">
+                                <div className="mt-1 max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                                     {line.arr_stop?.map((stop, index) => (
-                                        <div key={index} className="bg-gray-50 p-2 rounded">
+                                        <div
+                                            key={index}
+                                            className="bg-gray-50 p-2 rounded mb-2 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => flyToLocation(stop.pointX, stop.pointY)}
+                                        >
                                             {stop.name}
                                         </div>
                                     ))}
@@ -173,7 +180,10 @@ const LineDetailsPopup = ({ line, onClose }) => {
                             </div>
                             <div>
                                 <label className="font-semibold text-sm text-gray-600">End Place</label>
-                                <p className="mt-1">{line.end_place?.name}</p>
+                                <p className="mt-1 cursor-pointer hover:text-red-600"
+                                   onClick={() => flyToLocation(line.end_place.pointX, line.end_place.pointY)}>
+                                    {line.end_place?.name}
+                                </p>
                             </div>
                             <div>
                                 <label className="font-semibold text-sm text-gray-600">Time</label>

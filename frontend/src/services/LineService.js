@@ -39,7 +39,7 @@ const LineService = {
     },
     getLineDetails: async (lineId) => {
         try {
-            const response = await axios.get(`/api/line/get-detail/${lineId}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_KEY}/line/get-detail/${lineId}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch line details:", error);
