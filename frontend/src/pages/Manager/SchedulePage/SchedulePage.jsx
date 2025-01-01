@@ -251,9 +251,9 @@ const SchedulePage = () => {
                   key={index}
                   onClick={() => setSelected(item)}
                   className={`${
-                    item.bus.status !== "Active" ||
-                    item.driver.status !== "Enable" ||
-                    item.busboy.status !== "Enable"
+                    item?.bus?.status !== "Active" ||
+                    item?.driver?.status !== "Enable" ||
+                    item?.busboy?.status !== "Enable"
                       ? "bg-red-100 hover:bg-red-300" // Màu nền cảnh báo và màu khi hover
                       : "hover:bg-gray-100" // Màu nền khi hover nếu không có cảnh báo
                   }`}>
@@ -261,16 +261,16 @@ const SchedulePage = () => {
                     {item.id}
                   </TableCell>
                   <TableCell className="text-center py-3 px-4">
-                    {item.bus.license_plate}
+                    {item?.bus?.license_plate}
                   </TableCell>
                   <TableCell className="text-center py-3 px-4">
-                    {item.line.name}
+                    {item?.line?.name}
                   </TableCell>
                   <TableCell className="text-center py-3 px-4">
-                    {item.driver.name}
+                    {item?.driver?.name}
                   </TableCell>
                   <TableCell className="text-center py-3 px-4">
-                    {item.busboy.name}
+                    {item?.busboy?.name}
                   </TableCell>
                   <TableCell className="text-center py-3 px-4">
                     {item.time_start}

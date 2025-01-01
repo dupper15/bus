@@ -135,6 +135,10 @@ const updateEmployee = async (data) => {
             };
         }
 
+        if (data.position === "Bus boy"){
+            data.license = null
+        }
+
         const updatedEmployee = await Employee.findByIdAndUpdate(
             checkEmployee._id,
             data,

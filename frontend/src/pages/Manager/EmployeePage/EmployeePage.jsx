@@ -409,7 +409,7 @@ const EmployeePage = () => {
                     src={
                       selectedEmployee.image
                         ? selectedEmployee.image
-                        : "default-avatar.jpg"
+                        : avatar
                     }
                   />
                   <AvatarFallback>CN</AvatarFallback>
@@ -471,31 +471,17 @@ const EmployeePage = () => {
                   )}
                 </div>
                 <div className='flex justify-between items-center'>
-                  <span className='font-medium text-gray-600'>Salary:</span>
-                  {isEditing ? (
-                    <input
-                      type='text'
-                      name='salary'
-                      value={editedEmployee.salary}
-                      onChange={handleInputChange}
-                      className='text-gray-800 border p-2 rounded-md w-2/3'
-                    />
-                  ) : (
-                    <span className='text-gray-800'>
-                      {selectedEmployee.salary}
-                    </span>
-                  )}
-                </div>
-                <div className='flex justify-between items-center'>
                   <span className='font-medium text-gray-600'>Role:</span>
                   {isEditing ? (
-                    <input
-                      type='text'
+                    <select
                       name='position'
                       value={editedEmployee.position}
                       onChange={handleInputChange}
                       className='text-gray-800 border p-2 rounded-md w-2/3'
-                    />
+                    >
+                      <option value='Driver'>Driver</option>
+                      <option value='Bus boy'>Bus boy</option>
+                    </select>
                   ) : (
                     <span className='text-gray-800'>
                       {selectedEmployee.position}
@@ -538,7 +524,7 @@ const EmployeePage = () => {
                     </span>
                   )}
                 </div>
-                {selectedEmployee.license && (
+                {(editedEmployee.position === 'Driver' || (isEditing && selectedEmployee.position === 'Driver')) && (
                   <div className='flex justify-between items-center'>
                     <span className='font-medium text-gray-600'>License:</span>
                     {isEditing ? (
