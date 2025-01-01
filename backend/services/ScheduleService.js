@@ -171,16 +171,18 @@ const createSchedule = async (data) => {
       }
     }
 
-    // Lấy tất cả ID hiện có và sắp xếp
-    const schedules = await Schedule.find({}, { id: 1, _id: 0 }).sort({
-      id: 1,
-    });
-
-    const ids = schedules.map((schedule) =>
-      parseInt(schedule.id.replace("S", ""), 10)
+    const schedules = await Schedule.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
+    const uniqueSchedules = Array.from(
+      new Set(schedules.map((schedule) => schedule.id))
     );
+    console.log("Unique Schedules:", uniqueSchedules);
 
-    // Tìm ID nhỏ nhất bị thiếu
+    // Chuyển đổi sang số và sắp xếp
+    const ids = uniqueSchedules.map((id) => parseInt(id.replace("S", ""), 10));
+    ids.sort((a, b) => a - b);
+    console.log("Sorted IDs:", ids);
+
+    // Tìm ID mới
     let newIdNumber = 1;
     for (const id of ids) {
       if (id === newIdNumber) {
@@ -191,14 +193,19 @@ const createSchedule = async (data) => {
     }
     const newId = `S${String(newIdNumber).padStart(3, "0")}`;
 
+    // const yesterday = new Date();
+    // yesterday.setDate(yesterday.getDate() - 1); // Lùi lại 1 ngày
+
     const createdSchedule = await Schedule.create({
       id: newId,
       bus: data.bus,
       line: data.line,
       driver: data.driver,
       busboy: data.busboy,
+      status: "Pending",
       time_start: data.time_start,
       time: data.time,
+      // date: yesterday, // Ngày hôm qua
     });
 
     if (createdSchedule) {
@@ -585,3 +592,5 @@ module.exports = {
   employeeCheckIn,
   getEmployeeTask,
 };
+
+

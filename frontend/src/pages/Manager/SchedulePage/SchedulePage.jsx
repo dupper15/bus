@@ -286,7 +286,7 @@ const SchedulePage = () => {
                   </TableCell>
                   <TableCell className="text-center py-3 px-4">
                     <span
-                      className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
+                      className={`px-1 py-1 mx-2 w-full rounded-full text-xs font-medium ${
                         item.status === "Pending"
                           ? "bg-red-100 text-red-600"
                           : item.status === "Not start yet"

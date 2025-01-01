@@ -1,11 +1,14 @@
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { linePropTypes } from "@/utils/PropTypes.js";
 import StopList from "@/pages/MapPage/SubComponents/StopList/StopList.jsx";
 import TabSwitch from "@/pages/MapPage/SubComponents/TabSwitch/TabSwitch.jsx";
+import { useMutation } from "react-query";
+import * as LineService from "@/services/LineService";
 
 const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSelect }) => {
     const [activeTab, setActiveTab] = useState("details");
+    const [items, setItems] = useState([]);
 
     const tabs = [
         { key: "details", label: "Details" },
@@ -19,6 +22,33 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
             onTabSelect(key);
         }
     };
+
+    const mutationGetSchedule = useMutation({
+        mutationFn: async (data) => {
+            return await LineService.getAllSchedule(data);
+        },
+        onSuccess: (data) => {
+            setItems(data.data);
+        },
+
+        onError: (error) => {
+            console.log(error);
+        },
+    });
+
+    useEffect(() => {
+        mutationGetSchedule.mutate(line.id);
+    }, [line]);
+
+    const chunkItems = (items, chunkSize) => {
+        const chunks = [];
+        for (let i = 0; i < items.length; i += chunkSize) {
+            chunks.push(items.slice(i, i + chunkSize));
+        }
+        return chunks;
+    };
+    
+    const chunkedItems = chunkItems(items, 5);
 
     return (
         <aside className="w-full bg-white border-r border-gray-200 h-full flex flex-col">
@@ -55,6 +85,20 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
                             <h3 className="text-sm font-medium text-gray-500">Duration</h3>
                             <p className="text-gray-900">{line.time} minutes</p>
                         </div>
+                        {chunkedItems.map((chunk, index) => (
+                            <div key={index} className="grid grid-cols-5 gap-4">
+                                {chunk.map((item, itemIndex) => (
+                                    <div
+                                        key={itemIndex}
+                                        className={`flex justify-center items-center p-3 border rounded-lg ${
+                                            item.status === 0 ? "bg-gray-300 border-gray-400" : "bg-white border-gray-200"
+                                        }`}
+                                    >
+                                        <span className="text-gray-900 font-medium">{item.time}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
                     </div>
                 )}
 
