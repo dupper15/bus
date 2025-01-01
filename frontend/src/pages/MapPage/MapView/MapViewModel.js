@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import {useEffect, useRef, useState} from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -8,22 +8,32 @@ const useMapViewModel = ({ mapData, busLines, stops, selectedStopCoordinates, mo
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
     const [error] = useState(null);
+    const themeColor = "#22C55E";
+    const highlightColor = "#16A34A";
 
-    // Helper function to clear all route layers and sources
+    // Get stops that are part of the current navigation path
+    const getStopsInPath = (path) => {
+        if (!Array.isArray(path)) return new Set();
+
+        const stopIds = new Set();
+        path.forEach(segment => {
+            if (segment.type === 'bus' && Array.isArray(segment.to)) {
+                segment.to.forEach(stop => stopIds.add(stop.id));
+            }
+        });
+        return stopIds;
+    };
+
     const clearRouteLayers = (map) => {
         if (!map || !map.isStyleLoaded()) return;
 
         try {
-            // Get all layers and sources
             const layers = map.getStyle().layers;
-
-            // Remove path layers and sources
             layers?.forEach((layer) => {
-                if (layer.id.startsWith("path-") || layer.id.startsWith("line-")) {
+                if (layer.id.startsWith("path-") || layer.id.startsWith("line-") || layer.id.startsWith("arrow-")) {
                     if (map.getLayer(layer.id)) {
                         map.removeLayer(layer.id);
                     }
-                    // Only remove source after its layer is removed
                     if (map.getSource(layer.id)) {
                         map.removeSource(layer.id);
                     }
@@ -33,19 +43,62 @@ const useMapViewModel = ({ mapData, busLines, stops, selectedStopCoordinates, mo
             console.error("Error clearing route layers:", error);
         }
     };
+    const createArrowPoints = (coordinates, spacing = 100) => {
+        const arrows = [];
+        for (let i = 0; i < coordinates.length - 1; i++) {
+            const start = coordinates[i];
+            const end = coordinates[i + 1];
 
-    // Function to handle drawing routes
+            const dx = end[0] - start[0];
+            const dy = end[1] - start[1];
+            const length = Math.sqrt(dx * dx + dy * dy);
+
+            if (length < 0.0001) continue;
+
+            const dirX = dx / length;
+            const dirY = dy / length;
+
+            const numArrows = Math.floor(length * 111000 / spacing);
+
+            for (let j = 1; j <= numArrows; j++) {
+                const t = j / (numArrows + 1);
+                const point = [
+                    start[0] + dx * t,
+                    start[1] + dy * t
+                ];
+
+                const arrowSize = 0.0002;
+                const arrowAngle = Math.atan2(dy, dx);
+                arrows.push({
+                    type: "Feature",
+                    geometry: {
+                        type: "LineString",
+                        coordinates: [
+                            [
+                                point[0] - arrowSize * Math.cos(arrowAngle - Math.PI / 6),
+                                point[1] - arrowSize * Math.sin(arrowAngle - Math.PI / 6)
+                            ],
+                            point,
+                            [
+                                point[0] - arrowSize * Math.cos(arrowAngle + Math.PI / 6),
+                                point[1] - arrowSize * Math.sin(arrowAngle + Math.PI / 6)
+                            ]
+                        ]
+                    }
+                });
+            }
+        }
+        return arrows;
+    };
+
     const handleRouteDrawing = (map) => {
         if (!map.isStyleLoaded()) {
-            // If style isn't loaded, wait for it
             map.once('style.load', () => handleRouteDrawing(map));
             return;
         }
 
-        // Clear existing route layers first
         clearRouteLayers(map);
 
-        // Only add new lines if there are busLines and they're not empty
         if (busLines && busLines.length > 0) {
             const line = busLines[0];
             const routeCoordinates = mode === "inbound" ? [...line.route.coordinates].reverse() : line.route.coordinates;
@@ -72,9 +125,32 @@ const useMapViewModel = ({ mapData, busLines, stops, selectedStopCoordinates, mo
                             "line-cap": "round",
                         },
                         paint: {
-                            "line-color": "#FF5733",
+                            "line-color": themeColor,
                             "line-width": 4,
                         },
+                    });
+
+                    const arrows = createArrowPoints(routeCoordinates);
+                    map.addSource(`arrow-${line.id}`, {
+                        type: "geojson",
+                        data: {
+                            type: "FeatureCollection",
+                            features: arrows
+                        }
+                    });
+
+                    map.addLayer({
+                        id: `arrow-${line.id}`,
+                        type: "line",
+                        source: `arrow-${line.id}`,
+                        layout: {
+                            "line-join": "round",
+                            "line-cap": "round"
+                        },
+                        paint: {
+                            "line-color": themeColor,
+                            "line-width": 3
+                        }
                     });
                 } catch (error) {
                     console.error("Error adding route layer:", error);
@@ -107,14 +183,96 @@ const useMapViewModel = ({ mapData, busLines, stops, selectedStopCoordinates, mo
         };
     }, []);
 
-    // Effect for handling bus lines
+    useEffect(() => {
+        if (mapRef.current) {
+            const map = mapRef.current;
+            let stopMarkers = [];
+            const stopsInPath = getStopsInPath(path);
+
+            const updateMarkersVisibility = () => {
+                const currentZoom = Math.floor(map.getZoom());
+                const maxZoom = 14;
+                const minZoom = 10;
+                const stopsToShow = Math.max(0, stops.length * (currentZoom - minZoom) / (maxZoom - minZoom));
+
+                stopMarkers.forEach((marker, index) => {
+                    if (index < stopsToShow) {
+                        marker.getElement().style.display = "block";
+                    } else {
+                        marker.getElement().style.display = "none";
+                    }
+                });
+            };
+
+            const createCustomMarker = (stop) => {
+                const el = document.createElement('div');
+                el.className = 'bus-stop-marker';
+                const isHighlighted = stopsInPath.has(stop.id);
+
+                el.innerHTML = `
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="16" cy="16" r="14" fill="${isHighlighted ? highlightColor : themeColor}" 
+                                stroke="white" stroke-width="2"/>
+                        <path d="M10 12h12v7H10v-7zm0 9h3v3h-3v-3zm9 0h3v3h-3v-3z" fill="white"/>
+                        ${isHighlighted ? `
+                            <circle cx="16" cy="16" r="6" fill="white" fill-opacity="0.3"/>
+                            <circle cx="16" cy="16" r="3" fill="white"/>
+                        ` : ''}
+                    </svg>
+                `;
+
+                if (isHighlighted) {
+                    el.classList.add('highlighted');
+                }
+
+                return el;
+            };
+
+            stopMarkers = stops.map((stop) => {
+                return new mapboxgl.Marker({
+                    element: createCustomMarker(stop)
+                })
+                    .setLngLat([stop.pointX, stop.pointY])
+                    .setPopup(new mapboxgl.Popup({
+                        offset: 25,
+                        className: stopsInPath.has(stop.id) ? 'highlighted-popup' : ''
+                    }).setHTML(`
+                        <div class="stop-popup ${stopsInPath.has(stop.id) ? 'highlighted' : ''}">
+                            <h3 style="color: ${stopsInPath.has(stop.id) ? highlightColor : themeColor}">
+                                ${stop.name}
+                            </h3>
+                            ${stopsInPath.has(stop.id) ? '<p>Stop on current route</p>' : ''}
+                        </div>
+                    `))
+                    .addTo(map);
+            });
+
+            map.on("zoom", updateMarkersVisibility);
+            updateMarkersVisibility();
+
+            return () => {
+                stopMarkers.forEach((marker) => marker.remove());
+                map.off("zoom", updateMarkersVisibility);
+            };
+        }
+    }, [stops, path]);
+
+    useEffect(() => {
+        if (mapRef.current && selectedStopCoordinates) {
+            mapRef.current.flyTo({
+                center: selectedStopCoordinates,
+                zoom: 15,
+                essential: true,
+            });
+        }
+    }, [selectedStopCoordinates]);
+
     useEffect(() => {
         if (mapRef.current) {
             handleRouteDrawing(mapRef.current);
         }
     }, [busLines, mode]);
 
-    // Effect for handling navigation path
     useEffect(() => {
         const map = mapRef.current;
         if (!map) return;
@@ -125,10 +283,8 @@ const useMapViewModel = ({ mapData, busLines, stops, selectedStopCoordinates, mo
                 return;
             }
 
-            // Clear existing path layers
             clearRouteLayers(map);
 
-            // Only proceed with drawing if there's a path
             if (Array.isArray(path) && path.length > 0) {
                 const processSegments = async () => {
                     const allCoordinates = [];
@@ -136,13 +292,7 @@ const useMapViewModel = ({ mapData, busLines, stops, selectedStopCoordinates, mo
                     for (let i = 0; i < path.length; i++) {
                         const { type, coords, to } = path[i];
                         let waypoints = '';
-                        let color = '#FF0000';
-
-                        if (type === 'walking') {
-                            color = '#00FF00';
-                        } else if (type === 'bus') {
-                            color = '#007cbf';
-                        }
+                        const color = themeColor;
 
                         if (type === 'bus' && to) {
                             waypoints = to
@@ -170,10 +320,7 @@ const useMapViewModel = ({ mapData, busLines, stops, selectedStopCoordinates, mo
                                     const route = data.routes[0].geometry;
                                     allCoordinates.push(...route.coordinates);
 
-                                    if (map.getSource(sourceId)) {
-                                        map.removeSource(sourceId);
-                                    }
-
+                                    // Add main path
                                     map.addSource(sourceId, {
                                         type: "geojson",
                                         data: {
@@ -193,6 +340,32 @@ const useMapViewModel = ({ mapData, busLines, stops, selectedStopCoordinates, mo
                                         paint: {
                                             "line-color": color,
                                             "line-width": 4
+                                        }
+                                    });
+
+                                    // Add arrows
+                                    const arrows = createArrowPoints(route.coordinates);
+                                    const arrowSourceId = `arrow-${type}-${i}`;
+
+                                    map.addSource(arrowSourceId, {
+                                        type: "geojson",
+                                        data: {
+                                            type: "FeatureCollection",
+                                            features: arrows
+                                        }
+                                    });
+
+                                    map.addLayer({
+                                        id: arrowSourceId,
+                                        type: "line",
+                                        source: arrowSourceId,
+                                        layout: {
+                                            "line-join": "round",
+                                            "line-cap": "round"
+                                        },
+                                        paint: {
+                                            "line-color": color,
+                                            "line-width": 3
                                         }
                                     });
                                 }
