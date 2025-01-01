@@ -88,7 +88,6 @@ const useNavigationViewModel = () => {
                 busLines,
                 busStops
             );
-            console.log("bestPath", bestPath);
             if (bestPath) {
                 const formattedPath = formatFullPath(
                     bestPath,
@@ -271,6 +270,7 @@ const useNavigationViewModel = () => {
                 ]
             });
         }
+
 
         // Format middle segments
         for (let i = 1; i < pathData.segments.length; i++) {
