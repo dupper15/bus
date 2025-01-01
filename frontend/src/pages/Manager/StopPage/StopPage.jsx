@@ -40,10 +40,10 @@ import { transformStop } from "@/utils/Transformer";
 import FormStop from "@/components/SmallForm/FormStop.jsx";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import {error, success} from "@/components/ui/alert.jsx";
 const StopPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [stops, setStops] = useState([]);
-  const [error, setError] = useState(null);
   const [selectedStop, setSelectedStop] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
@@ -61,10 +61,8 @@ const StopPage = () => {
       const response = await StopService.getStops();
       const rawStops = response.data;
       setStops(rawStops.map(transformStop));
-      setError(null);
-    } catch (error) {
-      console.error("Failed to fetch stops:", error);
-      setError("Failed to load stops data");
+    } catch (err) {
+      error(err);
     } finally {
       setIsLoading(false);
     }
@@ -143,27 +141,46 @@ const StopPage = () => {
 
   const handleDelete = async () => {
     try {
-      await StopService.deleteStop(selectedStop.id);
-      await fetchStops();
-      handleClose();
-    } catch (error) {
-      console.error("Failed to delete stop:", error);
-      setError("Failed to delete stop");
+      if(!selectedStop?.id){
+        error("Invalid stop selected for deletion");
+        return;
+      }
+      const response = await StopService.deleteStop(selectedStop.id);
+      if (response.status === "OK") {
+        success("Stop deleted successfully");
+        await fetchStops();
+        setShowDialog(false);
+      } else {
+        error(response.message || "Failed to delete stop");
+      }
+    } catch (err) {
+      error("An error occurred while deleting the stop");
+      console.error("Error deleting stop:", err);
     }
   };
 
   const handleSubmit = async (formData) => {
     try {
       if (dialogType === "add") {
-        await StopService.createStop(formData);
+        const response = await StopService.createStop(formData);
+        if (response.status === "OK") {
+          success("Stop created successfully");
+        } else {
+          error(response.message || "Failed to create stop");
+        }
       } else {
-        await StopService.updateStop(formData.id, formData);
+        const response = await StopService.updateStop(formData.id, formData);
+        if (response.status === "OK") {
+          success("Stop updated successfully");
+        } else {
+          error(response.message || "Failed to update stop");
+        }
       }
       await fetchStops();
       handleClose();
-    } catch (error) {
-      console.error("Failed to save stop:", error);
-      setError("Failed to save stop");
+    } catch (err) {
+      error("An error occurred while processing your request");
+      console.error("Error submitting line:", err);
     }
   };
   return (
