@@ -200,15 +200,21 @@ const getAllSchedule = async () => {
         const now = new Date();
         const offset = 7 * 60; // GMT+7 in minutes
         const localTime = new Date(now.getTime() + offset * 60 * 1000);
-        const currentDate = localTime.toISOString().split("T")[0]; // Lấy ngày hiện tại ở định dạng YYYY-MM-DD
+        const currentDate = localTime.toISOString().split("T")[0]; // Ngày hiện tại (YYYY-MM-DD)
+
+        // Lấy danh sách các lịch trình đã tồn tại cho ngày hiện tại
+        const existingSchedules = await Schedule.find({ date: currentDate });
+        const existingScheduleIds = new Set(existingSchedules.map(sch => sch.id));
 
         const newSchedules = [];
 
         allSchedule.forEach(schedule => {
             const scheduleDate = new Date(schedule.date).toISOString().split("T")[0]; // Ngày của schedule
 
-            // Nếu khác ngày hiện tại, tạo schedule mới
-            if (scheduleDate !== currentDate) {
+            // Chỉ tạo mới nếu:
+            // 1. Lịch trình thuộc ngày hôm qua hoặc trước đó.
+            // 2. Lịch trình chưa tồn tại trong danh sách ngày hôm nay.
+            if (scheduleDate < currentDate && !existingScheduleIds.has(schedule.id)) {
                 const newSchedule = {
                     id: schedule.id, // Tạo ID mới
                     bus: schedule.bus,
@@ -236,10 +242,9 @@ const getAllSchedule = async () => {
         const hours = localTime.getUTCHours();
         const minutes = localTime.getUTCMinutes();
 
-
         allSchedule.forEach(schedule => {
             if (schedule.status !== "Not start yet") {
-              return; 
+                return;
             }
             const [startHours, startMinutes] = schedule.time_start.split(":").map(Number);
             const startTotalMinutes = startHours * 60 + startMinutes;

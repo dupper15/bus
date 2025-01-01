@@ -1,4 +1,5 @@
-const Bus = require("../models/BusModel")
+const Bus = require("../models/BusModel");
+const Bill = require("../models/MaintenanceBillModel");
 
 const createBus = async (data) => {
     try {
@@ -89,6 +90,17 @@ const updateBus = async (data) => {
 const getAllBus = async () => {
     try {
         const allBus = await Bus.find();
+        const bills = await Bill.find();
+        const currentDate = new Date();
+
+        bills.forEach(async (bill) => {
+            const billDate = new Date(bill.end_date);
+
+            if (currentDate > billDate) {
+                await Bus.findOneAndUpdate({ _id: bill.bus._id }, { status: "Active" }, {new: true});
+            }
+        });
+
         return {
             status: "OK",
             message: "Buses retrieved successfully.",
