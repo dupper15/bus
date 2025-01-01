@@ -89,11 +89,11 @@ const TaskPage = () => {
   const currentPage = parseInt(searchParams.get("page")) || 1;
 
   const totalPages = Math.ceil(filteredLines.length / ITEMS_PER_PAGE);
-  const currentItems = filteredLines
-      .filter((line) =>
-          line.name.toLowerCase().includes(searchWord.toLowerCase())
-      )
-      .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const currentItems = taskItems
+    .filter((item) =>
+      item.name.toLowerCase().includes(searchWord.toLowerCase())
+    )
+    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -127,179 +127,192 @@ const TaskPage = () => {
   }, [user, showCheckIn]);
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-full">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-full">Loading...</div>
+    );
   }
 
   return (
-      <div className="flex flex-wrap gap-8 bg-gray-100 p-8 h-full w-full">
-        <div className="flex flex-col flex-grow gap-4 bg-white py-4 px-8 rounded-lg shadow-md border border-gray-200">
-          <div className="flex items-center gap-4">
-            <Search
-                className="flex-grow border border-gray-300 rounded-lg p-2"
-                onChange={handleSearchChanged}
-                text="Type line name..."
-            />
-          </div>
-          <div className="overflow-x-auto rounded-lg bg-white shadow-md">
-            <Table className="overflow-hidden rounded-t-lg border border-gray-300">
-              <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
-                <TableRow>
-                  {["Id", "Name", "Start place", "End place", "Time"].map(
-                      (header, idx) => (
-                          <TableHead
-                              key={idx}
-                              className="text-center text-white text-base py-3 px-4">
-                            {header}
-                          </TableHead>
-                      )
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentItems.map((item, index) => (
-                    <TableRow
-                        key={index}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleLineClick(item)}
-                    >
-                      <TableCell className="text-center py-3 px-4">
-                        {item._id}
-                      </TableCell>
-                      <TableCell className="text-center py-3 px-4">
-                        {item.name}
-                      </TableCell>
-                      <TableCell className="text-center py-3 px-4">
-                        {item.start_place.name}
-                      </TableCell>
-                      <TableCell className="text-center py-3 px-4">
-                        {item.end_place.name}
-                      </TableCell>
-                      <TableCell className="text-center py-3 px-4">
-                        {item.time} minutes
-                      </TableCell>
-                    </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <Pagination className="flex justify-center items-center gap-4">
-            <PaginationContent className="flex gap-2">
-              <PaginationItem>
-                <PaginationPrevious
-                    href="#"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    className="text-green-500 hover:text-green-700">
-                  Previous
-                </PaginationPrevious>
-              </PaginationItem>
-              {[...Array(totalPages)].map((_, index) => (
-                  <PaginationItem key={index}>
-                    <PaginationLink
-                        href="#"
-                        onClick={() => handlePageChange(index + 1)}
-                        className={`px-4 py-2 rounded-full transition ${
-                            index + 1 === currentPage
-                                ? "bg-green-500 text-white"
-                                : "hover:bg-gray-200"
-                        }`}>
-                      {index + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                    href="#"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    className="text-green-500 hover:text-green-700">
-                  Next
-                </PaginationNext>
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+    <div className="flex flex-wrap gap-8 bg-gray-100 p-8 h-full w-full">
+      <div className="flex flex-col flex-grow gap-4 bg-white py-4 px-8 rounded-lg shadow-md border border-gray-200">
+        <div className="flex items-center gap-4">
+          <Search
+            className="flex-grow border border-gray-300 rounded-lg p-2"
+            onChange={handleSearchChanged}
+            text="Type line name..."
+          />
         </div>
+        <div className="overflow-x-auto rounded-lg bg-white shadow-md">
+          <Table className="overflow-hidden rounded-t-lg border border-gray-300">
+            <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
+              <TableRow>
+                {[
+                  "Name",
+                  "Start Station",
+                  "License Plate",
+                  "Time Start",
+                  "Status",
+                ].map((header, idx) => (
+                  <TableHead
+                    key={idx}
+                    className="text-center text-white text-base py-3 px-4">
+                    {header}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentItems.map((item, index) => (
+                <TableRow key={index} onClick={() => handleLineClick(item)}>
+                  <TableCell className="text-center py-3 px-4">
+                    {item.name}
+                  </TableCell>
+                  <TableCell className="text-center py-3 px-4">
+                    {item.station}
+                  </TableCell>
+                  <TableCell className="text-center py-3 px-4">
+                    {item.license_plate}
+                  </TableCell>
+                  <TableCell className="text-center py-3 px-4">
+                    {item.time}
+                  </TableCell>
+                  <TableCell className="text-center py-3 px-4">
+                    <span
+                      className={`px-3 py-1 mx-2 w-full rounded-full text-xs font-medium ${
+                        item.status === "Pending"
+                          ? "bg-red-100 text-red-600"
+                          : item.status === "Not start yet"
+                          ? "bg-yellow-100 text-orange-600"
+                          : item.status === "In Progress"
+                          ? "bg-blue-100 text-blue-600"
+                          : "bg-green-100 text-green-600"
+                      }`}>
+                      {item.status}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <Pagination className="flex justify-center items-center gap-4">
+          <PaginationContent className="flex gap-2">
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={() => handlePageChange(currentPage - 1)}
+                className="text-green-500 hover:text-green-700">
+                Previous
+              </PaginationPrevious>
+            </PaginationItem>
+            {[...Array(totalPages)].map((_, index) => (
+              <PaginationItem key={index}>
+                <PaginationLink
+                  href="#"
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`px-4 py-2 rounded-full transition ${
+                    index + 1 === currentPage
+                      ? "bg-green-500 text-white"
+                      : "hover:bg-gray-200"
+                  }`}>
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="text-green-500 hover:text-green-700">
+                Next
+              </PaginationNext>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
 
-        {/* Task Section */}
-        <div className="rounded-lg h-full overflow-y-auto p-8 shadow-md border bg-white border-gray-200 w-80">
-          <div className="text-2xl font-semibold mb-4 text-white bg-gradient-to-r from-green-500 to-green-500 shadow-lg rounded-lg py-3 px-5 text-center">
-            Tasks
-          </div>
-          <div className="space-y-6">
-            {taskItems.map((item, index) => (
-                <div
-                    key={index}
-                    className="p-5 rounded-lg shadow-md border bg-white border-gray-200 transition">
-                  <div className="grid grid-cols-2 gap-y-2">
-                    <div className="text-lg font-medium text-gray-800 col-span-2">
-                      {item.name}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <span className="font-semibold text-gray-700">Station:</span>{" "}
-                      {item.station}
-                    </div>
-                    <div className="text-sm text-gray-600">
+      {/* Task Section */}
+      <div className="rounded-lg h-full overflow-y-auto p-8 shadow-md border bg-white border-gray-200 w-80">
+        <div className="text-2xl font-semibold mb-4 text-white bg-gradient-to-r from-green-500 to-green-500 shadow-lg rounded-lg py-3 px-5 text-center">
+          Tasks
+        </div>
+        <div className="space-y-6">
+          {taskItems.map((item, index) => (
+            <div
+              key={index}
+              className="p-5 rounded-lg shadow-md border bg-white border-gray-200 transition">
+              <div className="grid grid-cols-2 gap-y-2">
+                <div className="text-lg font-medium text-gray-800 col-span-2">
+                  {item.name}
+                </div>
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold text-gray-700">Station:</span>{" "}
+                  {item.station}
+                </div>
+                <div className="text-sm text-gray-600">
                   <span className="font-semibold text-gray-700">
                     License plate:
                   </span>{" "}
-                      {item.license_plate}
-                    </div>
-                    <div className="text-sm flex flex-col text-gray-600">
+                  {item.license_plate}
+                </div>
+                <div className="text-sm flex flex-col text-gray-600">
                   <span className="font-semibold text-gray-700">
                     Time start:
                   </span>
-                      <div>{item.time}</div>
-                    </div>
-                    <div
-                        className={`text-sm font-semibold ${
-                            item.status === "Completed"
-                                ? "text-green-500"
-                                : item.status === "Not started yet"
-                                    ? "text-yellow-500"
-                                    : "text-blue-500"
-                        }`}>
-                      <span className="text-gray-700">Status:</span>{" "}
-                      {item.status || "Unknown"}
-                    </div>
-                  </div>
-                  <div className="mt-4 text-right">
-                    <button
-                        onClick={() => handleCheckIn(item._id)}
-                        className={`px-4 py-2 rounded-md ${
-                            item.ticket3 || item.ticket7
-                                ? "bg-slate-400 pointer-events-none text-slate-800"
-                                : "bg-green-500 text-white"
-                        } font-medium hover:bg-yellow-300 transition`}>
-                      {item.ticket3 || item.ticket7 ? "Checked In" : "Check In"}
-                    </button>
-                  </div>
+                  <div>{item.time}</div>
                 </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Popups */}
-        {showCheckIn && (
-            <>
-              <div
-                  className="fixed inset-0 bg-black bg-opacity-50 z-[9998]"
-                  onClick={() => setShowCheckIn(false)}
-              />
-              <div className="fixed top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] z-[9999] animate-fade-in">
-                <CheckInForm
-                    childCloseFormRequest={() => setShowCheckIn(false)}
-                    role="busboy"
-                    scheduleId={currentScheduleId}
-                />
+                <div
+                  className={`text-sm font-semibold ${
+                    item.status === "Completed"
+                      ? "text-green-500"
+                      : item.status === "Not started yet"
+                      ? "text-yellow-500"
+                      : "text-blue-500"
+                  }`}>
+                  <span className="text-gray-700">Status:</span>{" "}
+                  {item.status || "Unknown"}
+                </div>
               </div>
-            </>
-        )}
-
-        {selectedLine && (
-            <LineDetailsPopup
-                line={selectedLine}
-                onClose={() => setSelectedLine(null)}
-            />
-        )}
+              <div className="mt-4 text-right">
+                <button
+                  onClick={() => handleCheckIn(item._id)}
+                  className={`px-4 py-2 rounded-md ${
+                    item.ticket3 || item.ticket7
+                      ? "bg-slate-400 pointer-events-none text-slate-800"
+                      : "bg-green-500 text-white"
+                  } font-medium hover:bg-yellow-300 transition`}>
+                  {item.ticket3 || item.ticket7 ? "Checked In" : "Check In"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Popups */}
+      {showCheckIn && (
+        <>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-[9998]"
+            onClick={() => setShowCheckIn(false)}
+          />
+          <div className="fixed top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] z-[9999] animate-fade-in">
+            <CheckInForm
+              childCloseFormRequest={() => setShowCheckIn(false)}
+              role="busboy"
+              scheduleId={currentScheduleId}
+            />
+          </div>
+        </>
+      )}
+
+      {selectedLine && (
+        <LineDetailsPopup
+          line={selectedLine}
+          onClose={() => setSelectedLine(null)}
+        />
+      )}
+    </div>
   );
 };
 
