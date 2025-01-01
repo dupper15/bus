@@ -251,9 +251,9 @@ const SchedulePage = () => {
                   key={index}
                   onClick={() => setSelected(item)}
                   className={`${
-                    item.bus.status !== "Active" ||
-                    item.driver.status !== "Enable" ||
-                    item.busboy.status !== "Enable"
+                    item?.bus?.status !== "Active" ||
+                    item?.driver?.status !== "Enable" ||
+                    item?.busboy?.status !== "Enable"
                       ? "bg-red-100 hover:bg-red-300" // Màu nền cảnh báo và màu khi hover
                       : "hover:bg-gray-100" // Màu nền khi hover nếu không có cảnh báo
                   }`}>
@@ -298,7 +298,7 @@ const SchedulePage = () => {
                       {item.status}
                     </span>
                   </TableCell>
-                  {item.status === "Pending" && (
+                  {item.status === "Pending" ? (
                     <TableCell className="text-center flex justify-center items-center py-3 px-4">
                       <DropdownMenu>
                         <DropdownMenuTrigger>
@@ -315,6 +315,8 @@ const SchedulePage = () => {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
+                  ) : (
+                    <TableCell className="text-center flex justify-center items-center py-3 px-4"></TableCell>
                   )}
                 </TableRow>
               ))}
