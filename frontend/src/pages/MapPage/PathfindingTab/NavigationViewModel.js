@@ -267,10 +267,11 @@ const useNavigationViewModel = () => {
                 coords: [
                     startCoords,
                     [pathData.segments[0].to.pointY, pathData.segments[0].to.pointX]
-                ]
+                ],
+                from: { name: 'Current Location' },  // Added for RouteDetails
+                to: pathData.segments[0].to         // Added complete stop object for RouteDetails
             });
         }
-
 
         // Format middle segments
         for (let i = 1; i < pathData.segments.length; i++) {
@@ -283,15 +284,32 @@ const useNavigationViewModel = () => {
                     coords: [
                         [segment.from.pointY, segment.from.pointX],
                         [segment.to.pointY, segment.to.pointX]
-                    ]
+                    ],
+                    from: segment.from,  // Added complete stop object for RouteDetails
+                    to: segment.to      // Added complete stop object for RouteDetails
                 });
             } else { // bus segment
+                // Calculate the actual distance for the bus segment
+                const busStops = segment.intermediateStops;
+                let busDistance = 0;
+                for (let j = 0; j < busStops.length - 1; j++) {
+                    const currentStop = busStops[j];
+                    const nextStop = busStops[j + 1];
+                    busDistance += Math.sqrt(
+                        Math.pow(nextStop.pointX - currentStop.pointX, 2) +
+                        Math.pow(nextStop.pointY - currentStop.pointY, 2)
+                    ) * 111; // Convert to km
+                }
+
                 formattedSegments.push({
                     type: 'bus',
-                    endStop: segment.to,
                     line: segment.line,
-                    to: segment.intermediateStops, // Use intermediate stops for the route
-                    coords: [[segment.from.pointY, segment.from.pointX]] // Starting coordinate
+                    distance: busDistance,  // Added calculated distance
+                    endStop: segment.to,
+                    to: segment.intermediateStops,
+                    coords: segment.intermediateStops.map(stop => [stop.pointY, stop.pointX]),
+                    from: segment.from,     // Added complete stop object for RouteDetails
+                    routeNumber: segment.line.routeNumber  // Added route number for RouteDetails
                 });
             }
         }
@@ -300,56 +318,20 @@ const useNavigationViewModel = () => {
         const lastStop = pathData.segments[pathData.segments.length - 1].to;
         formattedSegments.push({
             type: 'walking',
+            distance: Math.sqrt(
+                Math.pow(endCoords[0] - lastStop.pointY, 2) +
+                Math.pow(endCoords[1] - lastStop.pointX, 2)
+            ) * 111,  // Calculate actual distance for final walking segment
             coords: [
                 [lastStop.pointY, lastStop.pointX],
                 endCoords
-            ]
+            ],
+            from: lastStop,           // Added complete stop object for RouteDetails
+            to: { name: 'Destination' }  // Added for RouteDetails
         });
 
         return formattedSegments;
     };
-
-    const getLineSegmentCoords = (line, fromStopId, toStopId) => {
-        const coords = [];
-        let recording = false;
-
-        line.arr_stop.forEach(stop => {
-            if (stop.id === fromStopId) {
-                recording = true;
-            }
-
-            if (recording) {
-                coords.push([stop.pointY, stop.pointX]);
-            }
-
-            if (stop.id === toStopId) {
-                recording = false;
-            }
-        });
-
-        // If not found in forward direction, try reverse
-        if (coords.length === 0) {
-            const reversedStops = [...line.arr_stop].reverse();
-            recording = false;
-
-            reversedStops.forEach(stop => {
-                if (stop.id === fromStopId) {
-                    recording = true;
-                }
-
-                if (recording) {
-                    coords.push([stop.pointY, stop.pointX]);
-                }
-
-                if (stop.id === toStopId) {
-                    recording = false;
-                }
-            });
-        }
-
-        return coords;
-    };
-
     const handleError = (message) => {
         console.error(message);
         setPath([]);

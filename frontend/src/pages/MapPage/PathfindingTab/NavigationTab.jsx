@@ -4,6 +4,7 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import { FiMapPin } from "react-icons/fi";
 import { FaArrowsUpDown } from "react-icons/fa6";
 import useNavigationViewModel from "./NavigationViewModel";
+import RouteDetails from "@/pages/MapPage/PathfindingTab/RouteDetail.jsx";
 
 const NavigationTab = ({
                            onFindPath,
@@ -14,6 +15,7 @@ const NavigationTab = ({
                            lines,
                        }) => {
     const {
+        path,
         findPath,
         error,
         start,
@@ -167,6 +169,11 @@ const NavigationTab = ({
             >
                 Find Route
             </button>
+            {path && path.length > 0 && (
+                <div className="mt-4">
+                    <RouteDetails path={path} />
+                </div>
+            )}
         </div>
     );
 };
