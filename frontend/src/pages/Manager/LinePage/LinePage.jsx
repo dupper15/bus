@@ -39,6 +39,9 @@ import {
 import LineService from "@/services/LineService.js";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { success, error } from "@/components/ui/alert.jsx";
+import {convertMinutesToHoursAndMinutes} from "@/utils/translateToVND.js";
+
 const LinePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const ITEMS_PER_PAGE = 10;
@@ -144,30 +147,78 @@ const LinePage = () => {
     else if (calculatedIndex < 100) return "L0" + calculatedIndex;
     else return "L" + calculatedIndex;
   };
+  // const handleFormSubmit = async (values) => {
+  //   try {
+  //     console.log("Form values:", values);
+  //     if (dialogType === "add") {
+  //       await LineService.createLine(values);
+  //     } else {
+  //       await LineService.updateLine(selectedLine._id, values);
+  //     }
+  //     await fetchLines();
+  //     setShowForm(false);
+  //   } catch (error) {
+  //     console.error("Error submitting line:", error);
+  //   }
+  // };
+  //
+  // const handleDelete = async () => {
+  //   try {
+  //     await LineService.deleteLine(selectedLine.id);
+  //     await fetchLines();
+  //     setShowDialog(false);
+  //   } catch (error) {
+  //     console.error("Error deleting line:", error);
+  //   }
+  // };
+
+
   const handleFormSubmit = async (values) => {
     try {
-      console.log("Form values:", values);
       if (dialogType === "add") {
-        await LineService.createLine(values);
+        const response = await LineService.createLine(values);
+        if (response.status === "OK") {
+          success("Line created successfully");
+        } else {
+          error(response.message || "Failed to create line");
+        }
       } else {
-        await LineService.updateLine(selectedLine._id, values);
+        const response = await LineService.updateLine(selectedLine._id, values);
+        if (response.status === "OK") {
+          success("Line updated successfully");
+        } else {
+          error(response.message || "Failed to update line");
+        }
       }
       await fetchLines();
       setShowForm(false);
-    } catch (error) {
-      console.error("Error submitting line:", error);
+    } catch (err) {
+      error("An error occurred while processing your request");
+      console.error("Error submitting line:", err);
     }
   };
 
   const handleDelete = async () => {
     try {
-      await LineService.deleteLine(selectedLine.id);
-      await fetchLines();
-      setShowDialog(false);
-    } catch (error) {
-      console.error("Error deleting line:", error);
+      if (!selectedLine?._id) {
+        error("Invalid line selected for deletion");
+        return;
+      }
+
+      const response = await LineService.deleteLine(selectedLine._id);
+      if (response.status === "OK") {
+        success("Line deleted successfully");
+        await fetchLines();
+        setShowDialog(false);
+      } else {
+        error(response.message || "Failed to delete line");
+      }
+    } catch (err) {
+      error("An error occurred while deleting the line");
+      console.error("Error deleting line:", err);
     }
   };
+
   return (
     <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
       <div className='flex w-full space-x-6'>
@@ -251,7 +302,7 @@ const LinePage = () => {
                           {line.end_place.name}
                         </TableCell>
                         <TableCell className='text-sm text-center py-2 px-3'>
-                          {line.time}
+                          {convertMinutesToHoursAndMinutes(line.time)}
                         </TableCell>
                         <TableCell className='text-sm text-center py-2 px-3'>
                           <DropdownMenu>
@@ -311,7 +362,7 @@ const LinePage = () => {
             </PaginationContent>
           </Pagination>
           {showForm && (
-            <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
+            <div className='fixed inset-0 w-full z-10 flex justify-center items-center transition-transform'>
               <FormLine
                 isAdd={dialogType === "add"}
                 handleClose={() => setShowForm(false)}

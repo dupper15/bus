@@ -12,17 +12,16 @@ import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { StopMapView } from "@/pages/Manager/StopPage/StopMap/StopMap.jsx";
+import {error} from "@/components/ui/alert.jsx";
 
 const formSchema = z.object({
   id: z.string().optional(),
   name: z.string().nonempty({ message: "Name is required." }),
   address: z.string().nonempty({ message: "Address is required." }),
   pointX: z
-    .string()
-    .regex(/^-?\d+(\.\d+)?$/, { message: "Point X must be a valid number." }),
+    .number(),
   pointY: z
-    .string()
-    .regex(/^-?\d+(\.\d+)?$/, { message: "Point Y must be a valid number." }),
+    .number(),
   isStation: z.enum(["true", "false"]),
 });
 
@@ -49,7 +48,11 @@ const FormStop = ({
   });
 
   const onSubmit = (data) => {
-    handleSubmit(data);
+      try {
+        handleSubmit(data);
+      }catch (err) {
+        error(err);
+      }
   };
 
   const handleMapSelection = (locationData) => {
@@ -72,23 +75,6 @@ const FormStop = ({
 
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               {/* ID Field */}
-              <FormField
-                control={form.control}
-                name='id'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stop ID</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Enter Stop ID'
-                        {...field}
-                        disabled={true}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               {/* Name Field */}
               <FormField
@@ -104,6 +90,26 @@ const FormStop = ({
                   </FormItem>
                 )}
               />
+
+                {/* Is Station Field */}
+                <FormField
+                    control={form.control}
+                    name='isStation'
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Is Station</FormLabel>
+                            <FormControl>
+                                <select
+                                    {...field}
+                                    className='w-full border border-gray-300 rounded-lg p-2'>
+                                    <option value='true'>Yes</option>
+                                    <option value='false'>No</option>
+                                </select>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
               {/* Address Field */}
               <FormField
@@ -158,25 +164,7 @@ const FormStop = ({
                 )}
               />
 
-              {/* Is Station Field */}
-              <FormField
-                control={form.control}
-                name='isStation'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Is Station</FormLabel>
-                    <FormControl>
-                      <select
-                        {...field}
-                        className='w-full border border-gray-300 rounded-lg p-2'>
-                        <option value='true'>Yes</option>
-                        <option value='false'>No</option>
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
             </div>
 
             {/* Map Toggle Button */}

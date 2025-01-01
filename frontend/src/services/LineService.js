@@ -3,7 +3,8 @@ import axios from 'axios';
 const LineService = {
     createLine: async (line) => {
         try {
-            await axios.post(`${import.meta.env.VITE_API_KEY}/line/create`, line);
+            const response = await axios.post(`${import.meta.env.VITE_API_KEY}/line/create`, line);
+            return response.data;
         } catch (error) {
             console.error("Failed to create line:", error);
             throw error;
@@ -11,7 +12,8 @@ const LineService = {
     },
     updateLine: async (lineId, line) => {
         try {
-            await axios.put(`${import.meta.env.VITE_API_KEY}/line/update/${lineId}`, line);
+            const response = await axios.put(`${import.meta.env.VITE_API_KEY}/line/update/${lineId}`, line);
+            return response.data;
         } catch (error) {
             console.error("Failed to update line:", error);
             throw error;
@@ -19,7 +21,8 @@ const LineService = {
     },
     deleteLine: async (lineId) => {
         try {
-            await axios.delete(`${import.meta.env.VITE_API_KEY}/line/delete/${lineId}`);
+            const response = await axios.delete(`${import.meta.env.VITE_API_KEY}/line/delete/${lineId}`);
+            return response.data;
         } catch (error) {
             console.error("Failed to delete line:", error);
             throw error;
