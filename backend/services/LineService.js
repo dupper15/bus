@@ -1,4 +1,5 @@
 const Line = require("../models/LineModel")
+const Schedule = require("../models/ScheduleModel")
 
 const createLine = (newLine) => {
     return new Promise(async (resolve, reject) => {
@@ -130,6 +131,79 @@ const deleteLine = (LineId) => {
     })
 }
 
+const getAllSchedule = async (LineId) => {
+    try {
+        const schedules = await Schedule.find({ line: LineId });
+
+        if (!schedules || schedules.length === 0) {
+            return {
+                status: "ERROR",
+                message: "No schedules found.",
+                data: [],
+            };
+        }
+
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+        const todayDate = now.toISOString().split('T')[0];  
+
+        const timesWithStatus = schedules
+            .map((schedule) => {
+
+                if (schedule.date.toISOString().split('T')[0] === todayDate) {
+                    const [hour, minute] = schedule.time_start.split(":").map(Number);
+                    const scheduleTime = new Date(now.getTime()); 
+                    scheduleTime.setHours(hour, minute, 0, 0); 
+
+                    const timeInMinutes = hour * 60 + minute;
+
+                    return {
+                        time: schedule.time_start,
+                        status: timeInMinutes > currentTimeInMinutes ? 1 : 0, 
+                    };
+                }
+
+                return null;
+            })
+            .filter((item) => item !== null); 
+            
+        if (timesWithStatus.length === 0) {
+            return {
+                status: "ERROR",
+                message: "No schedules found for today.",
+                data: [],
+            };
+        }
+
+        const sortedTimesWithStatus = timesWithStatus.sort((a, b) => {
+            const [hourA, minuteA] = a.time.split(":").map(Number);
+            const [hourB, minuteB] = b.time.split(":").map(Number);
+
+            return hourA * 60 + minuteA - (hourB * 60 + minuteB);
+        });
+
+        return {
+            status: "OK",
+            message: "Line details retrieved successfully.",
+            data: sortedTimesWithStatus,
+        };
+    } catch (e) {
+        return {
+            status: "ERROR",
+            message: "An error occurred while retrieving the line details.",
+            error: e.message,
+        };
+    }
+};
+
 module.exports = {
-    createLine, updateLine, getAllLine, getDetailLine, deleteLine
+    createLine, 
+    updateLine, 
+    getAllLine, 
+    getDetailLine, 
+    deleteLine,
+    getAllSchedule
 }

@@ -7,5 +7,6 @@ router.put('/update/:id' , lineController.updateLine);
 router.get('/get-all' , lineController.getAllLine);
 router.get('/get-detail/:id' , lineController.getDetailLine);
 router.delete('/delete/:id' , lineController.deleteLine);
+router.get('/get-all-schedule/:id', lineController.getAllSchedule);
 
 module.exports = router

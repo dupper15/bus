@@ -100,10 +100,26 @@ const deleteLine = async (req, res) => {
     }
 }
 
+const getAllSchedule = async (req, res) => {
+    try {
+        const LineId = req.params.id
+        const response = await LineService.getAllSchedule(LineId)
+        return res.status(200).json(response)
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({
+            status: 'ERROR',
+            message: 'An error occurred while retrieving the line details.',
+            error: e
+        })
+    }
+}
+
 module.exports = {
     createLine,
     updateLine,
     getAllLine,
     getDetailLine,
     deleteLine,
+    getAllSchedule
 }
