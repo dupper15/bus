@@ -11,12 +11,12 @@ import * as Message from "../ui/alert";
 import { IoIosArrowBack } from "react-icons/io";
 import { LogOut } from "lucide-react";
 import { IoIosArrowForward } from "react-icons/io";
-
+import logo from "../../assets/logo.png";
 const CustomerNavbar = () => {
   const [isExpanded, setIsExpanded] = useState(true);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  
+
   const handleLogoutAccount = async () => {
     await AccountService.logoutAccount();
     localStorage.removeItem("access_token");
@@ -24,18 +24,21 @@ const CustomerNavbar = () => {
     Message.success("Logout successfully");
     navigate("/login");
   };
-  
+
   const toggleSidebar = () => setIsExpanded(!isExpanded);
   const account = useSelector((state) => state.account);
 
   return (
     <div
-      className={`h-screen ${isExpanded ? "w-60" : "w-20"} bg-white shadow-lg flex flex-col border-r transition-all duration-300 overflow-hidden`}>
+      className={`h-screen ${
+        isExpanded ? "w-60" : "w-20"
+      } bg-white shadow-lg flex flex-col border-r transition-all duration-300 overflow-hidden`}>
       <div className='flex items-center justify-between w-full px-4 py-6 border-b border-gray-200'>
         {isExpanded && (
-          <h1 className='text-2xl font-bold text-green-500 tracking-wide'>
-            BUSTY
-          </h1>
+          <div className='text-xl h-10 w-full flex font-bold items-center justify-start'>
+            <img src={logo} className='w-auto h-10'></img>
+            <span className='font-bold text-3xl text-green-700'>Busty</span>
+          </div>
         )}
         <button
           onClick={toggleSidebar}
@@ -85,7 +88,9 @@ const CustomerNavbar = () => {
         )}
         <p
           onClick={handleLogoutAccount}
-          className={`flex ${isExpanded ? "" : "flex-col"} items-center hover:underline hover:text-green-500 p-2 cursor-pointer rounded-md transition-colors duration-200`}>
+          className={`flex ${
+            isExpanded ? "" : "flex-col"
+          } items-center hover:underline hover:text-green-500 p-2 cursor-pointer rounded-md transition-colors duration-200`}>
           <LogOut className='mr-2 w-4 h-4' />
           Logout
         </p>
@@ -112,4 +117,3 @@ const SidebarItem = ({ isExpanded, to, icon: Icon, label }) => {
 };
 
 export default CustomerNavbar;
-
