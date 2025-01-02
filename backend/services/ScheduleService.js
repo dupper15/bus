@@ -6,9 +6,15 @@ const Stop = require("../models/StopModel");
 
 const getEmployeeTask = async (employeeId) => {
   try {
-    // Tìm kiếm các lịch trình mà nhân viên là busboy hoặc driver
+    // Lấy ngày hiện tại
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    // Tìm kiếm các lịch trình mà nhân viên là busboy hoặc driver trong ngày hiện tại
     const schedules = await Schedule.find({
       $or: [{ busboy: employeeId }, { driver: employeeId }],
+      date: { $gte: startOfDay, $lte: endOfDay }, // Lọc theo ngày
     })
       .populate({
         path: "line",
@@ -28,41 +34,22 @@ const getEmployeeTask = async (employeeId) => {
       };
     }
 
-    // Lấy ngày hiện tại
-    const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+    // Lọc và sắp xếp lịch trình theo trạng thái và thời gian
+    const sortedSchedules = schedules
+      .filter((schedule) => schedule.status !== "Pending")
+      .sort((a, b) => {
+        // Đưa trạng thái "Completed" xuống dưới cùng
+        if (a.status === "Completed" && b.status !== "Completed") return 1;
+        if (a.status !== "Completed" && b.status === "Completed") return -1;
 
-    // Lọc các lịch trình
-    const filteredSchedules = schedules.filter((schedule) => {
-      // Chuyển đổi chuỗi time_start thành đối tượng Date
-      if (!schedule.time_start) return false; // Bỏ qua lịch trình không có thời gian bắt đầu
-      const [hours, minutes] = schedule.time_start.split(":").map(Number);
-      const scheduleTime = new Date();
-      scheduleTime.setHours(hours, minutes, 0, 0);
+        // Sắp xếp theo thời gian từ sớm đến muộn
+        const [aHours, aMinutes] = a.time_start.split(":").map(Number);
+        const [bHours, bMinutes] = b.time_start.split(":").map(Number);
+        const aTime = new Date().setHours(aHours, aMinutes, 0, 0);
+        const bTime = new Date().setHours(bHours, bMinutes, 0, 0);
 
-      // Lọc theo thời gian và trạng thái
-      return (
-        scheduleTime >= startOfDay &&
-        scheduleTime <= endOfDay &&
-        schedule.status !== "Pending"
-      );
-    });
-
-    // Sắp xếp lịch trình theo trạng thái và thời gian
-    const sortedSchedules = filteredSchedules.sort((a, b) => {
-      // Đưa trạng thái "Completed" xuống dưới cùng
-      if (a.status === "Completed" && b.status !== "Completed") return 1;
-      if (a.status !== "Completed" && b.status === "Completed") return -1;
-
-      // Sắp xếp theo thời gian từ sớm đến muộn
-      const [aHours, aMinutes] = a.time_start.split(":").map(Number);
-      const [bHours, bMinutes] = b.time_start.split(":").map(Number);
-      const aTime = new Date().setHours(aHours, aMinutes, 0, 0);
-      const bTime = new Date().setHours(bHours, bMinutes, 0, 0);
-
-      return aTime - bTime;
-    });
+        return aTime - bTime;
+      });
 
     // Chuyển đổi dữ liệu sang dạng dễ sử dụng
     const formattedData = sortedSchedules.map((schedule) => ({
@@ -244,11 +231,12 @@ const getAllSchedule = async () => {
 
     const endOfDay = new Date(currentDate); // Tạo một bản sao khác của currentDate
     endOfDay.setUTCHours(23, 59, 59, 999); // Đặt giờ, phút, giây, mili giây về 23:59:59
+
     const existingSchedules = await Schedule.find({
       date: { $gte: startOfDay, $lt: endOfDay },
     });
     const existingScheduleIds = new Set(existingSchedules.map((sch) => sch.id));
-    console.log(existingScheduleIds);
+
     const newSchedules = [];
 
     allSchedule.forEach((schedule) => {
@@ -280,30 +268,34 @@ const getAllSchedule = async () => {
     if (newSchedules.length > 0) {
       await Schedule.insertMany(newSchedules);
     }
-
     // Cập nhật trạng thái cho các schedule hiện tại
-    const hours = localTime.getUTCHours();
-    const minutes = localTime.getUTCMinutes();
+    const currentTotalMinutes = localTime.getUTCHours() * 60 + localTime.getUTCMinutes();
 
-    allSchedule.forEach((schedule) => {
-      if (schedule.status !== "Not start yet") {
-        return;
+    for (const schedule of allSchedule) {
+      // Bỏ qua nếu trạng thái không phải "Not start yet" hoặc "In Progress"
+      if (schedule.status !== "Not start yet" && schedule.status !== "In Progress") {
+        continue;
       }
-      const [startHours, startMinutes] = schedule.time_start
-        .split(":")
-        .map(Number);
+    
+      const [startHours, startMinutes] = schedule.time_start.split(":").map(Number);
       const startTotalMinutes = startHours * 60 + startMinutes;
-      const currentTotalMinutes = hours * 60 + minutes;
       const finishTotalMinutes = startTotalMinutes + schedule.line.time;
-
+    
       if (finishTotalMinutes <= currentTotalMinutes) {
         schedule.status = "Completed";
       } else if (startTotalMinutes <= currentTotalMinutes) {
         schedule.status = "In Progress";
+      } else {
+        schedule.status = "Not start yet";
       }
-      schedule.save();
-    });
-
+    
+      try {
+        await schedule.save();
+      } catch (error) {
+        console.error("Error saving schedule:", schedule.id, error);
+      }
+    }
+    
     return {
       status: "OK",
       message: "Schedules retrieved and updated successfully.",

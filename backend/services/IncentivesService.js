@@ -2,8 +2,8 @@ const Employee = require("../models/EmployeeModel");
 const Incentives = require("../models/IncentivesModel")
 
 const createIncentives = async (data) => {
-    try {
-        const checkEmployee = await Employee.findOne({id: data.id})
+    try {        
+        const checkEmployee = await Employee.findById(data.id)
         if (!checkEmployee) {
             return {
                 status: "ERROR",
