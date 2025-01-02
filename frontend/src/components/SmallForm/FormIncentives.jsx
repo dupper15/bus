@@ -28,9 +28,10 @@ import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { useMutation } from "react-query";
 import * as IncentiveService from "@/services/incentivesService";
+import * as EmployeeService from "@/services/employeeService";
 import * as Message from "@/components/ui/alert";
 import { ClipLoader } from "react-spinners";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const formSchema = z.object({
   id: z.string().nonempty({ message: "ID is required." }),
@@ -57,24 +58,29 @@ const formSchema = z.object({
 const FormIncentives = ({
   isAdd,
   handleClose,
-  id = "",
-  name = "",
-  type = "",
-  content = "",
-  date = "",
-  price = "",
+  incentives
 }) => {
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      id,
-      name,
-      type,
-      content,
-      date,
-      price,
+    defaultValues: isAdd === "true"
+    ? {
+      id: "",
+      type: "",
+      content: "",
+      date: "",
+      price: "",
+    } :
+    {
+      id: incentives.employee._id,
+      type: incentives.type,
+      content: incentives.content,
+      date: incentives.date,
+      price: incentives.price,
     },
   });
+
+  console.log("incentives", incentives)
+  console.log("defaultValues:", form.getValues());
 
   const onSubmit = async () => {
     const isValid = await form.trigger();
@@ -134,7 +140,24 @@ const FormIncentives = ({
       }
     },
   });
+
+  const mutationEmployee = useMutation({
+    mutationFn: async () => {
+      return await EmployeeService.getAllEmployee();
+    },
+    onError: (error) => {
+      console.error("Error creating incentives:", error);
+    },
+    onSuccess: (data) => {
+      setItems(data.data);
+    },
+  })
+
+  useEffect(() => {
+    mutationEmployee.mutate();
+  }, [handleClose])
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [items, setItems] = useState([]);
   return (
     <div className='absolute inset-0 p-4 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
       <Form {...form}>
@@ -147,43 +170,30 @@ const FormIncentives = ({
 
           {/* Form Fields */}
           <div className='grid grid-cols-1 gap-6'>
-            <FormField
+          <FormField
               control={form.control}
               name='id'
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ID</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder='Enter ID of employee'
-                      {...field}
-                      readOnly={isAdd !== "true"}
-                    />
-                  </FormControl>
+                <FormItem className='flex-1'>
+                  <FormLabel>ID Employee</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select a employee' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {items.map((item) => (
+                        <SelectItem key={item._id} value={item._id}>
+                          {item.id} - {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            {isAdd === "false" && (
-              <FormField
-                control={form.control}
-                name='name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Enter employee name'
-                        {...field}
-                        readOnly
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             <FormField
               control={form.control}

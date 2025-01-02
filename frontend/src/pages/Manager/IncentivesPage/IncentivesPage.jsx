@@ -308,12 +308,7 @@ const IncentivesPage = () => {
               <FormIncentives
                 handleClose={handleClose}
                 isAdd='false'
-                id={id}
-                name={name}
-                type={type}
-                content={content}
-                date={date}
-                price={price}
+                incentives={selected}
               />
             </div>
           )}
