@@ -35,7 +35,7 @@ import { useDispatch, useSelector } from "react-redux";
 import * as AccountService from "../services/accountService";
 import { resetAccount } from "@/redux/accountSlide";
 import * as Message from "../components/ui/alert";
-
+import logo from "../assets/logo.png";
 // Menu item
 const items = [
   {
@@ -135,8 +135,9 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className='text-xl font-bold items-center justify-center'>
-          <span className='font-extrabold text-2xl text-[#4CAF50]'>Busty</span>
+        <div className='text-xl h-10 w-full flex font-bold items-center justify-start'>
+          <img src={logo} className='w-auto h-10'></img>
+          <span className='font-bold text-3xl text-green-700'>Busty</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
