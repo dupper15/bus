@@ -20,7 +20,7 @@ const Purchase = ({ prevStep }) => {
   const MY_BANK = "MB";
   const ACCOUNT_NO = "0948041545";
   const ACCOUNT_NAME = "CAO DUONG LAM";
-  const price = 10000;
+  const price = 50000;
 
   const checkPaid = async () => {
     try {
@@ -99,7 +99,7 @@ const Purchase = ({ prevStep }) => {
             <tbody>
               <tr className='text-center text-gray-800'>
                 <td>
-                  US $30.00
+                  50.000 vnđ
                   <br />
                   <span className='text-xs text-gray-500'>/month</span>
                 </td>
@@ -112,19 +112,19 @@ const Purchase = ({ prevStep }) => {
             <tbody>
               <tr>
                 <td className='pr-6 text-gray-700'>Total</td>
-                <td className='pl-4 text-black'>US $30</td>
+                <td className='pl-4 text-black'>50.000 vnđ</td>
               </tr>
               <tr>
                 <td className='pr-6 text-gray-700'>Tax (0%)</td>
-                <td className='pl-4 text-black'>US $0</td>
+                <td className='pl-4 text-black'>0 vnđ</td>
               </tr>
               <tr className='border-t border-gray-300'>
                 <td className='pr-6 font-bold text-gray-800'>Grand Total</td>
-                <td className='pl-4 font-bold text-black'>US $30</td>
+                <td className='pl-4 font-bold text-black'>50.000 vnđ</td>
               </tr>
             </tbody>
           </table>
-        </div>
+        </div>  
       </div>
 
       {/* QR Code and Selection */}

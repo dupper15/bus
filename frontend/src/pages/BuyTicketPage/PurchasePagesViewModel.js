@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const usePurchasePagesViewModel = () => {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState();
   const [purchaseData, setPurchaseData] = useState({
     name: "",
     email: "",
@@ -13,8 +13,8 @@ const usePurchasePagesViewModel = () => {
     total: 30,
   });
 
-  const nextStep = () => setStep(2);
-  const prevStep = () => setStep(1);
+  const nextStep = () => setStep(1);
+  const prevStep = () => setStep(0);
 
   const updatePurchaseData = (newData) => {
     setPurchaseData((prevData) => ({

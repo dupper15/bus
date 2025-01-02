@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import Purchase from "./Purchase";
 import Review from "./Review";
@@ -9,7 +9,10 @@ import usePurchasePagesViewModel from "@/pages/BuyTicketPage/PurchasePagesViewMo
 
 const MainBuyPage = () => {
   const { step, nextStep, prevStep } = usePurchasePagesViewModel();
-
+  useEffect(() => { 
+    prevStep()
+  }, []);
+  useEffect(() => {console.log("hello",step)})
   return (
     <div className='flex flex-col min-h-screen bg-white text-black'>
       {/* Header */}

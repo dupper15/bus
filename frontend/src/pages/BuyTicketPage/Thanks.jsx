@@ -6,7 +6,8 @@ const Thanks = ({ nextStep }) => {
   const { purchaseData } = usePurchasePagesViewModel();
   useEffect(() => {
     nextStep();
-  });
+    console.log("alo")
+  },);
   return (
     <div className='flex flex-col items-center  h-max bg-white text-green-500 px-6'>
       {/* Icon cảm ơn */}
