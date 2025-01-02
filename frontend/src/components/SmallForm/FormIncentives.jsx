@@ -79,9 +79,6 @@ const FormIncentives = ({
     },
   });
 
-  console.log("incentives", incentives)
-  console.log("defaultValues:", form.getValues());
-
   const onSubmit = async () => {
     const isValid = await form.trigger();
     setIsSubmitting(true);
