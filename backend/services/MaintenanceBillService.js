@@ -78,9 +78,11 @@ const getAllBill = async () => {
 
 const getDetailBill = async (employeeId) => {
     try {
-        const bill = await Bill.findOne({
+        console.log(employeeId);
+        const bill = await Bill.find({
             employee: employeeId
         }).populate("bus", "license_plate");
+        console.log(bill);
         if (bill === null) {
             return {
                 status: "OK",
