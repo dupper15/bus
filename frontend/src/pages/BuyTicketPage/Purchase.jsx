@@ -55,7 +55,7 @@ const Purchase = ({ prevStep }) => {
   useEffect(() => {
     const interval = setInterval(() => {
       checkPaid(); // Gọi hàm không truyền selectedLine, sử dụng giá trị từ ref.
-    }, 3000);
+    }, 1000);
     return () => clearInterval(interval); // Xóa interval khi component bị unmount.
   }, []); // Chỉ chạy một lần khi component mount.
 

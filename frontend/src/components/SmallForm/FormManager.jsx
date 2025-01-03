@@ -82,7 +82,7 @@ const FormManager = ({
             onCreate();
             e.preventDefault();
           }}
-          className='w-full max-w-2xl h-full overflow-y-auto bg-white shadow-lg border rounded-lg p-6 space-y-6'>
+          className='w-full max-w-2xl h-max  overflow-y-auto bg-white shadow-lg border rounded-lg p-6 space-y-6'>
           <h1 className='text-2xl font-bold text-green-500 text-center'>
             Add New Manager
           </h1>

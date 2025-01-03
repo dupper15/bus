@@ -96,7 +96,6 @@ const MaintenancePage = () => {
 
   const handleAction = (id, action) => {
     mutaionResolve.mutate({ id: id, status: action });
-    console.log(`${action} request with ID: ${id}`);
   };
   const [showImage, setShowImage] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
