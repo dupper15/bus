@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 const Purchase = ({ prevStep }) => {
   const navigate = useNavigate();
   const account = useSelector((state) => state.account);
+  const [ticketCreated, setTicketCreated] = useState(false); 
 
   useEffect(() => {
     prevStep();
@@ -20,45 +21,54 @@ const Purchase = ({ prevStep }) => {
   const MY_BANK = "MB";
   const ACCOUNT_NO = "0948041545";
   const ACCOUNT_NAME = "CAO DUONG LAM";
-  const price = 50000;
-
+  const price = 10000;
+  
   const checkPaid = async () => {
+    if (ticketCreated) return; // Nếu vé đã được tạo, không thực hiện gì thêm
+  
     try {
       const response = await axios.get(
         "https://script.googleusercontent.com/macros/echo?user_content_key=1arkNjhD8BvBTKwRWk2wAxMXZeihNMn6ZszcG8obyaYSTG3t8vprpDUO6YgFznOq0v2ILdbwI34laxHjt9LtzNGkTSW3OOJEm5_BxDlH2jW0nuo2oDemN9CCS2h10ox_1xSncGQajx_ryfhECjZEnG8wA_srPnc6MBl2lEpm0VdZ3CX-sQi0hZ90X1RW5jikAGB2oH9IU6b9wxAeSFEnTgO9bqOAr_UnVt9qHG2oIwX1w6oFCY34T9z9Jw9Md8uu&lib=M-t7YJKp6uv0DvKyaUi6SixfZynQPYsQn"
       );
-      const data = await response.data.data;
+      const data = response.data.data;
       const lastPaid = data[data.length - 1];
       const check = content.replace(/[-:.\s]/g, "");
       const lastPrice = lastPaid["Giá trị"];
       const lastContent = lastPaid["Mô tả"];
+  
       if (lastPrice >= price && lastContent.includes(check)) {
-        const data = await TicketService.createTicket({
+        const ticketResponse = await TicketService.createTicket({
           price: price,
           customer: account._id,
         });
-        if (data.status === "OK") {
-          Message.success(data.message);
+  
+        if (ticketResponse.status === "OK") {
+          setTicketCreated(true);
+          localStorage.setItem("ticketCreated", "true"); // Lưu trạng thái vé vào localStorage
+          Message.success(ticketResponse.message);
           navigate("/payment/thanks");
         } else {
-          Message.error(data.message);
+          Message.error(ticketResponse.message);
         }
-      } else {
-        return false;
       }
     } catch (error) {
       console.error("Failed to check paid", error);
-      throw error;
-    } 
+    }
   };
-
+  
   useEffect(() => {
+    const ticketStatus = localStorage.getItem("ticketCreated");
+    if (ticketStatus === "true") {
+      setTicketCreated(true);
+    }
+  
     const interval = setInterval(() => {
-      checkPaid(); // Gọi hàm không truyền selectedLine, sử dụng giá trị từ ref.
-    }, 1000);
-    return () => clearInterval(interval); // Xóa interval khi component bị unmount.
-  }, []); // Chỉ chạy một lần khi component mount.
-
+      checkPaid();
+    }, 5000);
+  
+    return () => clearInterval(interval);
+  }, []);
+  
   return (
     <div className='flex flex-col min-h-screen bg-gray-50'>
       {/* Header */}
@@ -104,7 +114,7 @@ const Purchase = ({ prevStep }) => {
                   <span className='text-xs text-gray-500'>/month</span>
                 </td>
                 <td>1</td>
-                <td>US $30.00</td>
+                <td>50.000 vnđ</td>
               </tr>
             </tbody>
           </table>

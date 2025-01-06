@@ -357,7 +357,7 @@ const StopPage = () => {
                   onClick={handleClose}>
                   Cancel
                 </Button>
-                <Button className='w-[120px]' onClick={handleDelete}>
+                <Button variant='destructive' className='w-[120px]' onClick={handleDelete}>
                   Confirm
                 </Button>
               </div>

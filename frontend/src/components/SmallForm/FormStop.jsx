@@ -57,13 +57,17 @@ const FormStop = ({
 
   const handleMapSelection = (locationData) => {
     if (locationData) {
-      form.setValue("pointX", locationData.pointX);
-      form.setValue("pointY", locationData.pointY);
+      const x = toNumber1(locationData.pointX);
+      const y = toNumber1(locationData.pointY);
+      form.setValue("pointX", x);
+      form.setValue("pointY", y);
       form.setValue("address", locationData.address);
     }
     onMapClick(locationData);
   };
-
+  const toNumber1 = (value) => {
+    return parseFloat(value);
+};
   return (
     <div className='fixed inset-0 p-2 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50'>
       <div className='w-full max-w-4xl bg-white shadow-xl rounded-lg p-8 max-h-[90vh] overflow-y-auto scrollbar-hide'>
