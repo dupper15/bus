@@ -12,10 +12,17 @@ const Sidebar = ({
                      onInputFocus,
                      startCoordinates,
                      endCoordinates,
-                     onClearPath,
+                     onClearPath,   
                  }) => {
+                    
     const [activeTab, setActiveTab] = useState("lines");
     const [searchTerm, setSearchTerm] = useState("");
+
+    const resetSearch = () => {
+        setSearchTerm(""); // Reset giá trị tìm kiếm
+        onSearch("");      // Gọi hàm để cập nhật kết quả tìm kiếm
+    };
+    
 
     const tabs = [
         { key: "lines", label: "Lines" },

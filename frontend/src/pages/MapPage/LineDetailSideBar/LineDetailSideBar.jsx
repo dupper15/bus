@@ -6,7 +6,7 @@ import TabSwitch from "@/pages/MapPage/SubComponents/TabSwitch/TabSwitch.jsx";
 import { useMutation } from "react-query";
 import * as LineService from "@/services/LineService";
 
-const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSelect }) => {
+const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSelect, onResetSearch }) => {
     const [activeTab, setActiveTab] = useState("details");
     const [items, setItems] = useState([]);
 
@@ -21,6 +21,13 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
         if (key === "outbound" || key === "inbound") {
             onTabSelect(key);
         }
+    };
+
+    const handleBack = () => {
+        if (onResetSearch) {
+            onResetSearch(); // Reset tìm kiếm
+        }
+        onBack(); // Gọi logic quay lại
     };
 
     const mutationGetSchedule = useMutation({
@@ -134,5 +141,6 @@ LineDetailSideBar.propTypes = {
     selectedStop: PropTypes.string,
     onSelectStop: PropTypes.func.isRequired,
     onTabSelect: PropTypes.func.isRequired,
+    onResetSearch: PropTypes.func,
 };
 
