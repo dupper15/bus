@@ -161,122 +161,122 @@ const ProfilePage = () => {
   }, [account]);
 
   return (
-    <div className='flex flex-col w-full h-full overflow-y-auto bg-white'>
-      <div className='flex flex-grow w-full'>
-        <div className='flex flex-col w-full overflow-y-auto gap-4 ps-14 pe-20 scrollbar-hide text-black'>
-          <span className='font-bold text-xl md:text-3xl mt-6 text-slate-900 pointer-events-none'>
+    <div className="flex flex-col w-full h-full overflow-y-auto bg-white">
+      <div className="flex flex-grow w-full">
+        <div className="flex flex-col w-full overflow-y-auto gap-4 ps-14 pe-20 scrollbar-hide text-black">
+          <span className="font-bold text-xl md:text-3xl mt-6 text-slate-900 pointer-events-none">
             My Profile
           </span>
           <div>
-            <span className='font-semibold text-xl mb-2 text-slate-900 pointer-events-none'>
+            <span className="font-semibold text-xl mb-2 text-slate-900 pointer-events-none">
               Avatar
             </span>
-            <div className='flex items-center justify-between'>
-              <label htmlFor='upload-avatar' className='cursor-pointer'>
+            <div className="flex items-center justify-between">
+              <label htmlFor="upload-avatar" className="cursor-pointer">
                 <img
-                  className='object-cover w-[100px] h-[100px] rounded-full'
+                  className="object-cover w-[100px] h-[100px] rounded-full"
                   src={image}
-                  alt='Profile Avatar'
+                  alt="Profile Avatar"
                 />
               </label>
-              <div className='flex flex-col text-right cursor-pointer space-y-2'>
+              <div className="flex flex-col text-right cursor-pointer space-y-2">
                 <label
-                  className='md:text-m hover:text-green-500 cursor-pointer'
-                  htmlFor='image'>
+                  className="md:text-m hover:text-green-500 cursor-pointer"
+                  htmlFor="image">
                   Change image
                 </label>
                 <input
-                  type='file'
-                  id='image'
+                  type="file"
+                  id="image"
                   onChange={handleOnChangeImage}
-                  className='hidden'
-                  accept='image/jpeg, image/png, image/jpg'></input>
+                  className="hidden"
+                  accept="image/jpeg, image/png, image/jpg"></input>
                 {isUploading && (
-                  <span className='text-sm text-gray-500'>Uploading...</span>
+                  <span className="text-sm text-gray-500">Uploading...</span>
                 )}
                 <span
                   onClick={handleViewImage}
-                  className='md:text-m hover:text-green-500 cursor-pointer'>
+                  className="md:text-m hover:text-green-500 cursor-pointer">
                   View image
                 </span>
                 <span
                   onClick={handleRemoveImage}
-                  className='md:text-m hover:text-green-500 cursor-pointer'>
+                  className="md:text-m hover:text-green-500 cursor-pointer">
                   Remove photo
                 </span>
               </div>
             </div>
             {isViewImage && (
               <div
-                className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
                 onClick={closeModal}>
                 <div
-                  className='bg-white rounded shadow-lg relative'
+                  className="bg-white rounded shadow-lg relative"
                   onClick={(e) => e.stopPropagation()}>
                   <img
                     src={image}
-                    alt='Profile Image'
-                    className='object-fill w-[640px] h-[360px] rounded'
+                    alt="Profile Image"
+                    className="object-fill w-[640px] h-[360px] rounded"
                   />
                 </div>
               </div>
             )}
-            <div className='w-full h-[1px] bg-gray-400 my-4'></div>
-            <div className='flex items-center justify-between w-full'>
-              <div className='flex flex-col space-y-2'>
-                <span className='font-semibold text-xl text-slate-900 pointer-events-none'>
+            <div className="w-full h-[1px] bg-gray-400 my-4"></div>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex flex-col space-y-2">
+                <span className="font-semibold text-xl text-slate-900 pointer-events-none">
                   Name
                 </span>
                 {isEditingUserName ? (
                   <input
-                    type='text'
-                    className='font-thin text-s md:text-m rounded p-1 border text-black'
+                    type="text"
+                    className="font-thin text-s md:text-m rounded p-1 border text-black"
                     value={userName}
                     onChange={handleOnChangeUserName}
                   />
                 ) : (
-                  <span className='font-thin text-s md:text-m'>{userName}</span>
+                  <span className="font-thin text-s md:text-m">{userName}</span>
                 )}
               </div>
-              <div className='flex space-x-2 mt-2'>
+              <div className="flex space-x-2 mt-2">
                 {isEditingUserName ? (
                   <>
                     <button
-                      className='w-[80px] h-[40px] font-semibold rounded-lg shadow-sm flex justify-center items-center p-2 bg-red-500 text-white hover:bg-red-600'
+                      className="w-[80px] h-[40px] font-semibold rounded-lg shadow-sm flex justify-center items-center p-2 bg-red-500 text-white hover:bg-red-600"
                       onClick={handleCancelClick}>
                       Cancel
                     </button>
                     <button
                       onClick={handleUpdateUserName}
-                      className='w-[80px] h-[40px] font-semibold rounded-lg shadow-sm flex justify-center items-center p-2 bg-green-500 text-white hover:bg-green-600'>
+                      className="w-[80px] h-[40px] font-semibold rounded-lg shadow-sm flex justify-center items-center p-2 bg-green-500 text-white hover:bg-green-600">
                       Save
                     </button>
                   </>
                 ) : (
                   <button
-                    className='w-[80px] h-[40px] font-semibold rounded-lg shadow-sm flex justify-center items-center p-2 hover:bg-slate-400 bg-green-500 text-white'
+                    className="w-[80px] h-[40px] font-semibold rounded-lg shadow-sm flex justify-center items-center p-2 hover:bg-green-600 bg-green-500 text-white"
                     onClick={handleEditUserName}>
                     Edit
                   </button>
                 )}
               </div>
             </div>
-            <div className='w-full h-[1px] bg-gray-400 my-4'></div>
-            <div className='flex items-center justify-between w-full'>
-              <div className='flex flex-col space-y-2'>
-                <span className='font-semibold text-xl text-slate-900 pointer-events-none'>
+            <div className="w-full h-[1px] bg-gray-400 my-4"></div>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex flex-col space-y-2">
+                <span className="font-semibold text-xl text-slate-900 pointer-events-none">
                   Password
                 </span>
               </div>
               <Button
                 onClick={handleChangePassword}
-                className='bg-green-500 hover:bg-green-600 p-1 ml-2 sm:p-4 text-white'>
+                className="bg-green-500 hover:bg-green-600 p-1 ml-2 sm:p-4 text-white">
                 Change password
               </Button>
               {isChangePassword && (
-                <div className='fixed inset-0 w-full h-full z-10  flex justify-center items-center transition-transform'>
-                  <div className='absolute inset-0 bg-black bg-opacity-50 w-screen h-screen backdrop-blur-sm flex justify-center items-center'>
-                    <div className='fixed  top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%]'>
+                <div className="fixed inset-0 w-full h-full z-10  flex justify-center items-center transition-transform">
+                  <div className="absolute inset-0 bg-black bg-opacity-50 w-screen h-screen backdrop-blur-sm flex justify-center items-center">
+                    <div className="fixed  top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%]">
                       <ChangePassword
                         closeForm={() => setChangePassword(false)}
                       />
@@ -285,16 +285,16 @@ const ProfilePage = () => {
                 </div>
               )}
             </div>
-            <div className='w-full h-[1px] bg-gray-400 my-4'></div>
-            <div className='flex items-center justify-between w-full'>
-              <div className='flex flex-col space-y-2'>
-                <span className='font-semibold text-xl text-slate-900 pointer-events-none'>
+            <div className="w-full h-[1px] bg-gray-400 my-4"></div>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex flex-col space-y-2">
+                <span className="font-semibold text-xl text-slate-900 pointer-events-none">
                   National ID
                 </span>
-                <span className='font-thin text-s md:text-m'>{idCard}</span>
+                <span className="font-thin text-s md:text-m">{idCard}</span>
               </div>
             </div>
-            <div className='w-full h-[1px] bg-gray-400 my-4'></div>
+            <div className="w-full h-[1px] bg-gray-400 my-4"></div>
           </div>
         </div>
       </div>
