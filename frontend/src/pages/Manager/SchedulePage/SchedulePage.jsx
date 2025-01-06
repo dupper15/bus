@@ -186,26 +186,26 @@ const SchedulePage = () => {
   const maxPages = 6; // Số trang tối đa hiển thị cùng lúc
 
   return (
-    <div className="flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4">
-      <div className="flex-1 w-full space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300">
-        <div className="flex items-center flex-col xl:flex-row gap-4">
+    <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
+      <div className='flex-1 w-full space-y-8 bg-white shadow-lg rounded-xl p-6 border border-gray-300'>
+        <div className='flex items-center flex-col xl:flex-row gap-4'>
           <Search
-            className=" border border-gray-300 rounded-lg p-2"
+            className=' border border-gray-300 rounded-lg p-2'
             onChange={handleSearchChanged}
-            text="Type line id..."
+            text='Type line id...'
           />
 
-          <div className="flex gap-4">
+          <div className='flex gap-4'>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="text-left font-normal">
+                <Button variant='outline' className='text-left font-normal'>
                   {date ? format(date, "PPP") : "Pick a date"}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                  <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className='w-auto p-0' align='start'>
                 <Calendar
-                  mode="single"
+                  mode='single'
                   selected={date}
                   onSelect={handleDateChange} // Cập nhật giá trị khi chọn ngày mới
                 />
@@ -214,15 +214,15 @@ const SchedulePage = () => {
             <Button onClick={handleApproveAll} disabled={allNotPending}>
               Approve All
             </Button>
-            <Button onClick={handleAddClick} className="">
+            <Button onClick={handleAddClick} className=''>
               +
             </Button>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-gray-300 bg-white shadow-md">
-          <Table className="overflow-hidden rounded-t-lg ">
-            <TableHeader className="bg-green-500 rounded-t-lg pointer-events-none">
+        <div className='overflow-x-auto rounded-lg border border-gray-300 bg-white shadow-md'>
+          <Table className='overflow-hidden rounded-t-lg '>
+            <TableHeader className='bg-green-500 rounded-t-lg pointer-events-none'>
               <TableRow>
                 {[
                   "Schedule ID",
@@ -239,7 +239,7 @@ const SchedulePage = () => {
                 ].map((header, idx) => (
                   <TableHead
                     key={idx}
-                    className="text-center text-white text-base py-3 px-4">
+                    className='text-center text-white text-base py-3 px-4'>
                     {header}
                   </TableHead>
                 ))}
@@ -257,34 +257,34 @@ const SchedulePage = () => {
                       ? "bg-red-100 hover:bg-red-300" // Màu nền cảnh báo và màu khi hover
                       : "hover:bg-gray-100" // Màu nền khi hover nếu không có cảnh báo
                   }`}>
-                  <TableCell className="text-center py-3 px-4">
+                  <TableCell className='text-center py-3 px-4'>
                     {item.id}
                   </TableCell>
-                  <TableCell className="text-center py-3 px-4">
+                  <TableCell className='text-center py-3 px-4'>
                     {item?.bus?.license_plate}
                   </TableCell>
-                  <TableCell className="text-center py-3 px-4">
+                  <TableCell className='text-center py-3 px-4'>
                     {item?.line?.name}
                   </TableCell>
-                  <TableCell className="text-center py-3 px-4">
+                  <TableCell className='text-center py-3 px-4'>
                     {item?.driver?.name}
                   </TableCell>
-                  <TableCell className="text-center py-3 px-4">
+                  <TableCell className='text-center py-3 px-4'>
                     {item?.busboy?.name}
                   </TableCell>
-                  <TableCell className="text-center py-3 px-4">
+                  <TableCell className='text-center py-3 px-4'>
                     {item.time_start}
                   </TableCell>
-                  <TableCell className="text-center py-3 px-4">
+                  <TableCell className='text-center py-3 px-4'>
                     {convertMinutesToHoursAndMinutes(item.line.time)}
                   </TableCell>
-                  <TableCell className="text-center py-3 px-4">
+                  <TableCell className='text-center py-3 px-4'>
                     {item.ticket3}
                   </TableCell>
-                  <TableCell className="text-center py-3 px-4">
+                  <TableCell className='text-center py-3 px-4'>
                     {item.ticket7}
                   </TableCell>
-                  <TableCell className="text-center py-3 px-4">
+                  <TableCell className='text-center py-3 px-4'>
                     <span
                       className={`px-1 py-1 mx-2 w-full rounded-full text-xs font-medium ${
                         item.status === "Pending"
@@ -298,11 +298,11 @@ const SchedulePage = () => {
                       {item.status}
                     </span>
                   </TableCell>
-                  {item.status === "Pending" && (
-                    <TableCell className="text-center flex justify-center items-center py-3 px-4">
+                  {item.status === "Pending" ? (
+                    <TableCell className='text-center flex justify-center items-center py-3 px-4'>
                       <DropdownMenu>
                         <DropdownMenuTrigger>
-                          <EllipsisVertical className="mb-2 " />
+                          <EllipsisVertical className='mb-2 ' />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           <DropdownMenuItem onClick={() => handleEditClick()}>
@@ -315,20 +315,28 @@ const SchedulePage = () => {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
+                  ) : (
+                    <TableCell className='text-center flex justify-center items-center py-3 px-4'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          <EllipsisVertical className='mb-2 ' />
+                        </DropdownMenuTrigger>
+                      </DropdownMenu>
+                    </TableCell>
                   )}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
-        <Pagination className="flex justify-center items-center gap-4">
-          <PaginationContent className="flex gap-2">
+        <Pagination className='flex justify-center items-center gap-4'>
+          <PaginationContent className='flex gap-2'>
             <PaginationItem>
               {startPage > 1 && (
                 <PaginationPrevious
-                  href="#"
+                  href='#'
                   onClick={() => setStartPage(startPage - maxPages)}
-                  className="text-green-500 hover:text-green-700">
+                  className='text-green-500 hover:text-green-700'>
                   Previous
                 </PaginationPrevious>
               )}
@@ -339,7 +347,7 @@ const SchedulePage = () => {
             ).map((page) => (
               <PaginationItem key={page}>
                 <PaginationLink
-                  href="#"
+                  href='#'
                   onClick={() => handlePageChange(page)}
                   className={`px-4 py-2 rounded-full transition ${
                     page === currentPage
@@ -353,9 +361,9 @@ const SchedulePage = () => {
             <PaginationItem>
               {startPage + maxPages <= totalPages && (
                 <PaginationNext
-                  href="#"
+                  href='#'
                   onClick={() => setStartPage(startPage + maxPages)}
-                  className="text-green-500 hover:text-green-700">
+                  className='text-green-500 hover:text-green-700'>
                   Next
                 </PaginationNext>
               )}
@@ -364,14 +372,14 @@ const SchedulePage = () => {
         </Pagination>
 
         {showForm && (
-          <div className="fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform">
+          <div className='fixed inset-0 w-full h-full z-10 flex justify-center items-center transition-transform'>
             {dialogType === "add" && (
-              <FormSchedule handleClose={handleClose} isAdd="true" />
+              <FormSchedule handleClose={handleClose} isAdd='true' />
             )}
             {dialogType === "edit" && selected?.status === "Pending" && (
               <FormSchedule
                 handleClose={handleClose}
-                isAdd="false"
+                isAdd='false'
                 schedule={selected}
               />
             )}
@@ -382,23 +390,23 @@ const SchedulePage = () => {
           <Dialog open={showDialog} onOpenChange={handleClose}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle className="text-center">
+                <DialogTitle className='text-center'>
                   Are you sure you want to delete?
                 </DialogTitle>
                 <DialogDescription>
                   This action cannot be undone. This will permanently delete the
                   schedule.
                 </DialogDescription>
-                <div className="flex items-center justify-center gap-2 pt-4">
+                <div className='flex items-center justify-center gap-2 pt-4'>
                   <Button
-                    variant="outline"
-                    className="w-[120px]"
+                    variant='outline'
+                    className='w-[120px]'
                     onClick={handleClose}>
                     Cancel
                   </Button>
                   <Button
-                    variant="destructive"
-                    className="w-[120px]"
+                    variant='destructive'
+                    className='w-[120px]'
                     onClick={handleDelete}>
                     Confirm
                   </Button>

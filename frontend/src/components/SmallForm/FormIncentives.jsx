@@ -55,28 +55,25 @@ const formSchema = z.object({
   ),
 });
 
-const FormIncentives = ({
-  isAdd,
-  handleClose,
-  incentives
-}) => {
+const FormIncentives = ({ isAdd, handleClose, incentives }) => {
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: isAdd === "true"
-    ? {
-      id: "",
-      type: "",
-      content: "",
-      date: "",
-      price: "",
-    } :
-    {
-      id: incentives.employee._id,
-      type: incentives.type,
-      content: incentives.content,
-      date: incentives.date,
-      price: incentives.price,
-    },
+    defaultValues:
+      isAdd === "true"
+        ? {
+            id: "",
+            type: "",
+            content: "",
+            date: "",
+            price: "",
+          }
+        : {
+            id: incentives.employee._id,
+            type: incentives.type,
+            content: incentives.content,
+            date: incentives.date,
+            price: incentives.price,
+          },
   });
 
   const onSubmit = async () => {
@@ -148,11 +145,11 @@ const FormIncentives = ({
     onSuccess: (data) => {
       setItems(data.data);
     },
-  })
+  });
 
   useEffect(() => {
     mutationEmployee.mutate();
-  }, [handleClose])
+  }, [handleClose]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [items, setItems] = useState([]);
   return (
@@ -160,14 +157,14 @@ const FormIncentives = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className='w-full max-w-2xl bg-white shadow-lg h-[90%] border my-4 mb-10 scrollbar-hide overflow-y-auto rounded-lg p-6 space-y-6'>
+          className='w-full max-w-2xl bg-white shadow-lg h-max border my-4 mb-10 scrollbar-hide overflow-y-auto rounded-lg p-6 space-y-6'>
           <h1 className='text-2xl font-bold text-green-500 text-center'>
             {isAdd === "true" ? "Add New Incentive" : "Edit Incentive"}
           </h1>
 
           {/* Form Fields */}
           <div className='grid grid-cols-1 gap-6'>
-          <FormField
+            <FormField
               control={form.control}
               name='id'
               render={({ field }) => (

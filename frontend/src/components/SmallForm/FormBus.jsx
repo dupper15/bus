@@ -156,7 +156,7 @@ const FormBus = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className='w-full max-w-3xl bg-white shadow-xl border border-slate-300 rounded-lg p-8 h-max-[90%] my-10 h-full overflow-y-auto scrollbar-hide space-y-6'>
+          className='w-full max-w-3xl bg-white shadow-xl border border-slate-300 rounded-lg p-8 h-max-[90%] my-10 h-max overflow-y-auto scrollbar-hide space-y-6'>
           <h1 className='text-3xl font-semibold text-green-600 text-center'>
             {isAdd === "true" ? "Add New Bus" : "Edit Bus"}
           </h1>

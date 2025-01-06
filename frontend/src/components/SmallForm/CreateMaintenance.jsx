@@ -4,7 +4,6 @@ import * as BillService from "@/services/billService";
 import * as Message from "@/components/ui/alert";
 import { useSelector } from "react-redux";
 
-
 const CreateMaintenance = ({ childCloseFormRequest }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -58,15 +57,18 @@ const CreateMaintenance = ({ childCloseFormRequest }) => {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     const uploadPreset = "afh5sfc";
-    
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", uploadPreset);
 
-    const response = await fetch("https://api.cloudinary.com/v1_1/ddcjjegzf/image/upload", {
-      method: "POST",
-      body: formData,
-    });
+    const response = await fetch(
+      "https://api.cloudinary.com/v1_1/ddcjjegzf/image/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
     const result = await response.json();
 
@@ -76,7 +78,7 @@ const CreateMaintenance = ({ childCloseFormRequest }) => {
 
   return (
     <form
-      className='fixed h-auto max-h-[80vh] scrollbar-hide w-max overflow-y-auto top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 max-w-lg bg-white p-6 rounded-2xl shadow-2xl border border-gray-200'
+      className='fixed h-auto max-h-[80vh] scrollbar-hide w-full overflow-y-auto top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 max-w-lg bg-white p-6 rounded-lg shadow-2xl border border-gray-200'
       onSubmit={handleSubmit}>
       {/* Close button */}
       <button
@@ -90,8 +92,8 @@ const CreateMaintenance = ({ childCloseFormRequest }) => {
         Create Maintenance
       </h1>
 
-       {/* Title Input */}
-       <div className='mb-4'>
+      {/* Title Input */}
+      <div className='mb-4'>
         <textarea
           rows={1}
           value={title}

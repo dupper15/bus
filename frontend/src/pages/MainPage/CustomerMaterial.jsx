@@ -52,38 +52,38 @@ const CustomerMaterial = () => {
   const [showRequest, setShowRequest] = useState(false);
   const [refresh, setRefresh] = useState(false);
 
-  const account = useSelector((state) => state.account)
+  const account = useSelector((state) => state.account);
   const [itemsTicket, setItemsTicket] = useState([]);
   const [itemsOpinion, setItemsOpinion] = useState([]);
 
   const mutaionGetTicket = useMutation({
     mutationFn: async (id) => {
-      return await TicketService.getDetailTicket(id); 
+      return await TicketService.getDetailTicket(id);
     },
     onSuccess: (data) => {
       setItemsTicket(data.data);
     },
     onError: (data) => {
       console.log(data.message);
-    }
-  })
+    },
+  });
 
   const mutaionGetOpinion = useMutation({
     mutationFn: async (id) => {
-      return await OpinionService.getAllCustomer(id); 
+      return await OpinionService.getAllCustomer(id);
     },
     onSuccess: (data) => {
       setItemsOpinion(data.data);
     },
     onError: (data) => {
       console.log(data.message);
-    }
-  })
+    },
+  });
 
   useEffect(() => {
     mutaionGetTicket.mutate(account?._id);
     mutaionGetOpinion.mutate(account?._id);
-  }, [refresh])
+  }, [refresh]);
 
   return (
     <div className='bg-slate-200 p-4 overflow-y-auto h-full scrollbar-hide'>
@@ -109,7 +109,10 @@ const CustomerMaterial = () => {
                     <strong>Customer:</strong> {ticket?.customer?.name}
                   </p>
                   <p className='text-gray-600 mt-2'>
-                    <strong>Expiration:</strong> {new Date(ticket.expiration_date).toLocaleDateString("en-GB")}
+                    <strong>Expiration:</strong>{" "}
+                    {new Date(ticket.expiration_date).toLocaleDateString(
+                      "en-GB"
+                    )}
                   </p>
                 </div>
                 <div>
@@ -127,7 +130,7 @@ const CustomerMaterial = () => {
         </div>
       </div>
 
-      <div className='bg-white p-6 h-full overflow-x-auto w-full mt-4 border border-slate-300 m-2 shadow-md rounded-md'>
+      <div className='bg-white p-6 h-max overflow-x-auto w-full mt-4 border border-slate-300 m-2 shadow-md rounded-md'>
         <div className='flex items-center justify-between'>
           <h3 className='text-xl font-semibold mb-4'>Your Reflects</h3>
           <Button onClick={() => setShowRequest(true)}>Reflect</Button>
@@ -164,11 +167,15 @@ const CustomerMaterial = () => {
                 </div>
                 <div>
                   <p className='text-sm text-gray-500 mt-2'>
-                    <strong>Received Date:</strong> {new Date(reflect.receive_date).toLocaleDateString("en-GB")}
+                    <strong>Received Date:</strong>{" "}
+                    {new Date(reflect.receive_date).toLocaleDateString("en-GB")}
                   </p>
                   {reflect.resolve_date && (
                     <p className='text-sm text-gray-500 mt-2'>
-                      <strong>Resolve Date:</strong> {new Date(reflect.resolve_date).toLocaleDateString("en-GB")}
+                      <strong>Resolve Date:</strong>{" "}
+                      {new Date(reflect.resolve_date).toLocaleDateString(
+                        "en-GB"
+                      )}
                     </p>
                   )}
                   <p
