@@ -84,8 +84,10 @@ const OpinionPage = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleSearchStatus = () => {
+  const handleSearch = () => {
+    const currentDate = new Date();
     const filteredItems = items.filter((item) => {
+      // Lọc theo trạng thái
       const matchesStatus = (() => {
         switch (selectedStatus) {
           case "Pending":
@@ -97,21 +99,8 @@ const OpinionPage = () => {
         }
       })();
 
-      const matchesTitle = item?.title
-        ?.toLowerCase()
-        .includes(searchWord.toLowerCase());
-
-      return matchesStatus && matchesTitle; // Phải khớp cả status và title
-    });
-
-    setCurrentItems(filteredItems);
-  };
-
-  const handleSearchTime = () => {
-    const currentDate = new Date();
-
-    const filteredItems = items.filter((item) => {
-      const itemDate = new Date(item.receive_date); // Đảm bảo `item.receive_date` là chuỗi ngày hợp lệ
+      // Lọc theo thời gian
+      const itemDate = new Date(item.receive_date); // Đảm bảo item.receive_date là chuỗi ngày hợp lệ
       const matchesTime = (() => {
         switch (selectedTime) {
           case "Today":
@@ -135,23 +124,22 @@ const OpinionPage = () => {
         }
       })();
 
+      // Lọc theo tiêu đề
       const matchesTitle = item?.title
         ?.toLowerCase()
         .includes(searchWord.toLowerCase());
 
-      return matchesTime && matchesTitle; // Phải khớp cả thời gian và title
+      // Phải khớp tất cả điều kiện
+      return matchesStatus && matchesTime && matchesTitle;
     });
 
     setCurrentItems(filteredItems);
   };
 
+  // Gọi hàm lọc trong useEffect khi các giá trị thay đổi
   useEffect(() => {
-    handleSearchStatus();
-  }, [selectedStatus, searchWord, items]);
-
-  useEffect(() => {
-    handleSearchTime();
-  }, [selectedTime, searchWord, items]);
+    handleSearch();
+  }, [selectedStatus, selectedTime, searchWord, items]);
 
   const mutationGetAll = useMutation({
     mutationFn: () => {
