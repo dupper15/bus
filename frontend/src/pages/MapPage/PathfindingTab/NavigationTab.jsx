@@ -6,8 +6,15 @@ import { FaArrowsUpDown } from "react-icons/fa6";
 import { MdCompare } from "react-icons/md";
 import useNavigationViewModel from "./NavigationViewModel";
 import RouteDetails from "@/pages/MapPage/PathfindingTab/RouteDetail";
-import pathTransformerService from "../../../services/PathTransformerService";
+import pathTransformerService from "@/services/PathTransformerService";
 
+/**
+ * NavigationTab component - Handles route finding and pathfinding functionality
+ * Enhanced to work with Strategy and Composite patterns
+ *
+ * @param {Object} props - Component properties
+ * @returns {JSX.Element} - Navigation tab component
+ */
 const NavigationTab = ({
                            onFindPath,
                            busStops,
@@ -16,8 +23,10 @@ const NavigationTab = ({
                            endCoordinates,
                            lines,
                        }) => {
+    // Use enhanced NavigationViewModel with Strategy and Composite patterns
     const {
         path,
+        route, // New Route composite object
         findPath,
         error,
         start,
@@ -53,14 +62,16 @@ const NavigationTab = ({
     const [showStrategyInfo, setShowStrategyInfo] = useState(false);
     const [showComparison, setShowComparison] = useState(false);
 
+    // Update local state when props change
     useEffect(() => {
         if (startCoordinates) handleStartChange(startCoordinates);
-    }, [startCoordinates]);
+    }, [startCoordinates, handleStartChange]);
 
     useEffect(() => {
         if (endCoordinates) handleEndChange(endCoordinates);
-    }, [endCoordinates]);
+    }, [endCoordinates, handleEndChange]);
 
+    // Handle input changes
     const handleStartInputChange = (value) => {
         setStartClicked(false);
         handleStartChange(value);
@@ -71,6 +82,7 @@ const NavigationTab = ({
         handleEndChange(value);
     };
 
+    // Handle picking locations on map
     const handlePickLocation = (type) => {
         if (type === 'start') {
             setPickingStart(true);
@@ -82,46 +94,54 @@ const NavigationTab = ({
         document.body.style.cursor = 'crosshair';
     };
 
+    // Reset cursor when not picking
     useEffect(() => {
         if (!pickingStart && !pickingEnd) {
             document.body.style.cursor = 'default';
         }
     }, [pickingStart, pickingEnd]);
 
+    // Find path using selected strategy
     const handleFindPath = async () => {
         if (!start || !end) return;
+
         const [startLat, startLng] = start.coordinates.map(Number);
         const [endLat, endLng] = end.coordinates.map(Number);
 
-        const strategyPath = await findPath(
+        // Use strategy pattern to find path
+        const strategyResult = await findPath(
             [startLng, startLat],
             [endLng, endLat],
             busStops,
             lines
         );
 
-        if (strategyPath) {
-            // Transform the path for MapView compatibility
-            const mapViewPath = pathTransformerService.transformForMapView(strategyPath);
+        if (strategyResult) {
+            // Transform Route object to MapView format using PathTransformerService
+            const mapViewPath = pathTransformerService.transformForMapView(strategyResult);
 
-            // Debug logging
-            console.log('Strategy Path:', strategyPath);
+            // Log for debugging
+            console.log('Route found:', strategyResult);
             console.log('Transformed MapView Path:', mapViewPath);
-            console.log('Transformation Stats:', pathTransformerService.getTransformationStats(strategyPath, mapViewPath));
+            console.log('Transformation Stats:',
+                pathTransformerService.getTransformationStats(strategyResult, mapViewPath));
 
             // Pass the transformed path to the parent component
-            onFindPath(mapViewPath, error);
+            onFindPath(mapViewPath, error, routeMetadata);
         }
 
         setShowComparison(false);
         clearStrategyComparison();
     };
 
+    // Compare all available strategies
     const handleCompareStrategies = async () => {
         if (!start || !end) return;
+
         const [startLat, startLng] = start.coordinates.map(Number);
         const [endLat, endLng] = end.coordinates.map(Number);
 
+        // Use Strategy pattern to compare all strategies
         const results = await compareAllStrategies(
             [startLng, startLat],
             [endLng, endLat],
@@ -137,19 +157,21 @@ const NavigationTab = ({
             console.log('Best Strategy Result:', results[0]);
             console.log('Transformed for MapView:', mapViewPath);
 
-            onFindPath(mapViewPath, null);
+            onFindPath(mapViewPath, null, results[0].metadata);
             setShowComparison(true);
         }
     };
 
+    // Select a route from comparison results
     const handleSelectComparisonRoute = (index) => {
         selectRouteFromComparison(index);
+
         if (strategyComparison[index]) {
             // Transform the selected route for MapView
             const selectedStrategyPath = strategyComparison[index].path;
             const mapViewPath = pathTransformerService.transformForMapView(selectedStrategyPath);
 
-            onFindPath(mapViewPath, null);
+            onFindPath(mapViewPath, null, strategyComparison[index].metadata);
         }
     };
 
@@ -164,6 +186,7 @@ const NavigationTab = ({
                 </div>
 
                 <div className="flex-1 flex flex-col gap-4">
+                    {/* Start location input */}
                     <div className="relative flex gap-2">
                         <input
                             type="text"
@@ -175,10 +198,13 @@ const NavigationTab = ({
                         />
                         <button
                             onClick={() => handlePickLocation('start')}
+                            aria-label="Pick start location on map"
                             className={`p-2 rounded-md transition-colors ${pickingStart ? 'bg-green-100' : 'hover:bg-green-50'}`}
                         >
                             <FiCrosshair className="text-green-500" />
                         </button>
+
+                        {/* Start location suggestions */}
                         {!startClicked && startSuggestions.length > 0 && (
                             <ul className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
                                 {startSuggestions.map((suggestion, index) => (
@@ -197,6 +223,7 @@ const NavigationTab = ({
                         )}
                     </div>
 
+                    {/* End location input */}
                     <div className="relative flex gap-2">
                         <input
                             type="text"
@@ -208,10 +235,13 @@ const NavigationTab = ({
                         />
                         <button
                             onClick={() => handlePickLocation('end')}
+                            aria-label="Pick end location on map"
                             className={`p-2 rounded-md transition-colors ${pickingEnd ? 'bg-green-100' : 'hover:bg-green-50'}`}
                         >
                             <FiCrosshair className="text-green-500" />
                         </button>
+
+                        {/* End location suggestions */}
                         {!endClicked && endSuggestions.length > 0 && (
                             <ul className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
                                 {endSuggestions.map((suggestion, index) => (
@@ -233,6 +263,7 @@ const NavigationTab = ({
 
                 <button
                     onClick={handleSwap}
+                    aria-label="Swap start and end locations"
                     className="p-2 hover:bg-green-50 rounded-md transition-colors mt-auto mb-auto"
                 >
                     <FaArrowsUpDown className="text-green-500" />
@@ -247,6 +278,7 @@ const NavigationTab = ({
                     </label>
                     <button
                         onClick={() => setShowStrategyInfo(!showStrategyInfo)}
+                        aria-label="Show strategy information"
                         className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                     >
                         <FaInfoCircle className="text-gray-400 text-sm" />
@@ -257,6 +289,7 @@ const NavigationTab = ({
                     value={selectedStrategy}
                     onChange={(e) => handleStrategyChange(e.target.value)}
                     className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                    aria-label="Select route strategy"
                 >
                     {getAvailableStrategies().map((strategy) => (
                         <option key={strategy.key} value={strategy.key}>
@@ -265,6 +298,7 @@ const NavigationTab = ({
                     ))}
                 </select>
 
+                {/* Strategy information */}
                 {showStrategyInfo && (
                     <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
                         <p className="text-sm text-blue-800">
@@ -274,6 +308,7 @@ const NavigationTab = ({
                 )}
             </div>
 
+            {/* Error display */}
             {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
                     <p className="text-sm text-red-600">{error}</p>
@@ -373,10 +408,13 @@ const NavigationTab = ({
                 </div>
             )}
 
-            {/* Route Details */}
+            {/* Route Details - Using enhanced RouteDetails component with Composite pattern */}
             {path && path.length > 0 && (
                 <div className="mt-4">
-                    <RouteDetails path={path} />
+                    <RouteDetails
+                        path={path}
+                        route={route} // Pass Route composite object if available
+                    />
                 </div>
             )}
         </div>
