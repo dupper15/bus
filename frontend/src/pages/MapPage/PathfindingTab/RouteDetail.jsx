@@ -13,16 +13,28 @@ const calculateBusTime = (distanceKm) => {
 
 const RouteDetails = ({ path, fare = "6k VND" }) => {
     const [activeTab, setActiveTab] = useState('details');
-    if (!path || path.length === 0) return null;
+
+    // Safety check for path
+    if (!path || !Array.isArray(path) || path.length === 0) {
+        return (
+            <div className="bg-white rounded-lg shadow p-6">
+                <p className="text-gray-500 text-center">No route information available</p>
+            </div>
+        );
+    }
 
     const renderRouteDetails = () => (
         <div className="p-6 space-y-6">
             {path.map((segment, index) => {
                 const isWalking = segment.type === 'walking';
-                const distance = segment.distance;
+                const distance = segment.distance || 0;
                 const time = isWalking
                     ? calculateWalkingTime(distance)
                     : calculateBusTime(distance);
+
+                // Handle different segment structures
+                const fromName = getLocationName(segment.from);
+                const toName = getLocationName(segment.to);
 
                 return (
                     <div key={index} className="flex items-start gap-5">
@@ -39,17 +51,13 @@ const RouteDetails = ({ path, fare = "6k VND" }) => {
                                 <div className="flex-1">
                                     <p className="text-gray-900 font-medium text-base">
                                         {isWalking ? (
-                                            `Walk to ${segment.to?.name || 'destination'}`
+                                            `Walk to ${toName}`
                                         ) : (
-                                            `Take ${segment.line?.name || 'Bus'} towards ${segment.to[segment.to.length - 1].name}`
+                                            `Take ${segment.line?.name || 'Bus'} towards ${toName}`
                                         )}
                                     </p>
                                     <p className="text-gray-500 mt-1">
-                                        {isWalking ? (
-                                            `From ${segment.from?.name || 'current location'}`
-                                        ) : (
-                                            `From ${segment.from?.name} to ${segment.to[segment.to.length - 1].name}`
-                                        )}
+                                        {`From ${fromName}`}
                                     </p>
                                 </div>
                                 <div className="text-right ml-4">
@@ -68,9 +76,14 @@ const RouteDetails = ({ path, fare = "6k VND" }) => {
                                     <span className="text-gray-500">
                                         • Next bus in {Math.floor(Math.random() * 10) + 1} mins
                                     </span>
-                                    {segment.to.length > 2 && (
+                                    {segment.intermediateStops && segment.intermediateStops.length > 2 && (
                                         <span className="text-gray-500">
-                                            • {segment.to.length - 2} stops
+                                            • {segment.intermediateStops.length - 2} stops
+                                        </span>
+                                    )}
+                                    {segment.stops && Array.isArray(segment.stops) && segment.stops.length > 2 && (
+                                        <span className="text-gray-500">
+                                            • {segment.stops.length - 2} stops
                                         </span>
                                     )}
                                 </div>
@@ -100,23 +113,32 @@ const RouteDetails = ({ path, fare = "6k VND" }) => {
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 mb-4">
                                 <FaBus className="text-gray-600 text-xl" />
-                                <span className="font-medium">{segment.line?.name}</span>
+                                <span className="font-medium">{segment.line?.name || 'Bus Route'}</span>
                             </div>
                             <div className="space-y-3 pl-8">
-                                {segment.to.map((stop, stopIndex) => (
-                                    <div key={stopIndex} className="flex items-center gap-3">
-                                        <div className="relative flex items-center">
-                                            <FaCircle className={`w-2 h-2 ${stopIndex === 0 || stopIndex === segment.to.length - 1 ? 'text-green-500' : 'text-gray-400'}`} />
-                                            {stopIndex !== segment.to.length - 1 && (
-                                                <div className="absolute top-3 left-1 w-px h-6 bg-gray-300" />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-gray-900">{stop.name}</p>
-                                            <p className="text-sm text-gray-500">{stop.address}</p>
-                                        </div>
+                                {renderBusStops(segment)}
+                            </div>
+                        </div>
+                    )}
+                    {segment.type === 'walking' && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 mb-4">
+                                <FaWalking className="text-gray-600 text-xl" />
+                                <span className="font-medium">Walking</span>
+                            </div>
+                            <div className="space-y-3 pl-8">
+                                <div className="flex items-center gap-3">
+                                    <FaCircle className="w-2 h-2 text-green-500" />
+                                    <div>
+                                        <p className="font-medium text-gray-900">{getLocationName(segment.from)}</p>
                                     </div>
-                                ))}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <FaCircle className="w-2 h-2 text-green-500" />
+                                    <div>
+                                        <p className="font-medium text-gray-900">{getLocationName(segment.to)}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -124,6 +146,58 @@ const RouteDetails = ({ path, fare = "6k VND" }) => {
             ))}
         </div>
     );
+
+    // Helper function to render bus stops for a segment
+    const renderBusStops = (segment) => {
+        let stops = [];
+
+        // Handle different stop structures from strategy pattern
+        if (segment.intermediateStops && Array.isArray(segment.intermediateStops)) {
+            stops = segment.intermediateStops;
+        } else if (segment.stops && Array.isArray(segment.stops)) {
+            stops = segment.stops;
+        } else if (segment.from && segment.to) {
+            // Fallback: just show from and to
+            stops = [segment.from, segment.to];
+        }
+
+        return stops.map((stop, stopIndex) => (
+            <div key={stopIndex} className="flex items-center gap-3">
+                <div className="relative flex items-center">
+                    <FaCircle className={`w-2 h-2 ${
+                        stopIndex === 0 || stopIndex === stops.length - 1
+                            ? 'text-green-500'
+                            : 'text-gray-400'
+                    }`} />
+                    {stopIndex !== stops.length - 1 && (
+                        <div className="absolute top-3 left-1 w-px h-6 bg-gray-300" />
+                    )}
+                </div>
+                <div>
+                    <p className="font-medium text-gray-900">{getLocationName(stop)}</p>
+                    {stop.address && (
+                        <p className="text-sm text-gray-500">{stop.address}</p>
+                    )}
+                </div>
+            </div>
+        ));
+    };
+
+    // Helper function to get location name from different object structures
+    const getLocationName = (location) => {
+        if (!location) return 'Unknown location';
+
+        if (typeof location === 'string') return location;
+        if (location.name) return location.name;
+        if (location.formatted) return location.formatted;
+
+        // Handle coordinate arrays or objects
+        if (Array.isArray(location) && location.length === 2) {
+            return `${location[0].toFixed(4)}, ${location[1].toFixed(4)}`;
+        }
+
+        return 'Unknown location';
+    };
 
     return (
         <div className="bg-white rounded-lg shadow">

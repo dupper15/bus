@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import mapDisplayService from "@/services/MapDisplayService.js";
 
 /**
- * MapViewModel - Refactored to use MapDisplayService facade
+ * MapViewModel - Enhanced to handle Strategy pattern route structures
  * Handles map state and delegates all MapBox operations to the service layer
  */
-const useMapViewModel = ({busLines, stops, selectedStopCoordinates, mode, path, onMapClick }) => {
+const useMapViewModel = ({ busLines, stops, selectedStopCoordinates, mode, path, onMapClick }) => {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
     const [error] = useState(null);
@@ -25,7 +25,7 @@ const useMapViewModel = ({busLines, stops, selectedStopCoordinates, mode, path, 
                 mapRef.current.remove();
             }
         };
-    }, []);
+    }, [onMapClick]);
 
     // Handle bus stops display
     useEffect(() => {
@@ -67,11 +67,18 @@ const useMapViewModel = ({busLines, stops, selectedStopCoordinates, mode, path, 
         }
     }, [busLines, mode]);
 
-    // Handle navigation path display
+    // Handle navigation path display - Now expects pre-transformed path
     useEffect(() => {
         if (!mapRef.current || !Array.isArray(path) || path.length === 0) return;
 
-        mapDisplayService.displayNavigationPath(mapRef.current, path);
+        console.log('MapViewModel received path:', path); // Debug log
+
+        // Path should already be transformed by PathTransformerService
+        if (path.length > 0 && path[0].coords) {
+            mapDisplayService.displayNavigationPath(mapRef.current, path);
+        } else {
+            console.warn('MapViewModel received path without coords property:', path);
+        }
     }, [path]);
 
     return {

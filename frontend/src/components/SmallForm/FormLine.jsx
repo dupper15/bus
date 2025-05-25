@@ -44,8 +44,7 @@ import StopService from "@/services/StopService.js";
 import { warning, error } from "@/components/ui/alert.jsx";
 import { cn } from "@/lib/utils";
 
-mapboxgl.accessToken =
-    "pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg";
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const formSchema = z.object({
   name: z.string().nonempty({ message: "Name is required." }),

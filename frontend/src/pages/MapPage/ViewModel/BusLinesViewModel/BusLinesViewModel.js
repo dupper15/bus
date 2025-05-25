@@ -2,11 +2,12 @@ import { useState, useCallback, useEffect } from "react";
 import LineService from "@/services/LineService";
 import StopService from "@/services/StopService";
 import routingService from "@/services/RoutingService";
+import routeFinderContext from "@/services/strategies/RouteFinderContext";
 import { transformLine, transformStop } from "@/utils/Transformer.js";
 
 /**
- * BusLinesViewModel - Refactored to use service layer
- * Manages bus lines and stops state, delegating route operations to services
+ * BusLinesViewModel - Enhanced for Strategy pattern compatibility
+ * Manages bus lines and stops state, with enhanced pathfinding capabilities
  */
 const useBusLinesViewModel = () => {
     // State variables
@@ -23,6 +24,10 @@ const useBusLinesViewModel = () => {
     const [startCoordinates, setStartCoordinates] = useState("");
     const [endCoordinates, setEndCoordinates] = useState("");
     const [viewMode, setViewMode] = useState("outbound");
+
+    // New strategy-related state
+    const [currentStrategy, setCurrentStrategy] = useState(routeFinderContext.getCurrentStrategyType());
+    const [routeMetadata, setRouteMetadata] = useState(null);
 
     // Fetch lines
     const fetchLines = useCallback(async () => {
@@ -87,6 +92,10 @@ const useBusLinesViewModel = () => {
         setBusLines([]); // Clear bus lines to indicate loading
         fetchBusLine(line);
         setError(null); // Clear any previous errors
+
+        // Clear any existing path when selecting a new line
+        setPath([]);
+        setRouteMetadata(null);
     };
 
     // Handle back
@@ -95,6 +104,8 @@ const useBusLinesViewModel = () => {
         setBusLines([]);
         setSelectedStop(null);
         setSelectedStopCoordinates(null);
+        setPath([]);
+        setRouteMetadata(null);
     };
 
     // Handle stop selection
@@ -106,13 +117,96 @@ const useBusLinesViewModel = () => {
         }
     };
 
-    // Handle path finding
-    const handleFindPath = (newPath, newError) => {
+    // Enhanced path finding with strategy support
+    const handleFindPath = (newPath, newError, metadata = null) => {
         if (newPath) {
             setPath(newPath);
+            setRouteMetadata(metadata);
             setError(null);
         } else {
             setError(newError);
+            setPath([]);
+            setRouteMetadata(null);
+        }
+    };
+
+    // Enhanced path finding using RouteFinderContext
+    const findPathWithStrategy = async (startCoords, endCoords, strategyType = null) => {
+        try {
+            setError(null);
+
+            // Use specific strategy if provided, otherwise use current
+            if (strategyType && strategyType !== currentStrategy) {
+                routeFinderContext.setStrategy(strategyType);
+                setCurrentStrategy(strategyType);
+            }
+
+            const result = await routeFinderContext.findPath(
+                startCoords,
+                endCoords,
+                stops,
+                lines
+            );
+
+            if (result && result.path) {
+                setPath(result.path);
+                setRouteMetadata(result.metadata);
+                setError(null);
+                return result;
+            } else {
+                throw new Error("No valid path found with the selected strategy.");
+            }
+        } catch (error) {
+            console.error("Error finding path:", error);
+            setError(error.message || "An error occurred while finding the path.");
+            setPath([]);
+            setRouteMetadata(null);
+            return null;
+        }
+    };
+
+    // Compare all strategies for a route
+    const compareStrategies = async (startCoords, endCoords) => {
+        try {
+            setError(null);
+
+            const results = await routeFinderContext.compareStrategies(
+                startCoords,
+                endCoords,
+                stops,
+                lines
+            );
+
+            // Set the best result as current path
+            if (results.length > 0) {
+                setPath(results[0].path);
+                setRouteMetadata(results[0].metadata);
+            }
+
+            return results;
+        } catch (error) {
+            console.error("Error comparing strategies:", error);
+            setError(error.message || "An error occurred while comparing strategies.");
+            return [];
+        }
+    };
+
+    // Get available strategies
+    const getAvailableStrategies = () => {
+        return routeFinderContext.getAvailableStrategies();
+    };
+
+    // Change current strategy
+    const changeStrategy = (strategyType) => {
+        try {
+            routeFinderContext.setStrategy(strategyType);
+            setCurrentStrategy(strategyType);
+
+            // If there's an existing path, we could optionally recalculate it
+            console.log(`Strategy changed to: ${strategyType}`);
+        } catch (error) {
+            console.error("Error changing strategy:", error);
+            setError("Failed to change pathfinding strategy");
         }
     };
 
@@ -126,6 +220,18 @@ const useBusLinesViewModel = () => {
         } else if (focusedInput === "end") {
             setEndCoordinates(coordinates.join(", "));
         }
+    };
+
+    // Get route recommendations based on context
+    const getRouteRecommendations = (context = {}) => {
+        return routeFinderContext.getStrategyRecommendations(context);
+    };
+
+    // Clear path and related data
+    const clearPath = () => {
+        setPath([]);
+        setRouteMetadata(null);
+        setError(null);
     };
 
     // Fetch stops and lines on mount
@@ -149,6 +255,14 @@ const useBusLinesViewModel = () => {
         }
     }, [error]);
 
+    // Monitor current strategy changes
+    useEffect(() => {
+        const strategyType = routeFinderContext.getCurrentStrategyType();
+        if (strategyType !== currentStrategy) {
+            setCurrentStrategy(strategyType);
+        }
+    }, [currentStrategy]);
+
     // Filter lines based on search query
     const filteredLines = lines.filter((line) => {
         const searchLower = searchQuery.toLowerCase();
@@ -164,6 +278,7 @@ const useBusLinesViewModel = () => {
     });
 
     return {
+        // Existing functionality
         lines: filteredLines,
         fetchLines,
         stops,
@@ -190,7 +305,31 @@ const useBusLinesViewModel = () => {
         viewMode,
         setViewMode,
         setError,
-        setPath
+        setPath,
+
+        // Enhanced strategy-related functionality
+        currentStrategy,
+        routeMetadata,
+        findPathWithStrategy,
+        compareStrategies,
+        getAvailableStrategies,
+        changeStrategy,
+        getRouteRecommendations,
+        clearPath,
+
+        // Strategy context access
+        routeFinderContext: () => routeFinderContext,
+
+        // Utility functions
+        getRouteStats: () => {
+            if (!path || path.length === 0) return null;
+            return routingService.getRouteSummary({ segments: path });
+        },
+
+        validateCurrentRoute: (constraints) => {
+            if (!path || path.length === 0) return false;
+            return routingService.validateRoute({ segments: path }, constraints);
+        }
     };
 };
 

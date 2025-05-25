@@ -1,4 +1,4 @@
-import mapBoxFacade from "@/services/ MapBoxFacade.js";
+import mapBoxFacade from "@/services/MapBoxFacade.js";
 
 /**
  * GeolocationService handles location-based operations including
@@ -7,7 +7,7 @@ import mapBoxFacade from "@/services/ MapBoxFacade.js";
 class GeolocationService {
     constructor() {
         this.mapBoxFacade = mapBoxFacade;
-        this.geoapifyApiKey = 'YOUR_GEOAPIFY_API_KEY'; // This should be configured
+        this.geoapifyApiKey = import.meta.env.VITE_GEOAPIFY_API_KEY;
     }
 
     /**
@@ -33,6 +33,7 @@ class GeolocationService {
             );
 
             if (!response.ok) {
+                console.log("response", response);
                 throw new Error('Failed to fetch location suggestions');
             }
 

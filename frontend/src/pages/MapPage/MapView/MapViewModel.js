@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-mapboxgl.accessToken = "pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg";
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const useMapViewModel = ({ mapData, busLines, stops, selectedStopCoordinates, mode, path, onMapClick }) => {
     const mapContainerRef = useRef(null);

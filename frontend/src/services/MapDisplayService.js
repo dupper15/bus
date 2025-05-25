@@ -1,4 +1,4 @@
-import mapBoxFacade from "@/services/ MapBoxFacade.js";
+import mapBoxFacade from "@/services/MapBoxFacade.js";
 
 
 /**
@@ -163,14 +163,17 @@ class MapDisplayService {
 
     /**
      * Displays a navigation path with multiple segments
+     * Enhanced to handle transformed path structure from PathTransformerService
      * @param {Object} map - Map instance
-     * @param {Array} pathSegments - Array of path segments
+     * @param {Array} pathSegments - Array of path segments (transformed format)
      */
     async displayNavigationPath(map, pathSegments) {
         await this.mapBoxFacade.waitForStyleLoad(map);
 
         // Clear existing paths
         this.clearRoute(map);
+
+        console.log('MapDisplayService received path segments:', pathSegments); // Debug log
 
         const allCoordinates = [];
 
@@ -179,26 +182,35 @@ class MapDisplayService {
             const segment = pathSegments[i];
             const segmentId = `path-${segment.type}-${i}`;
 
-            if (segment.coordinates && segment.coordinates.length > 0) {
-                allCoordinates.push(...segment.coordinates);
+            // Handle both 'coords' (transformed) and 'coordinates' (original) properties
+            const segmentCoords = segment.coords || segment.coordinates || [];
 
-                // Add segment to map
+            if (segmentCoords && segmentCoords.length > 0) {
+                allCoordinates.push(...segmentCoords);
+
+                // Add main path
                 this.mapBoxFacade.addRouteLayer(map, {
                     id: segmentId,
-                    coordinates: segment.coordinates,
+                    coordinates: segmentCoords, // MapBoxFacade expects 'coordinates'
                     color: this.themeColor,
                     width: 4
                 });
 
                 // Add arrows for direction
-                this.addRouteArrows(map, `arrow-${segment.type}-${i}`, segment.coordinates);
+                this.addRouteArrows(map, `arrow-${segment.type}-${i}`, segmentCoords);
+            } else {
+                console.warn(`Segment ${i} has no coordinates:`, segment);
             }
         }
 
         // Fit map to show entire path
         if (allCoordinates.length > 0) {
-            const bounds = this.mapBoxFacade.createBounds(allCoordinates);
-            this.mapBoxFacade.fitBounds(map, bounds);
+            try {
+                const bounds = this.mapBoxFacade.createBounds(allCoordinates);
+                this.mapBoxFacade.fitBounds(map, bounds);
+            } catch {
+                console.warn('No coordinates found in any path segments');
+            }
         }
     }
 

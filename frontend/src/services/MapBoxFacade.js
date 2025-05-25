@@ -324,5 +324,5 @@ class MapBoxFacade {
 }
 
 // Export singleton instance
-const mapBoxFacade = new MapBoxFacade("pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg");
+const mapBoxFacade = new MapBoxFacade(import.meta.env.VITE_MAPBOX_ACCESS_TOKEN);
 export default mapBoxFacade;
