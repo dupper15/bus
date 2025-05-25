@@ -36,7 +36,7 @@ class WalkingSegment extends RouteComponent {
      * @returns {number} - Duration in minutes
      */
     getDuration() {
-        return this.duration;
+        return Math.round(this.duration * 10) / 10;
     }
 
     /**

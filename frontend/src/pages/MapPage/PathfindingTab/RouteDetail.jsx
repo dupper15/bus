@@ -80,7 +80,7 @@ const RouteDetails = ({ path, route, fare = "6k VND" }) => {
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-500">Score:</span>
-                                <span className="font-medium">{summary.optimizationScore}</span>
+                                <span className="font-medium">{summary.optimizationScore?.toFixed(1)}</span>
                             </div>
                         </div>
                     </div>
@@ -99,11 +99,11 @@ const RouteDetails = ({ path, route, fare = "6k VND" }) => {
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-500">Walking distance:</span>
-                                <span className="font-medium">{summary.walkingDistance.toFixed(1)}km</span>
+                                <span className="font-medium">{summary.walkingDistance?.toFixed(1)}km</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-500">Bus distance:</span>
-                                <span className="font-medium">{summary.busDistance.toFixed(1)}km</span>
+                                <span className="font-medium">{summary.busDistance?.toFixed(1)}km</span>
                             </div>
                         </div>
                     </div>
@@ -146,18 +146,6 @@ const RouteDetails = ({ path, route, fare = "6k VND" }) => {
                         </div>
                     </div>
                 </div>
-
-                {/* Metadata */}
-                {summary.metadata && Object.keys(summary.metadata).length > 0 && (
-                    <div className="pt-4 border-t">
-                        <h3 className="font-medium text-gray-900 mb-3">Additional Information</h3>
-                        <div className="text-sm text-gray-600">
-                            <pre className="bg-gray-50 p-3 rounded-lg overflow-x-auto">
-                                {JSON.stringify(summary.metadata, null, 2)}
-                            </pre>
-                        </div>
-                    </div>
-                )}
             </div>
         );
     };

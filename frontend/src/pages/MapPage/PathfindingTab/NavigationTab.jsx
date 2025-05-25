@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { FaMapMarkerAlt, FaInfoCircle } from "react-icons/fa";
 import { FiMapPin, FiCrosshair } from "react-icons/fi";
@@ -62,6 +62,18 @@ const NavigationTab = ({
     const [showStrategyInfo, setShowStrategyInfo] = useState(false);
     const [showComparison, setShowComparison] = useState(false);
 
+    // Loading states for search suggestions
+    const [startLoading, setStartLoading] = useState(false);
+    const [endLoading, setEndLoading] = useState(false);
+
+    // Show/hide states for suggestion boxes
+    const [showStartSuggestions, setShowStartSuggestions] = useState(false);
+    const [showEndSuggestions, setShowEndSuggestions] = useState(false);
+
+    // Refs for suggestion containers
+    const startSuggestionsRef = useRef(null);
+    const endSuggestionsRef = useRef(null);
+
     // Update local state when props change
     useEffect(() => {
         if (startCoordinates) handleStartChange(startCoordinates);
@@ -71,16 +83,62 @@ const NavigationTab = ({
         if (endCoordinates) handleEndChange(endCoordinates);
     }, [endCoordinates, handleEndChange]);
 
-    // Handle input changes
+    // Handle clicks outside suggestion boxes
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (startSuggestionsRef.current && !startSuggestionsRef.current.contains(event.target)) {
+                setShowStartSuggestions(false);
+            }
+            if (endSuggestionsRef.current && !endSuggestionsRef.current.contains(event.target)) {
+                setShowEndSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    // Handle input changes with sustained search box visibility
     const handleStartInputChange = (value) => {
-        setStartClicked(false);
         handleStartChange(value);
+
+        if (value.trim()) {
+            setShowStartSuggestions(true);
+            setStartLoading(true);
+            // Loading will be set to false when suggestions arrive
+        } else {
+            setShowStartSuggestions(false);
+            setStartLoading(false);
+        }
     };
 
     const handleEndInputChange = (value) => {
-        setEndClicked(false);
         handleEndChange(value);
+
+        if (value.trim()) {
+            setShowEndSuggestions(true);
+            setEndLoading(true);
+            // Loading will be set to false when suggestions arrive
+        } else {
+            setShowEndSuggestions(false);
+            setEndLoading(false);
+        }
     };
+
+    // Update loading states when suggestions change
+    useEffect(() => {
+        if (startSuggestions.length > 0 || start.name === '') {
+            setStartLoading(false);
+        }
+    }, [startSuggestions, start.name]);
+
+    useEffect(() => {
+        if (endSuggestions.length > 0 || end.name === '') {
+            setEndLoading(false);
+        }
+    }, [endSuggestions, end.name]);
 
     // Handle picking locations on map
     const handlePickLocation = (type) => {
@@ -187,13 +245,18 @@ const NavigationTab = ({
 
                 <div className="flex-1 flex flex-col gap-4">
                     {/* Start location input */}
-                    <div className="relative flex gap-2">
+                    <div className="relative flex gap-2" ref={startSuggestionsRef}>
                         <input
                             type="text"
                             placeholder="Choose starting point..."
                             value={start.name || ""}
                             onChange={(e) => handleStartInputChange(e.target.value)}
-                            onFocus={() => onInputFocus("start")}
+                            onFocus={() => {
+                                onInputFocus("start");
+                                if (start.name && start.name.trim()) {
+                                    setShowStartSuggestions(true);
+                                }
+                            }}
                             className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 placeholder:text-gray-400"
                         />
                         <button
@@ -204,33 +267,54 @@ const NavigationTab = ({
                             <FiCrosshair className="text-green-500" />
                         </button>
 
-                        {/* Start location suggestions */}
-                        {!startClicked && startSuggestions.length > 0 && (
-                            <ul className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                {startSuggestions.map((suggestion, index) => (
-                                    <li
-                                        key={index}
-                                        onClick={() => {
-                                            handleStartSuggestionClick(suggestion);
-                                            setStartClicked(true);
-                                        }}
-                                        className="px-3 py-2 text-sm hover:bg-green-50 cursor-pointer"
-                                    >
-                                        {suggestion.name}
+                        {/* Start location suggestions - positioned below input */}
+                        {showStartSuggestions && (
+                            <ul className="absolute z-10 w-full top-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                {startLoading ? (
+                                    <li className="px-3 py-4 text-center">
+                                        <div className="flex items-center justify-center">
+                                            <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                            <span className="text-sm text-gray-500">Searching...</span>
+                                        </div>
                                     </li>
-                                ))}
+                                ) : startSuggestions.length > 0 ? (
+                                    startSuggestions.map((suggestion, index) => (
+                                        <li
+                                            key={index}
+                                            onClick={() => {
+                                                handleStartSuggestionClick(suggestion);
+                                                setShowStartSuggestions(false);
+                                            }}
+                                            className="px-3 py-2 text-sm hover:bg-green-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                        >
+                                            <div className="font-medium">{suggestion.name}</div>
+                                            {suggestion.address && (
+                                                <div className="text-xs text-gray-500 mt-1">{suggestion.address}</div>
+                                            )}
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li className="px-3 py-4 text-center text-sm text-gray-500">
+                                        No locations found
+                                    </li>
+                                )}
                             </ul>
                         )}
                     </div>
 
                     {/* End location input */}
-                    <div className="relative flex gap-2">
+                    <div className="relative flex gap-2" ref={endSuggestionsRef}>
                         <input
                             type="text"
                             placeholder="Choose destination..."
                             value={end.name || ""}
                             onChange={(e) => handleEndInputChange(e.target.value)}
-                            onFocus={() => onInputFocus("end")}
+                            onFocus={() => {
+                                onInputFocus("end");
+                                if (end.name && end.name.trim()) {
+                                    setShowEndSuggestions(true);
+                                }
+                            }}
                             className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 placeholder:text-gray-400"
                         />
                         <button
@@ -241,21 +325,37 @@ const NavigationTab = ({
                             <FiCrosshair className="text-green-500" />
                         </button>
 
-                        {/* End location suggestions */}
-                        {!endClicked && endSuggestions.length > 0 && (
-                            <ul className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                {endSuggestions.map((suggestion, index) => (
-                                    <li
-                                        key={index}
-                                        onClick={() => {
-                                            handleEndSuggestionClick(suggestion);
-                                            setEndClicked(true);
-                                        }}
-                                        className="px-3 py-2 text-sm hover:bg-green-50 cursor-pointer"
-                                    >
-                                        {suggestion.name}
+                        {/* End location suggestions - positioned below input */}
+                        {showEndSuggestions && (
+                            <ul className="absolute z-10 w-full top-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                {endLoading ? (
+                                    <li className="px-3 py-4 text-center">
+                                        <div className="flex items-center justify-center">
+                                            <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                            <span className="text-sm text-gray-500">Searching...</span>
+                                        </div>
                                     </li>
-                                ))}
+                                ) : endSuggestions.length > 0 ? (
+                                    endSuggestions.map((suggestion, index) => (
+                                        <li
+                                            key={index}
+                                            onClick={() => {
+                                                handleEndSuggestionClick(suggestion);
+                                                setShowEndSuggestions(false);
+                                            }}
+                                            className="px-3 py-2 text-sm hover:bg-green-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                        >
+                                            <div className="font-medium">{suggestion.name}</div>
+                                            {suggestion.address && (
+                                                <div className="text-xs text-gray-500 mt-1">{suggestion.address}</div>
+                                            )}
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li className="px-3 py-4 text-center text-sm text-gray-500">
+                                        No locations found
+                                    </li>
+                                )}
                             </ul>
                         )}
                     </div>
@@ -388,22 +488,6 @@ const NavigationTab = ({
                                 )}
                             </div>
                         ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Route Metadata */}
-            {routeMetadata && (
-                <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
-                    <div className="text-xs text-gray-600 space-y-1">
-                        <div className="font-medium">Route Info:</div>
-                        <div>Strategy: {routeMetadata.strategy}</div>
-                        <div>Transfers: {routeMetadata.transfers}</div>
-                        <div>Walking Distance: {routeMetadata.totalWalking?.toFixed(1)}km</div>
-                        <div>Total Distance: {routeMetadata.totalDistance?.toFixed(1)}km</div>
-                        {routeMetadata.score && (
-                            <div>Optimization Score: {routeMetadata.score.toFixed(1)}</div>
-                        )}
                     </div>
                 </div>
             )}

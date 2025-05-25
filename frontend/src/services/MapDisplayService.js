@@ -1,20 +1,47 @@
 import mapBoxFacade from "@/services/MapBoxFacade.js";
 
-
 /**
  * MapDisplayService handles all map visualization operations including
  * route display, marker management, and map interactions.
+ * Enhanced with smart stop filtering based on zoom and viewport
  */
 class MapDisplayService {
     constructor() {
         this.mapBoxFacade = mapBoxFacade;
         this.themeColor = "#22C55E";
         this.highlightColor = "#16A34A";
+
+        // Colors for different segment types
+        this.segmentColors = {
+            walking: "#3B82F6",    // Blue for walking
+            bus: "#22C55E",        // Green for bus
+            transfer: "#F59E0B"    // Orange for transfers
+        };
+
         this.stopMarkers = new Map();
+        this.allStops = []; // Store all stops for filtering
+        this.currentZoom = 13;
+        this.currentBounds = null;
+        this.isUpdatingStops = false;
+
+        // Zoom-based stop density configuration
+        // Lower zoom = zoomed out = fewer stops
+        // Higher zoom = zoomed in = more stops
+        this.zoomConfig = {
+            9: { maxStops: 10, gridSize: 0.05, showOnlyMajor: true },    // Very zoomed out - major hubs only
+            10: { maxStops: 20, gridSize: 0.03, showOnlyMajor: true },   // Zoomed out - important stops
+            11: { maxStops: 50, gridSize: 0.02, showOnlyMajor: false },  // Medium-far
+            12: { maxStops: 100, gridSize: 0.015, showOnlyMajor: false }, // Medium
+            13: { maxStops: 200, gridSize: 0.01, showOnlyMajor: false },  // Default zoom
+            14: { maxStops: 400, gridSize: 0.008, showOnlyMajor: false }, // Zoomed in
+            15: { maxStops: 600, gridSize: 0.005, showOnlyMajor: false }, // Very zoomed in
+            16: { maxStops: 1000, gridSize: 0.003, showOnlyMajor: false }, // Maximum detail
+            17: { maxStops: 1500, gridSize: 0.002, showOnlyMajor: false }  // Street level
+        };
     }
 
     /**
-     * Initializes a new map instance
+     * Initializes a new map instance with stop filtering
      * @param {HTMLElement} container - DOM element for the map
      * @param {Object} options - Map configuration options
      * @returns {Object} - Map instance
@@ -22,7 +49,300 @@ class MapDisplayService {
     initializeMap(container, options = {}) {
         const map = this.mapBoxFacade.createMap(container, options);
         this.mapBoxFacade.addNavigationControls(map);
+
+        // Set up event listeners for smart stop filtering
+        this.setupStopFiltering(map);
+
         return map;
+    }
+
+    /**
+     * Sets up smart stop filtering based on zoom and pan events
+     * @param {Object} map - Map instance
+     */
+    setupStopFiltering(map) {
+        // Debounced update function to prevent excessive calls
+        let updateTimeout;
+        const debouncedUpdate = () => {
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(() => {
+                this.updateVisibleStops(map);
+            }, 150); // 150ms debounce
+        };
+
+        // Listen for zoom changes
+        this.mapBoxFacade.setMapEventHandler(map, 'zoom', () => {
+            this.currentZoom = this.mapBoxFacade.getZoom(map);
+            debouncedUpdate();
+        });
+
+        // Listen for pan/move events
+        this.mapBoxFacade.setMapEventHandler(map, 'moveend', () => {
+            this.currentBounds = map.getBounds();
+            debouncedUpdate();
+        });
+
+        // Initial setup
+        map.on('load', () => {
+            this.currentZoom = this.mapBoxFacade.getZoom(map);
+            this.currentBounds = map.getBounds();
+            if (this.allStops.length > 0) {
+                this.updateVisibleStops(map);
+            }
+        });
+    }
+
+    /**
+     * Displays bus stops with smart filtering based on zoom and viewport
+     * @param {Object} map - Map instance
+     * @param {Array} stops - Array of bus stops
+     * @param {Object} options - Display options
+     */
+    displayBusStops(map, stops, options = {}) {
+        console.log('=== DisplayBusStops called ===');
+        console.log(`Total stops provided: ${stops?.length || 0}`);
+
+        // Store all stops for filtering
+        this.allStops = stops || [];
+
+        // Update current map state
+        this.currentZoom = this.mapBoxFacade.getZoom(map);
+        this.currentBounds = map.getBounds();
+
+        console.log(`Current zoom: ${this.currentZoom}, bounds available: ${!!this.currentBounds}`);
+
+        // Force clear any existing markers first
+        this.clearStopMarkers();
+
+        // Initial display with filtering
+        this.updateVisibleStops(map, options);
+    }
+
+    /**
+     * Updates visible stops based on current zoom and viewport
+     * @param {Object} map - Map instance
+     * @param {Object} options - Display options
+     */
+    updateVisibleStops(map, options = {}) {
+        if (this.isUpdatingStops || !this.allStops.length) return;
+
+        this.isUpdatingStops = true;
+
+        try {
+            console.log('=== Updating visible stops ===');
+
+            // Get current zoom configuration
+            const zoomLevel = Math.floor(this.currentZoom);
+            const config = this.getZoomConfig(zoomLevel);
+
+            console.log(`Zoom: ${this.currentZoom.toFixed(1)}, Config: max=${config.maxStops}, major=${config.showOnlyMajor}`);
+
+            // IMPORTANT: Clear existing markers FIRST
+            console.log(`Clearing ${this.stopMarkers.size} existing markers`);
+            this.clearStopMarkers();
+
+            // Filter stops based on viewport and zoom
+            const filteredStops = this.filterStopsForDisplay(config);
+
+            // Display filtered stops
+            this.displayFilteredStops(map, filteredStops, options, config);
+
+            console.log('=== Stop update complete ===');
+
+        } finally {
+            this.isUpdatingStops = false;
+        }
+    }
+
+    /**
+     * Gets zoom configuration for current zoom level
+     * @param {number} zoomLevel - Current zoom level
+     * @returns {Object} - Zoom configuration
+     */
+    getZoomConfig(zoomLevel) {
+        // Find the appropriate zoom level configuration
+        const availableZooms = Object.keys(this.zoomConfig).map(Number).sort((a, b) => a - b);
+
+        // Find the highest zoom level that's still <= current zoom
+        let targetZoom = availableZooms[0]; // Default to lowest zoom config
+
+        for (let zoom of availableZooms) {
+            if (zoomLevel >= zoom) {
+                targetZoom = zoom;
+            }
+        }
+
+        return this.zoomConfig[targetZoom];
+    }
+
+    /**
+     * Filters stops based on viewport bounds and zoom-based density
+     * @param {Object} config - Zoom configuration
+     * @returns {Array} - Filtered stops
+     */
+    filterStopsForDisplay(config) {
+        if (!this.currentBounds) {
+            // If no bounds, apply zoom-based filtering to all stops
+            let allStops = this.allStops;
+            if (config.showOnlyMajor) {
+                allStops = this.filterMajorStops(allStops);
+            }
+            return allStops.slice(0, config.maxStops);
+        }
+
+        // First filter: only stops within current viewport (with small buffer for smooth transitions)
+        const buffer = 0.001; // Small buffer to prevent stops disappearing at edges
+        const viewportStops = this.allStops.filter(stop => {
+            const lng = stop.pointX;
+            const lat = stop.pointY;
+
+            return lng >= (this.currentBounds.getWest() - buffer) &&
+                lng <= (this.currentBounds.getEast() + buffer) &&
+                lat >= (this.currentBounds.getSouth() - buffer) &&
+                lat <= (this.currentBounds.getNorth() + buffer);
+        });
+
+        console.log(`Viewport filter: ${viewportStops.length}/${this.allStops.length} stops in bounds`);
+
+        // Second filter: apply zoom-based importance filtering
+        let importanceFilteredStops = viewportStops;
+        if (config.showOnlyMajor) {
+            importanceFilteredStops = this.filterMajorStops(viewportStops);
+            console.log(`Major stops filter: ${importanceFilteredStops.length}/${viewportStops.length} major stops`);
+        }
+
+        // Third filter: apply grid-based density filtering
+        const densityFilteredStops = this.applyDensityFilter(importanceFilteredStops, config);
+        console.log(`Density filter: ${densityFilteredStops.length}/${importanceFilteredStops.length} after grid filtering`);
+
+        // Fourth filter: limit total count based on zoom
+        const finalStops = densityFilteredStops.slice(0, config.maxStops);
+        console.log(`Final filter: ${finalStops.length} stops (max: ${config.maxStops})`);
+
+        return finalStops;
+    }
+
+    /**
+     * Filters to show only major/important stops when zoomed out
+     * @param {Array} stops - Input stops
+     * @returns {Array} - Major stops only
+     */
+    filterMajorStops(stops) {
+        const majorStops = stops.filter(stop => {
+            // Priority 1: Highlighted stops (part of current route) always show
+            if (this.isStopHighlighted(stop)) {
+                return true;
+            }
+
+            // Priority 2: Stations (isStation: true from database)
+            if (stop.isStation === true) {
+                return true;
+            }
+
+            // Priority 3: Major landmarks based on name (as fallback)
+            const name = (stop.name || '').toLowerCase();
+            if (name.includes('bến xe') ||      // Bus terminals
+                name.includes('ga') ||          // Train stations
+                name.includes('sân bay') ||     // Airports
+                name.includes('bệnh viện') ||   // Hospitals
+                name.includes('đại học') ||     // Universities
+                name.includes('trường') ||      // Schools
+                name.includes('chợ') ||         // Markets
+                name.includes('trung tâm')) {   // Centers
+                return true;
+            }
+
+            return false;
+        });
+
+        console.log(`Major stops identified: ${majorStops.length}/${stops.length} (${majorStops.filter(s => s.isStation).length} stations)`);
+        return majorStops;
+    }
+
+    /**
+     * Applies grid-based density filtering to prevent overcrowding
+     * @param {Array} stops - Stops within viewport
+     * @param {Object} config - Zoom configuration
+     * @returns {Array} - Density-filtered stops
+     */
+    applyDensityFilter(stops, config) {
+        const gridSize = config.gridSize;
+        const grid = new Map();
+        const prioritizedStops = [];
+
+        // Sort stops by priority (highlighted stops first, then by importance)
+        const sortedStops = stops.sort((a, b) => {
+            // Prioritize highlighted stops
+            const aHighlighted = this.isStopHighlighted(a);
+            const bHighlighted = this.isStopHighlighted(b);
+
+            if (aHighlighted && !bHighlighted) return -1;
+            if (!aHighlighted && bHighlighted) return 1;
+
+            // Then prioritize by stop importance (could be based on transfer count, etc.)
+            return (b.importance || 0) - (a.importance || 0);
+        });
+
+        for (let stop of sortedStops) {
+            const gridX = Math.floor(stop.pointX / gridSize);
+            const gridY = Math.floor(stop.pointY / gridSize);
+            const gridKey = `${gridX},${gridY}`;
+
+            // If this grid cell is empty or this stop is highlighted, add it
+            if (!grid.has(gridKey) || this.isStopHighlighted(stop)) {
+                grid.set(gridKey, stop);
+                prioritizedStops.push(stop);
+            }
+        }
+
+        return prioritizedStops;
+    }
+
+    /**
+     * Checks if a stop should be highlighted (part of current route)
+     * @param {Object} stop - Bus stop object
+     * @returns {boolean} - Whether stop is highlighted
+     */
+    isStopHighlighted(stop) {
+        // This would be set by the current route/path
+        return stop.isHighlighted || false;
+    }
+
+    /**
+     * Displays the filtered stops on the map
+     * @param {Object} map - Map instance
+     * @param {Array} filteredStops - Filtered stops to display
+     * @param {Object} options - Display options
+     * @param {Object} config - Zoom configuration
+     */
+    displayFilteredStops(map, filteredStops, options = {}, config = null) {
+        const stopsInPath = options.highlightStops || new Set();
+
+        filteredStops.forEach((stop) => {
+            const isHighlighted = stopsInPath.has(stop.id);
+            stop.isHighlighted = isHighlighted; // Store for filtering priority
+
+            const markerElement = this.createBusStopMarker(stop, isHighlighted);
+
+            const marker = this.mapBoxFacade.placeMarker(map, {
+                coordinates: [stop.pointX, stop.pointY],
+                element: markerElement,
+                id: `stop-${stop.id}`,
+                popup: {
+                    html: this.createStopPopupContent(stop, isHighlighted),
+                    className: isHighlighted ? 'highlighted-popup' : ''
+                }
+            });
+
+            this.stopMarkers.set(stop.id, marker);
+        });
+
+        // Enhanced logging with config info
+        const configInfo = config ?
+            `(${config.showOnlyMajor ? 'major stops only' : 'all stops'})` :
+            '';
+
+        console.log(`Displaying ${filteredStops.length}/${this.allStops.length} stops at zoom ${this.currentZoom.toFixed(1)} ${configInfo}`);
     }
 
     /**
@@ -54,39 +374,6 @@ class MapDisplayService {
         if (options.showArrows !== false) {
             this.addRouteArrows(map, `arrow-${id}`, routeCoords);
         }
-    }
-
-    /**
-     * Displays bus stops on the map
-     * @param {Object} map - Map instance
-     * @param {Array} stops - Array of bus stops
-     * @param {Object} options - Display options
-     */
-    displayBusStops(map, stops, options = {}) {
-        // Clear existing stop markers
-        this.clearStopMarkers();
-
-        const stopsInPath = options.highlightStops || new Set();
-
-        stops.forEach((stop) => {
-            const isHighlighted = stopsInPath.has(stop.id);
-            const markerElement = this.createBusStopMarker(stop, isHighlighted);
-
-            const marker = this.mapBoxFacade.placeMarker(map, {
-                coordinates: [stop.pointX, stop.pointY],
-                element: markerElement,
-                id: `stop-${stop.id}`,
-                popup: {
-                    html: this.createStopPopupContent(stop, isHighlighted),
-                    className: isHighlighted ? 'highlighted-popup' : ''
-                }
-            });
-
-            this.stopMarkers.set(stop.id, marker);
-        });
-
-        // Set up zoom-based visibility
-        this.setupStopVisibility(map, stops);
     }
 
     /**
@@ -133,37 +420,8 @@ class MapDisplayService {
     }
 
     /**
-     * Sets up zoom-based visibility for bus stops
-     * @param {Object} map - Map instance
-     * @param {Array} stops - Array of bus stops
-     */
-    setupStopVisibility(map, stops) {
-        const updateVisibility = () => {
-            const currentZoom = Math.floor(this.mapBoxFacade.getZoom(map));
-            const maxZoom = 14;
-            const minZoom = 10;
-            const stopsToShow = Math.max(
-                0,
-                stops.length * (currentZoom - minZoom) / (maxZoom - minZoom)
-            );
-
-            let index = 0;
-            this.stopMarkers.forEach((marker) => {
-                const element = marker.getElement();
-                if (element) {
-                    element.style.display = index < stopsToShow ? "block" : "none";
-                }
-                index++;
-            });
-        };
-
-        this.mapBoxFacade.setMapEventHandler(map, "zoom", updateVisibility);
-        updateVisibility();
-    }
-
-    /**
      * Displays a navigation path with multiple segments
-     * Enhanced to handle transformed path structure from PathTransformerService
+     * Enhanced to handle different colors for different segment types
      * @param {Object} map - Map instance
      * @param {Array} pathSegments - Array of path segments (transformed format)
      */
@@ -177,7 +435,7 @@ class MapDisplayService {
 
         const allCoordinates = [];
 
-        // Process each segment
+        // Process each segment with appropriate colors
         for (let i = 0; i < pathSegments.length; i++) {
             const segment = pathSegments[i];
             const segmentId = `path-${segment.type}-${i}`;
@@ -188,16 +446,20 @@ class MapDisplayService {
             if (segmentCoords && segmentCoords.length > 0) {
                 allCoordinates.push(...segmentCoords);
 
-                // Add main path
+                // Get color based on segment type
+                const segmentColor = this.getSegmentColor(segment.type);
+                const segmentWidth = this.getSegmentWidth(segment.type);
+
+                // Add main path with type-specific styling
                 this.mapBoxFacade.addRouteLayer(map, {
                     id: segmentId,
-                    coordinates: segmentCoords, // MapBoxFacade expects 'coordinates'
-                    color: this.themeColor,
-                    width: 4
+                    coordinates: segmentCoords,
+                    color: segmentColor,
+                    width: segmentWidth
                 });
 
-                // Add arrows for direction
-                this.addRouteArrows(map, `arrow-${segment.type}-${i}`, segmentCoords);
+                // Add arrows for direction with matching color
+                this.addRouteArrows(map, `arrow-${segment.type}-${i}`, segmentCoords, segmentColor);
             } else {
                 console.warn(`Segment ${i} has no coordinates:`, segment);
             }
@@ -215,13 +477,42 @@ class MapDisplayService {
     }
 
     /**
+     * Gets the appropriate color for a segment type
+     * @param {string} segmentType - Type of segment ('walking', 'bus', etc.)
+     * @returns {string} - Hex color code
+     */
+    getSegmentColor(segmentType) {
+        return this.segmentColors[segmentType] || this.segmentColors.bus;
+    }
+
+    /**
+     * Gets the appropriate line width for a segment type
+     * @param {string} segmentType - Type of segment
+     * @returns {number} - Line width in pixels
+     */
+    getSegmentWidth(segmentType) {
+        switch (segmentType) {
+            case 'walking':
+                return 3; // Slightly thinner for walking
+            case 'bus':
+                return 4; // Standard width for bus
+            case 'transfer':
+                return 2; // Thin for transfers
+            default:
+                return 4;
+        }
+    }
+
+    /**
      * Adds directional arrows to a route
      * @param {Object} map - Map instance
      * @param {string} id - Layer ID for arrows
      * @param {Array} coordinates - Route coordinates
+     * @param {string} color - Arrow color (optional)
      */
-    addRouteArrows(map, id, coordinates) {
+    addRouteArrows(map, id, coordinates, color = null) {
         const arrows = this.createArrowPoints(coordinates);
+        const arrowColor = color || this.themeColor;
 
         map.addSource(id, {
             type: "geojson",
@@ -240,7 +531,7 @@ class MapDisplayService {
                 "line-cap": "round"
             },
             paint: {
-                "line-color": this.themeColor,
+                "line-color": arrowColor,
                 "line-width": 3
             }
         });
@@ -313,10 +604,26 @@ class MapDisplayService {
      * Clears all stop markers from the map
      */
     clearStopMarkers() {
+        // Remove markers from MapBox
         this.stopMarkers.forEach((marker, id) => {
-            this.mapBoxFacade.removeMarker(id);
+            try {
+                marker.remove(); // Remove the marker from the map
+            } catch (error) {
+                console.warn(`Failed to remove marker ${id}:`, error);
+            }
         });
+
+        // Clear the markers map
         this.stopMarkers.clear();
+
+        // Also clear via MapBoxFacade for any remaining references
+        try {
+            this.mapBoxFacade.clearAllMarkers();
+        } catch (error) {
+            console.warn('Failed to clear markers via facade:', error);
+        }
+
+        console.log('All stop markers cleared');
     }
 
     /**
@@ -368,13 +675,36 @@ class MapDisplayService {
     }
 
     /**
+     * Forces an immediate update of visible stops (useful after route changes)
+     * @param {Object} map - Map instance
+     */
+    forceStopUpdate(map) {
+        this.isUpdatingStops = false; // Reset flag
+        this.updateVisibleStops(map);
+    }
+
+    /**
+     * Gets current stop display statistics
+     * @returns {Object} - Display statistics
+     */
+    getDisplayStats() {
+        return {
+            totalStops: this.allStops.length,
+            displayedStops: this.stopMarkers.size,
+            currentZoom: this.currentZoom,
+            hasValidBounds: !!this.currentBounds
+        };
+    }
+
+    /**
      * Cleans up map resources
      * @param {Object} map - Map instance
      */
     cleanup(map) {
         this.clearRoute(map);
         this.clearStopMarkers();
-        // Additional cleanup if needed
+        this.allStops = [];
+        this.currentBounds = null;
     }
 }
 
