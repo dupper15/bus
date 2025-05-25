@@ -1,6 +1,11 @@
 import { useState, useCallback, useEffect } from "react";
-import GeoapifyService from "@/services/GeoapifyService";
+import geolocationService from "../../../services/GeolocationService";
+import routingService from "../../../services/RoutingService";
 
+/**
+ * NavigationViewModel - Refactored to use service layer with facade pattern
+ * Handles navigation state and delegates location/routing operations to services
+ */
 const useNavigationViewModel = () => {
     const [path, setPath] = useState([]);
     const [error, setError] = useState(null);
@@ -9,24 +14,20 @@ const useNavigationViewModel = () => {
     const [startSuggestions, setStartSuggestions] = useState([]);
     const [endSuggestions, setEndSuggestions] = useState([]);
 
-    const debounce = (func, delay) => {
-        let timeoutId;
-        return (...args) => {
-            if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                func(...args);
-            }, delay);
-        };
-    };
+    // Debounced search function
+    const debouncedFetchSuggestions = useCallback(
+        geolocationService.debounceSearch(async (query, setSuggestions) => {
+            if (!query) {
+                setSuggestions([]);
+                return;
+            }
 
-    const fetchSuggestions = async (query, setSuggestions) => {
-        if (!query) return;
-        const bbox = [106.491, 10.348, 107.020, 11.160]; // Ho Chi Minh City bounding box
-        const suggestions = await GeoapifyService.fetchSuggestions(query, bbox);
-        setSuggestions(suggestions);
-    };
-
-    const debouncedFetchSuggestions = useCallback(debounce(fetchSuggestions, 300), []);
+            const bbox = geolocationService.getHCMCBoundingBox();
+            const suggestions = await geolocationService.searchLocations(query, bbox);
+            setSuggestions(suggestions);
+        }, 300),
+        []
+    );
 
     const handleChange = (value, setField, setSuggestions) => {
         setField((prev) => ({ ...prev, name: value }));
@@ -38,21 +39,48 @@ const useNavigationViewModel = () => {
         setSuggestions([]);
     };
 
-    const findNearestBusStops = (coords, busStops, maxDistance = 1) => {
-        const nearbyStops = [];
+    const findPath = async (startCoords, endCoords, busStops, busLines) => {
+        try {
+            setError(null);
 
-        busStops.forEach((stop) => {
-            const distance = Math.sqrt(
-                Math.pow(stop.pointX - coords[1], 2) +
-                Math.pow(stop.pointY - coords[0], 2)
-            ) * 111; // Convert to km
+            // Find nearby stops using routing service
+            const nearbyStartStops = routingService.findNearestStops(startCoords, busStops);
+            const nearbyEndStops = routingService.findNearestStops(endCoords, busStops);
 
-            if (distance <= maxDistance) {
-                nearbyStops.push({ stop, distance });
+            if (nearbyStartStops.length === 0 || nearbyEndStops.length === 0) {
+                handleError("No nearby bus stops found within 1km.");
+                return;
             }
-        });
 
-        return nearbyStops.sort((a, b) => a.distance - b.distance);
+            // Build stop routes map
+            const stopRoutesMap = buildStopRoutesMap(busLines);
+
+            // Find best path
+            const bestPath = findBestPath(
+                nearbyStartStops,
+                nearbyEndStops,
+                stopRoutesMap,
+                busLines,
+                busStops
+            );
+
+            if (bestPath) {
+                // Create route segments with directions from routing service
+                const formattedPath = await routingService.createRouteSegments(
+                    bestPath,
+                    startCoords,
+                    endCoords
+                );
+
+                setPath(formattedPath);
+                setError(null);
+                return formattedPath;
+            } else {
+                handleError("No valid path found.");
+            }
+        } catch (err) {
+            handleError(err.message || "An error occurred while finding the path.");
+        }
     };
 
     const buildStopRoutesMap = (busLines) => {
@@ -70,46 +98,11 @@ const useNavigationViewModel = () => {
         return stopRoutes;
     };
 
-    const findPath = async (startCoords, endCoords, busStops, busLines) => {
-        try {
-            const nearbyStartStops = findNearestBusStops(startCoords, busStops);
-            const nearbyEndStops = findNearestBusStops(endCoords, busStops);
-
-            if (nearbyStartStops.length === 0 || nearbyEndStops.length === 0) {
-                handleError("No nearby bus stops found within 1km.");
-                return;
-            }
-
-            const stopRoutesMap = buildStopRoutesMap(busLines);
-            const bestPath = findBestPath(
-                nearbyStartStops,
-                nearbyEndStops,
-                stopRoutesMap,
-                busLines,
-                busStops
-            );
-            if (bestPath) {
-                const formattedPath = formatFullPath(
-                    bestPath,
-                    startCoords,
-                    endCoords
-                );
-                setPath(formattedPath);
-                setError(null);
-                return formattedPath;
-            } else {
-                handleError("No valid path found.");
-            }
-        } catch (err) {
-            handleError(err.message || "An error occurred.");
-        }
-    };
-
     const findBestPath = (startStops, endStops, stopRoutesMap, busLines, busStops) => {
         const queue = new Queue();
         const visited = new Map();
 
-        // Try each possible start stop
+        // Initialize queue with start stops
         startStops.forEach(({ stop: startStop, distance: initialWalk }) => {
             queue.enqueue({
                 currentStop: startStop,
@@ -117,6 +110,7 @@ const useNavigationViewModel = () => {
                 lines: [],
                 transfers: 0,
                 totalWalking: initialWalk,
+                totalDistance: initialWalk,
                 segments: [{
                     type: 'walking',
                     distance: initialWalk,
@@ -138,15 +132,18 @@ const useNavigationViewModel = () => {
             );
 
             if (endStopMatch) {
-                const finalScore = calculatePathScore(
-                    current.transfers,
-                    current.totalWalking
-                );
+                const finalScore = routingService.calculateRouteScore({
+                    transfers: current.transfers,
+                    totalDistance: current.totalWalking + endStopMatch.distance,
+                    totalDuration: 0 // Will be calculated later
+                });
+
                 if (finalScore < minScore) {
                     minScore = finalScore;
                     bestPath = {
                         ...current,
-                        segments: [...current.segments]
+                        segments: [...current.segments],
+                        finalWalkDistance: endStopMatch.distance
                     };
                 }
                 continue;
@@ -158,7 +155,7 @@ const useNavigationViewModel = () => {
             const currentRoutes = stopRoutesMap.get(current.currentStop.id);
             if (!currentRoutes) continue;
 
-            // Explore each possible route from current stop
+            // Explore bus routes
             currentRoutes.forEach(line => {
                 const lineStops = line.arr_stop;
                 const currentStopIndex = lineStops.findIndex(
@@ -186,7 +183,7 @@ const useNavigationViewModel = () => {
                             current.transfers + 1 :
                             current.transfers;
 
-                        // Get all intermediate stops between current and next stop
+                        // Get intermediate stops
                         const intermediateStops = stops.slice(stopIndex, i + 1);
 
                         queue.enqueue({
@@ -197,6 +194,7 @@ const useNavigationViewModel = () => {
                                 current.lines,
                             transfers: newTransfers,
                             totalWalking: current.totalWalking,
+                            totalDistance: current.totalDistance,
                             segments: [
                                 ...current.segments,
                                 {
@@ -204,7 +202,7 @@ const useNavigationViewModel = () => {
                                     line: line,
                                     from: current.currentStop,
                                     to: nextStop,
-                                    intermediateStops: intermediateStops // Add intermediate stops
+                                    intermediateStops: intermediateStops
                                 }
                             ]
                         });
@@ -212,18 +210,17 @@ const useNavigationViewModel = () => {
                 });
             });
 
-            // Explore walking transfers to nearby stops
-            const nearbyStops = findNearestBusStops(
-                [current.currentStop.pointY, current.currentStop.pointX],
+            // Explore walking transfers
+            const nearbyStops = routingService.findNearestStops(
+                [current.currentStop.pointX, current.currentStop.pointY],
                 busStops
             );
 
             nearbyStops.forEach(({ stop: nearStop, distance }) => {
-                if (distance > 1) return; // Skip if walking distance > 1km
-                if (nearStop.id === current.currentStop.id) return; // Skip same stop
+                if (distance > 1 || nearStop.id === current.currentStop.id) return;
 
                 const totalWalking = current.totalWalking + distance;
-                if (totalWalking > 4) return; // Skip if total walking > 4km
+                if (totalWalking > 4) return;
 
                 const key = `${nearStop.id}-${current.transfers}`;
                 if (visited.has(key)) return;
@@ -234,6 +231,7 @@ const useNavigationViewModel = () => {
                     lines: current.lines,
                     transfers: current.transfers,
                     totalWalking: totalWalking,
+                    totalDistance: current.totalDistance + distance,
                     segments: [
                         ...current.segments,
                         {
@@ -250,88 +248,6 @@ const useNavigationViewModel = () => {
         return bestPath;
     };
 
-    const calculatePathScore = (transfers, totalWalking) => {
-        // Weighted scoring - lower is better
-        // Prioritize fewer transfers over walking distance
-        return transfers * 2 + totalWalking;
-    };
-
-    const formatFullPath = (pathData, startCoords, endCoords) => {
-        const formattedSegments = [];
-
-        // Add initial walking segment
-        if (pathData.segments[0].type === 'walking') {
-            formattedSegments.push({
-                type: 'walking',
-                distance: pathData.segments[0].distance,
-                coords: [
-                    startCoords,
-                    [pathData.segments[0].to.pointY, pathData.segments[0].to.pointX]
-                ],
-                from: { name: 'Current Location' },  // Added for RouteDetails
-                to: pathData.segments[0].to         // Added complete stop object for RouteDetails
-            });
-        }
-
-        // Format middle segments
-        for (let i = 1; i < pathData.segments.length; i++) {
-            const segment = pathData.segments[i];
-
-            if (segment.type === 'walking') {
-                formattedSegments.push({
-                    type: 'walking',
-                    distance: segment.distance,
-                    coords: [
-                        [segment.from.pointY, segment.from.pointX],
-                        [segment.to.pointY, segment.to.pointX]
-                    ],
-                    from: segment.from,  // Added complete stop object for RouteDetails
-                    to: segment.to      // Added complete stop object for RouteDetails
-                });
-            } else { // bus segment
-                // Calculate the actual distance for the bus segment
-                const busStops = segment.intermediateStops;
-                let busDistance = 0;
-                for (let j = 0; j < busStops.length - 1; j++) {
-                    const currentStop = busStops[j];
-                    const nextStop = busStops[j + 1];
-                    busDistance += Math.sqrt(
-                        Math.pow(nextStop.pointX - currentStop.pointX, 2) +
-                        Math.pow(nextStop.pointY - currentStop.pointY, 2)
-                    ) * 111; // Convert to km
-                }
-
-                formattedSegments.push({
-                    type: 'bus',
-                    line: segment.line,
-                    distance: busDistance,  // Added calculated distance
-                    endStop: segment.to,
-                    to: segment.intermediateStops,
-                    coords: segment.intermediateStops.map(stop => [stop.pointY, stop.pointX]),
-                    from: segment.from,     // Added complete stop object for RouteDetails
-                    routeNumber: segment.line.routeNumber  // Added route number for RouteDetails
-                });
-            }
-        }
-
-        // Add final walking segment
-        const lastStop = pathData.segments[pathData.segments.length - 1].to;
-        formattedSegments.push({
-            type: 'walking',
-            distance: Math.sqrt(
-                Math.pow(endCoords[0] - lastStop.pointY, 2) +
-                Math.pow(endCoords[1] - lastStop.pointX, 2)
-            ) * 111,  // Calculate actual distance for final walking segment
-            coords: [
-                [lastStop.pointY, lastStop.pointX],
-                endCoords
-            ],
-            from: lastStop,           // Added complete stop object for RouteDetails
-            to: { name: 'Destination' }  // Added for RouteDetails
-        });
-
-        return formattedSegments;
-    };
     const handleError = (message) => {
         console.error(message);
         setPath([]);
@@ -342,13 +258,18 @@ const useNavigationViewModel = () => {
         const temp = start;
         setStart(end);
         setEnd(temp);
+
+        const tempSuggestions = startSuggestions;
+        setStartSuggestions(endSuggestions);
+        setEndSuggestions(tempSuggestions);
     };
 
+    // Clear error after timeout
     useEffect(() => {
         if (error) {
             const timer = setTimeout(() => {
                 setError(null);
-            }, 5000); // Clear error after 5 seconds
+            }, 5000);
 
             return () => clearTimeout(timer);
         }
@@ -372,6 +293,7 @@ const useNavigationViewModel = () => {
     };
 };
 
+// Queue implementation for pathfinding
 class Queue {
     constructor() {
         this.items = [];

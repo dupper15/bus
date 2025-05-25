@@ -8,36 +8,36 @@ import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { CiMap } from "react-icons/ci";
 
 const MapPage = () => {
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
-  const {
-    lines,
-    stops,
-    busLines,
-    selectedLine,
-    selectedStop,
-    selectedStopCoordinates,
-    handleLineSelect,
-    handleBack,
-    handleSelectStop,
-    handleSearch,
-    path,
-    error,
-    setError,
-    handleFindPath,
-    handleInputFocus,
-    handleMapClick,
-    startCoordinates,
-    endCoordinates,
-    viewMode,
-    setViewMode,
-    setPath, // Make sure this is exposed from your ViewModel
-  } = useBusLinesViewModel();
+    const [isMapExpanded, setIsMapExpanded] = useState(false);
+    const {
+        lines,
+        stops,
+        busLines,
+        selectedLine,
+        selectedStop,
+        selectedStopCoordinates,
+        handleLineSelect,
+        handleBack,
+        handleSelectStop,
+        handleSearch,
+        path,
+        error,
+        setError,
+        handleFindPath,
+        handleInputFocus,
+        handleMapClick,
+        startCoordinates,
+        endCoordinates,
+        viewMode,
+        setViewMode,
+        setPath, // Make sure this is exposed from your ViewModel
+    } = useBusLinesViewModel();
 
-  const toggleMap = () => setIsMapExpanded(!isMapExpanded);
+    const toggleMap = () => setIsMapExpanded(!isMapExpanded);
 
-  const handleClearPath = () => {
-    setPath([]); // Clear the path
-  };
+    const handleClearPath = () => {
+        setPath([]); // Clear the path
+    };
 
   useEffect(() => {
     if (error) {
@@ -76,31 +76,31 @@ const MapPage = () => {
                     transition-all duration-300 ease-in-out
                     bg-white shadow-xl z-10
                 `}>
-          <div className='h-full overflow-y-auto w-full'>
-            {!selectedLine ? (
-              <Sidebar
-                lines={lines}
-                onSelectLine={handleLineSelect}
-                onSearch={handleSearch}
-                onFindPath={handleFindPath}
-                busStops={stops}
-                onInputFocus={handleInputFocus}
-                startCoordinates={startCoordinates}
-                endCoordinates={endCoordinates}
-                busLines={busLines}
-                onClearPath={handleClearPath}
-              />
-            ) : (
-              <LineDetailSideBar
-                line={selectedLine}
-                onBack={handleBack}
-                selectedStop={selectedStop}
-                onSelectStop={handleSelectStop}
-                onTabSelect={setViewMode}
-              />
-            )}
-          </div>
-        </div>
+                    <div className="h-full overflow-y-auto w-full">
+                        {!selectedLine ? (
+                            <Sidebar
+                                lines={lines}
+                                onSelectLine={handleLineSelect}
+                                onSearch={handleSearch}
+                                onFindPath={handleFindPath}
+                                busStops={stops}
+                                onInputFocus={handleInputFocus}
+                                startCoordinates={startCoordinates}
+                                endCoordinates={endCoordinates}
+                                busLines={busLines}
+                                onClearPath={handleClearPath}
+                            />
+                        ) : (
+                            <LineDetailSideBar
+                                line={selectedLine}
+                                onBack={handleBack}
+                                selectedStop={selectedStop}
+                                onSelectStop={handleSelectStop}
+                                onTabSelect={setViewMode}
+                            />
+                        )}
+                    </div>
+                </div>
 
         {/* Control buttons container */}
         <div

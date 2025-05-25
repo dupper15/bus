@@ -1,50 +1,66 @@
-import mapboxgl from "mapbox-gl";
+import routingService from './RoutingService';
 
-mapboxgl.accessToken = "pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg";
-
+/**
+ * MapBoxService - Refactored to delegate to RoutingService
+ * Maintains backward compatibility while using the facade pattern
+ */
 const MapBoxService = {
+    /**
+     * Fetches bus line route through multiple stops
+     * @param {Array} stops - Array of bus stops
+     * @returns {Promise<Object>} - Route object with coordinates
+     */
     fetchBusLineRoute: async (stops) => {
-        if (stops.length < 2) {
-            throw new Error("At least two stops are required to create a bus line.");
-        }
-
-        const waypoints = stops.map((stop) => `${stop.pointX},${stop.pointY}`).join(";");
-        const apiUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${waypoints}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
-
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-
-        if (!data.routes || !data.routes[0]) {
-            throw new Error("Failed to fetch bus line route.");
-        }
-
-        return data.routes[0].geometry;
+        const route = await routingService.getBusRoute(stops);
+        return route || { coordinates: [] };
     },
 
-    fetchSuggestions: async (query, bbox) => {
-        if (!query) return [];
+    /**
+     * Gets walking route between two points
+     * @param {Array} start - Starting coordinates [lat, lng]
+     * @param {Array} end - Ending coordinates [lat, lng]
+     * @returns {Promise<Object>} - Walking route data
+     */
+    fetchWalkingRoute: async (start, end) => {
+        // Convert from [lat, lng] to [lng, lat] for MapBox
+        const startLngLat = [start[1], start[0]];
+        const endLngLat = [end[1], end[0]];
 
-        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?bbox=${bbox.join(',')}&access_token=${mapboxgl.accessToken}`;
-        const response = await fetch(url);
-        const data = await response.json();
-
-        return data.features.map(feature => ({
-            id: feature.id,
-            name: feature.place_name,
-            coordinates: feature.geometry.coordinates,
-        }));
+        const route = await routingService.getWalkingRoute(startLngLat, endLngLat);
+        return route || { coordinates: [], distance: 0, duration: 0 };
     },
 
-    fetchPath: async (startStop, endStop) => {
-        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${startStop.pointX},${startStop.pointY};${endStop.pointX},${endStop.pointY}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
-        const response = await fetch(url);
-        const data = await response.json();
+    /**
+     * Finds optimal route between locations
+     * @param {Array} startCoords - Starting coordinates
+     * @param {Array} endCoords - Ending coordinates
+     * @param {Array} busStops - Available bus stops
+     * @param {Array} busLines - Available bus lines
+     * @returns {Promise<Object>} - Optimal route
+     */
+    findOptimalRoute: async (startCoords, endCoords, busStops, busLines) => {
+        return await routingService.findBestRoute(startCoords, endCoords, busStops, busLines);
+    },
 
-        if (data.routes && data.routes.length > 0) {
-            return data.routes[0].geometry.coordinates;
-        } else {
-            throw new Error("No route found.");
-        }
+    /**
+     * Calculates distance between two points
+     * @param {Array} coord1 - First coordinate [lng, lat]
+     * @param {Array} coord2 - Second coordinate [lng, lat]
+     * @returns {number} - Distance in kilometers
+     */
+    calculateDistance: (coord1, coord2) => {
+        return routingService.calculateDistance(coord1, coord2);
+    },
+
+    /**
+     * Finds nearest stops to a location
+     * @param {Array} coordinates - Location coordinates [lng, lat]
+     * @param {Array} busStops - Array of bus stops
+     * @param {number} maxDistance - Maximum search distance in km
+     * @returns {Array} - Array of nearby stops with distances
+     */
+    findNearbyStops: (coordinates, busStops, maxDistance = 1) => {
+        return routingService.findNearestStops(coordinates, busStops, maxDistance);
     }
 };
 

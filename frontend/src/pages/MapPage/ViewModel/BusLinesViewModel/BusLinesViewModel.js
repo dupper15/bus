@@ -1,9 +1,13 @@
-import {useState, useCallback, useEffect} from "react";
+import { useState, useCallback, useEffect } from "react";
 import LineService from "@/services/LineService";
 import StopService from "@/services/StopService";
-import MapBoxService from "@/services/MapboxService.js";
-import {transformLine, transformStop} from "@/utils/Transformer.js";
+import routingService from "@/services/RoutingService";
+import { transformLine, transformStop } from "@/utils/Transformer.js";
 
+/**
+ * BusLinesViewModel - Refactored to use service layer
+ * Manages bus lines and stops state, delegating route operations to services
+ */
 const useBusLinesViewModel = () => {
     // State variables
     const [stops, setStops] = useState([]);
@@ -27,13 +31,14 @@ const useBusLinesViewModel = () => {
             const rawLines = response.data;
             const sortedLines = rawLines.map(transformLine).sort((a, b) => {
                 // Extract numbers from line names and compare them numerically
-                const numA = parseInt(a.name.match(/\d+/)[0]);
-                const numB = parseInt(b.name.match(/\d+/)[0]);
+                const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
+                const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
                 return numA - numB;
             });
             setLines(sortedLines);
         } catch (error) {
             console.error("Error fetching lines:", error);
+            setError("Failed to fetch bus lines");
         }
     }, []);
 
@@ -45,24 +50,33 @@ const useBusLinesViewModel = () => {
             setStops(rawStops.map(transformStop));
         } catch (error) {
             console.error("Failed to fetch stops:", error);
+            setError("Failed to fetch bus stops");
         }
     }, []);
 
-    // Fetch bus line route
+    // Fetch bus line route using routing service
     const fetchBusLine = async (line) => {
         try {
-            const stopsSequence = viewMode === "outbound" ? [line.end_place, ...line.arr_stop.slice().reverse(), line.start_place] : [line.start_place, ...line.arr_stop, line.end_place];
-            const route = await MapBoxService.fetchBusLineRoute(stopsSequence);
-            setBusLines([{...line, route}]);
+            const stopsSequence = viewMode === "outbound"
+                ? [line.end_place, ...line.arr_stop.slice().reverse(), line.start_place]
+                : [line.start_place, ...line.arr_stop, line.end_place];
+
+            // Use routing service to get the bus route
+            const route = await routingService.getBusRoute(stopsSequence);
+
+            if (route) {
+                setBusLines([{
+                    ...line,
+                    route: {
+                        coordinates: route.coordinates
+                    }
+                }]);
+            }
         } catch (error) {
             console.error("Error fetching bus line route:", error);
+            setError("Failed to fetch bus route");
         }
     };
-    useEffect(() => {
-        if (busLines.length > 0) {
-            console.log("Bus lines", busLines);
-        }
-    }, [busLines]);
 
     // Handle search
     const handleSearch = (query) => setSearchQuery(query);
@@ -72,6 +86,7 @@ const useBusLinesViewModel = () => {
         setSelectedLine(line);
         setBusLines([]); // Clear bus lines to indicate loading
         fetchBusLine(line);
+        setError(null); // Clear any previous errors
     };
 
     // Handle back
@@ -95,7 +110,7 @@ const useBusLinesViewModel = () => {
     const handleFindPath = (newPath, newError) => {
         if (newPath) {
             setPath(newPath);
-
+            setError(null);
         } else {
             setError(newError);
         }
@@ -125,6 +140,14 @@ const useBusLinesViewModel = () => {
             fetchBusLine(selectedLine);
         }
     }, [selectedLine, viewMode]);
+
+    // Clear error after timeout
+    useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => setError(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
 
     // Filter lines based on search query
     const filteredLines = lines.filter((line) => {
