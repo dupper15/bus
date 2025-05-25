@@ -7,10 +7,15 @@ import { MdCompare } from "react-icons/md";
 import useNavigationViewModel from "./NavigationViewModel";
 import RouteDetails from "@/pages/MapPage/PathfindingTab/RouteDetail";
 import pathTransformerService from "@/services/PathTransformerService";
+import {
+    SearchSuggestionsListSkeleton,
+    StrategyComparisonSkeleton,
+    RouteDetailsSkeleton
+} from "@/components/ui/loadingSkeletons.jsx";
 
 /**
  * NavigationTab component - Handles route finding and pathfinding functionality
- * Enhanced to work with Strategy and Composite patterns
+ * Enhanced with loading skeletons for better UX
  *
  * @param {Object} props - Component properties
  * @returns {JSX.Element} - Navigation tab component
@@ -69,6 +74,9 @@ const NavigationTab = ({
     // Show/hide states for suggestion boxes
     const [showStartSuggestions, setShowStartSuggestions] = useState(false);
     const [showEndSuggestions, setShowEndSuggestions] = useState(false);
+
+    // Route finding loading state
+    const [isLoadingRoute, setIsLoadingRoute] = useState(false);
 
     // Refs for suggestion containers
     const startSuggestionsRef = useRef(null);
@@ -163,33 +171,38 @@ const NavigationTab = ({
     const handleFindPath = async () => {
         if (!start || !end) return;
 
-        const [startLat, startLng] = start.coordinates.map(Number);
-        const [endLat, endLng] = end.coordinates.map(Number);
+        setIsLoadingRoute(true);
+        try {
+            const [startLat, startLng] = start.coordinates.map(Number);
+            const [endLat, endLng] = end.coordinates.map(Number);
 
-        // Use strategy pattern to find path
-        const strategyResult = await findPath(
-            [startLng, startLat],
-            [endLng, endLat],
-            busStops,
-            lines
-        );
+            // Use strategy pattern to find path
+            const strategyResult = await findPath(
+                [startLng, startLat],
+                [endLng, endLat],
+                busStops,
+                lines
+            );
 
-        if (strategyResult) {
-            // Transform Route object to MapView format using PathTransformerService
-            const mapViewPath = pathTransformerService.transformForMapView(strategyResult);
+            if (strategyResult) {
+                // Transform Route object to MapView format using PathTransformerService
+                const mapViewPath = pathTransformerService.transformForMapView(strategyResult);
 
-            // Log for debugging
-            console.log('Route found:', strategyResult);
-            console.log('Transformed MapView Path:', mapViewPath);
-            console.log('Transformation Stats:',
-                pathTransformerService.getTransformationStats(strategyResult, mapViewPath));
+                // Log for debugging
+                console.log('Route found:', strategyResult);
+                console.log('Transformed MapView Path:', mapViewPath);
+                console.log('Transformation Stats:',
+                    pathTransformerService.getTransformationStats(strategyResult, mapViewPath));
 
-            // Pass the transformed path to the parent component
-            onFindPath(mapViewPath, error, routeMetadata);
+                // Pass the transformed path to the parent component
+                onFindPath(mapViewPath, error, routeMetadata);
+            }
+
+            setShowComparison(false);
+            clearStrategyComparison();
+        } finally {
+            setIsLoadingRoute(false);
         }
-
-        setShowComparison(false);
-        clearStrategyComparison();
     };
 
     // Compare all available strategies
@@ -269,36 +282,33 @@ const NavigationTab = ({
 
                         {/* Start location suggestions - positioned below input */}
                         {showStartSuggestions && (
-                            <ul className="absolute z-10 w-full top-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                {startLoading ? (
-                                    <li className="px-3 py-4 text-center">
-                                        <div className="flex items-center justify-center">
-                                            <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-                                            <span className="text-sm text-gray-500">Searching...</span>
-                                        </div>
-                                    </li>
-                                ) : startSuggestions.length > 0 ? (
-                                    startSuggestions.map((suggestion, index) => (
-                                        <li
-                                            key={index}
-                                            onClick={() => {
-                                                handleStartSuggestionClick(suggestion);
-                                                setShowStartSuggestions(false);
-                                            }}
-                                            className="px-3 py-2 text-sm hover:bg-green-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                        >
-                                            <div className="font-medium">{suggestion.name}</div>
-                                            {suggestion.address && (
-                                                <div className="text-xs text-gray-500 mt-1">{suggestion.address}</div>
-                                            )}
+                            startLoading ? (
+                                <SearchSuggestionsListSkeleton count={3} />
+                            ) : (
+                                <ul className="absolute z-10 w-full top-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                    {startSuggestions.length > 0 ? (
+                                        startSuggestions.map((suggestion, index) => (
+                                            <li
+                                                key={index}
+                                                onClick={() => {
+                                                    handleStartSuggestionClick(suggestion);
+                                                    setShowStartSuggestions(false);
+                                                }}
+                                                className="px-3 py-2 text-sm hover:bg-green-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                            >
+                                                <div className="font-medium">{suggestion.name}</div>
+                                                {suggestion.address && (
+                                                    <div className="text-xs text-gray-500 mt-1">{suggestion.address}</div>
+                                                )}
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li className="px-3 py-4 text-center text-sm text-gray-500">
+                                            No locations found
                                         </li>
-                                    ))
-                                ) : (
-                                    <li className="px-3 py-4 text-center text-sm text-gray-500">
-                                        No locations found
-                                    </li>
-                                )}
-                            </ul>
+                                    )}
+                                </ul>
+                            )
                         )}
                     </div>
 
@@ -327,36 +337,33 @@ const NavigationTab = ({
 
                         {/* End location suggestions - positioned below input */}
                         {showEndSuggestions && (
-                            <ul className="absolute z-10 w-full top-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                {endLoading ? (
-                                    <li className="px-3 py-4 text-center">
-                                        <div className="flex items-center justify-center">
-                                            <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-                                            <span className="text-sm text-gray-500">Searching...</span>
-                                        </div>
-                                    </li>
-                                ) : endSuggestions.length > 0 ? (
-                                    endSuggestions.map((suggestion, index) => (
-                                        <li
-                                            key={index}
-                                            onClick={() => {
-                                                handleEndSuggestionClick(suggestion);
-                                                setShowEndSuggestions(false);
-                                            }}
-                                            className="px-3 py-2 text-sm hover:bg-green-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                        >
-                                            <div className="font-medium">{suggestion.name}</div>
-                                            {suggestion.address && (
-                                                <div className="text-xs text-gray-500 mt-1">{suggestion.address}</div>
-                                            )}
+                            endLoading ? (
+                                <SearchSuggestionsListSkeleton count={3} />
+                            ) : (
+                                <ul className="absolute z-10 w-full top-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                    {endSuggestions.length > 0 ? (
+                                        endSuggestions.map((suggestion, index) => (
+                                            <li
+                                                key={index}
+                                                onClick={() => {
+                                                    handleEndSuggestionClick(suggestion);
+                                                    setShowEndSuggestions(false);
+                                                }}
+                                                className="px-3 py-2 text-sm hover:bg-green-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                            >
+                                                <div className="font-medium">{suggestion.name}</div>
+                                                {suggestion.address && (
+                                                    <div className="text-xs text-gray-500 mt-1">{suggestion.address}</div>
+                                                )}
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li className="px-3 py-4 text-center text-sm text-gray-500">
+                                            No locations found
                                         </li>
-                                    ))
-                                ) : (
-                                    <li className="px-3 py-4 text-center text-sm text-gray-500">
-                                        No locations found
-                                    </li>
-                                )}
-                            </ul>
+                                    )}
+                                </ul>
+                            )
                         )}
                     </div>
                 </div>
@@ -419,15 +426,22 @@ const NavigationTab = ({
             <div className="flex gap-2 mb-4">
                 <button
                     onClick={handleFindPath}
-                    disabled={!start || !end}
-                    className="flex-1 py-2 bg-green-500 text-white text-sm font-medium rounded-md hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    disabled={!start || !end || isLoadingRoute}
+                    className="flex-1 py-2 bg-green-500 text-white text-sm font-medium rounded-md hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                    Find Route
+                    {isLoadingRoute ? (
+                        <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Finding Route...
+                        </>
+                    ) : (
+                        'Find Route'
+                    )}
                 </button>
 
                 <button
                     onClick={handleCompareStrategies}
-                    disabled={!start || !end || isComparing}
+                    disabled={!start || !end || isComparing || isLoadingRoute}
                     className="px-3 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
                     title="Compare all strategies"
                 >
@@ -440,7 +454,7 @@ const NavigationTab = ({
             </div>
 
             {/* Strategy Comparison Results */}
-            {showComparison && strategyComparison.length > 0 && (
+            {showComparison && (
                 <div className="mb-4">
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="text-sm font-medium text-gray-700">
@@ -457,50 +471,56 @@ const NavigationTab = ({
                         </button>
                     </div>
 
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {strategyComparison.map((result, index) => (
-                            <div
-                                key={index}
-                                onClick={() => handleSelectComparisonRoute(index)}
-                                className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                                    index === 0 ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:bg-gray-50'
-                                }`}
-                            >
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="text-sm font-medium">
-                                        {result.strategyUsed.icon} {result.strategyUsed.name}
-                                    </span>
-                                    {index === 0 && (
-                                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                            Best
+                    {isComparing ? (
+                        <StrategyComparisonSkeleton count={3} />
+                    ) : strategyComparison.length > 0 ? (
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {strategyComparison.map((result, index) => (
+                                <div
+                                    key={index}
+                                    onClick={() => handleSelectComparisonRoute(index)}
+                                    className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                                        index === 0 ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-sm font-medium">
+                                            {result.strategyUsed.icon} {result.strategyUsed.name}
                                         </span>
-                                    )}
-                                </div>
-
-                                {result.metadata && (
-                                    <div className="text-xs text-gray-600 space-y-1">
-                                        <div>Transfers: {result.metadata.transfers}</div>
-                                        <div>Walking: {result.metadata.totalWalking?.toFixed(1)}km</div>
-                                        {result.metadata.score && (
-                                            <div>Score: {result.metadata.score.toFixed(1)}</div>
+                                        {index === 0 && (
+                                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                                Best
+                                            </span>
                                         )}
                                     </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+
+                                    {result.metadata && (
+                                        <div className="text-xs text-gray-600 space-y-1">
+                                            <div>Transfers: {result.metadata.transfers}</div>
+                                            <div>Walking: {result.metadata.totalWalking?.toFixed(1)}km</div>
+                                            {result.metadata.score && (
+                                                <div>Score: {result.metadata.score.toFixed(1)}</div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : null}
                 </div>
             )}
 
             {/* Route Details - Using enhanced RouteDetails component with Composite pattern */}
-            {path && path.length > 0 && (
+            {isLoadingRoute ? (
+                <RouteDetailsSkeleton />
+            ) : path && path.length > 0 ? (
                 <div className="mt-4">
                     <RouteDetails
                         path={path}
                         route={route} // Pass Route composite object if available
                     />
                 </div>
-            )}
+            ) : null}
         </div>
     );
 };

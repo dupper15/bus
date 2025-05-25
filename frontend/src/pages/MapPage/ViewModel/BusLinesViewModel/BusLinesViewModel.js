@@ -6,7 +6,7 @@ import routeFinderContext from "@/services/strategies/RouteFinderContext";
 import { transformLine, transformStop } from "@/utils/Transformer.js";
 
 /**
- * BusLinesViewModel - Enhanced for Strategy pattern compatibility
+ * BusLinesViewModel - Enhanced with loading states for better UX
  * Manages bus lines and stops state, with enhanced pathfinding capabilities
  */
 const useBusLinesViewModel = () => {
@@ -25,13 +25,20 @@ const useBusLinesViewModel = () => {
     const [endCoordinates, setEndCoordinates] = useState("");
     const [viewMode, setViewMode] = useState("outbound");
 
+    // Loading states
+    const [isLoadingLines, setIsLoadingLines] = useState(true);
+    const [isLoadingStops, setIsLoadingStops] = useState(true);
+    const [isLoadingBusLine, setIsLoadingBusLine] = useState(false);
+    const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+
     // New strategy-related state
     const [currentStrategy, setCurrentStrategy] = useState(routeFinderContext.getCurrentStrategyType());
     const [routeMetadata, setRouteMetadata] = useState(null);
 
-    // Fetch lines
+    // Fetch lines with loading state
     const fetchLines = useCallback(async () => {
         try {
+            setIsLoadingLines(true);
             const response = await LineService.getLines();
             const rawLines = response.data;
             const sortedLines = rawLines.map(transformLine).sort((a, b) => {
@@ -44,24 +51,30 @@ const useBusLinesViewModel = () => {
         } catch (error) {
             console.error("Error fetching lines:", error);
             setError("Failed to fetch bus lines");
+        } finally {
+            setIsLoadingLines(false);
         }
     }, []);
 
-    // Fetch stops
+    // Fetch stops with loading state
     const fetchStops = useCallback(async () => {
         try {
+            setIsLoadingStops(true);
             const response = await StopService.getStops();
             const rawStops = response.data;
             setStops(rawStops.map(transformStop));
         } catch (error) {
             console.error("Failed to fetch stops:", error);
             setError("Failed to fetch bus stops");
+        } finally {
+            setIsLoadingStops(false);
         }
     }, []);
 
-    // Fetch bus line route using routing service
+    // Fetch bus line route using routing service with loading state
     const fetchBusLine = async (line) => {
         try {
+            setIsLoadingBusLine(true);
             const stopsSequence = viewMode === "outbound"
                 ? [line.end_place, ...line.arr_stop.slice().reverse(), line.start_place]
                 : [line.start_place, ...line.arr_stop, line.end_place];
@@ -80,13 +93,15 @@ const useBusLinesViewModel = () => {
         } catch (error) {
             console.error("Error fetching bus line route:", error);
             setError("Failed to fetch bus route");
+        } finally {
+            setIsLoadingBusLine(false);
         }
     };
 
     // Handle search
     const handleSearch = (query) => setSearchQuery(query);
 
-    // Handle line selection
+    // Handle line selection with loading state
     const handleLineSelect = (line) => {
         setSelectedLine(line);
         setBusLines([]); // Clear bus lines to indicate loading
@@ -94,18 +109,18 @@ const useBusLinesViewModel = () => {
         setError(null); // Clear any previous errors
 
         // Clear any existing path when selecting a new line
-        setPath([]);
-        setRouteMetadata(null);
+        clearPath();
     };
 
-    // Handle back
+    // Enhanced handle back - clears path and navigation data
     const handleBack = () => {
         setSelectedLine(null);
-        setBusLines([]);
+        setBusLines([]); // Clear bus lines from map
         setSelectedStop(null);
         setSelectedStopCoordinates(null);
-        setPath([]);
-        setRouteMetadata(null);
+
+        // Clear navigation data and any existing paths
+        clearPath();
     };
 
     // Handle stop selection
@@ -117,7 +132,7 @@ const useBusLinesViewModel = () => {
         }
     };
 
-    // Enhanced path finding with strategy support
+    // Enhanced path finding with strategy support and loading state
     const handleFindPath = (newPath, newError, metadata = null) => {
         if (newPath) {
             setPath(newPath);
@@ -130,9 +145,10 @@ const useBusLinesViewModel = () => {
         }
     };
 
-    // Enhanced path finding using RouteFinderContext
+    // Enhanced path finding using RouteFinderContext with loading state
     const findPathWithStrategy = async (startCoords, endCoords, strategyType = null) => {
         try {
+            setIsLoadingRoute(true);
             setError(null);
 
             // Use specific strategy if provided, otherwise use current
@@ -162,12 +178,15 @@ const useBusLinesViewModel = () => {
             setPath([]);
             setRouteMetadata(null);
             return null;
+        } finally {
+            setIsLoadingRoute(false);
         }
     };
 
-    // Compare all strategies for a route
+    // Compare all strategies for a route with loading state
     const compareStrategies = async (startCoords, endCoords) => {
         try {
+            setIsLoadingRoute(true);
             setError(null);
 
             const results = await routeFinderContext.compareStrategies(
@@ -188,6 +207,8 @@ const useBusLinesViewModel = () => {
             console.error("Error comparing strategies:", error);
             setError(error.message || "An error occurred while comparing strategies.");
             return [];
+        } finally {
+            setIsLoadingRoute(false);
         }
     };
 
@@ -232,6 +253,21 @@ const useBusLinesViewModel = () => {
         setPath([]);
         setRouteMetadata(null);
         setError(null);
+        // Clear navigation input coordinates
+        setStartCoordinates("");
+        setEndCoordinates("");
+        setFocusedInput(null);
+    };
+
+    // Enhanced view mode setter that clears navigation when switching to lines tab
+    const setViewModeWithClear = (mode) => {
+        setViewMode(mode);
+
+        // If switching to outbound/inbound from navigation, clear the path and bus lines
+        if ((mode === "outbound" || mode === "inbound") && path.length > 0) {
+            clearPath();
+            setBusLines([]); // Also clear any bus line display
+        }
     };
 
     // Fetch stops and lines on mount
@@ -303,9 +339,15 @@ const useBusLinesViewModel = () => {
         startCoordinates,
         endCoordinates,
         viewMode,
-        setViewMode,
+        setViewMode: setViewModeWithClear, // Use enhanced version
         setError,
         setPath,
+
+        // Loading states
+        isLoadingLines,
+        isLoadingStops,
+        isLoadingBusLine,
+        isLoadingRoute,
 
         // Enhanced strategy-related functionality
         currentStrategy,
@@ -329,7 +371,11 @@ const useBusLinesViewModel = () => {
         validateCurrentRoute: (constraints) => {
             if (!path || path.length === 0) return false;
             return routingService.validateRoute({ segments: path }, constraints);
-        }
+        },
+
+        // Loading state getters for easy access
+        isLoading: isLoadingLines || isLoadingStops,
+        hasData: lines.length > 0 && stops.length > 0
     };
 };
 
