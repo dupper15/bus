@@ -187,13 +187,6 @@ const NavigationTab = ({
             if (strategyResult) {
                 // Transform Route object to MapView format using PathTransformerService
                 const mapViewPath = pathTransformerService.transformForMapView(strategyResult);
-
-                // Log for debugging
-                console.log('Route found:', strategyResult);
-                console.log('Transformed MapView Path:', mapViewPath);
-                console.log('Transformation Stats:',
-                    pathTransformerService.getTransformationStats(strategyResult, mapViewPath));
-
                 // Pass the transformed path to the parent component
                 onFindPath(mapViewPath, error, routeMetadata);
             }
@@ -224,10 +217,6 @@ const NavigationTab = ({
             // Transform the best result for MapView
             const bestStrategyPath = results[0].path;
             const mapViewPath = pathTransformerService.transformForMapView(bestStrategyPath);
-
-            console.log('Best Strategy Result:', results[0]);
-            console.log('Transformed for MapView:', mapViewPath);
-
             onFindPath(mapViewPath, null, results[0].metadata);
             setShowComparison(true);
         }

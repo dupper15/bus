@@ -114,12 +114,6 @@ const useNavigationViewModel = () => {
                 setPath(legacyPath);
                 setError(null);
 
-                console.log('Route found:', {
-                    route: result.path,
-                    legacyPath: legacyPath,
-                    metadata: result.metadata
-                });
-
                 return legacyPath;
             } else {
                 handleError("No valid path found with the selected strategy.");
@@ -165,12 +159,6 @@ const useNavigationViewModel = () => {
                 setRoute(bestResult.path);
                 setPath(bestResult.legacyPath);
                 setRouteMetadata(bestResult.metadata);
-
-                console.log('Strategy comparison completed:', {
-                    totalResults: enhancedResults.length,
-                    bestStrategy: bestResult.strategyUsed?.name,
-                    bestScore: bestResult.score
-                });
             }
 
             return enhancedResults;
@@ -197,12 +185,6 @@ const useNavigationViewModel = () => {
             if (selectedResult.strategyUsed && selectedResult.strategyUsed.type) {
                 handleStrategyChange(selectedResult.strategyUsed.type);
             }
-
-            console.log('Route selected from comparison:', {
-                index: routeIndex,
-                strategy: selectedResult.strategyUsed?.name,
-                score: selectedResult.score
-            });
         }
     };
 
@@ -287,8 +269,6 @@ const useNavigationViewModel = () => {
                 endCoords = [106.70598, 10.78084]; // Default nearby location
             }
 
-            console.log('Optimization coordinates:', { startCoords, endCoords }); // Debug log
-
             const optimizedPath = await findPath(
                 startCoords,
                 endCoords,
@@ -301,13 +281,6 @@ const useNavigationViewModel = () => {
                 handleStrategyChange(originalStrategy);
                 return null;
             }
-
-            console.log('Route optimized:', {
-                originalStrategy,
-                newStrategy: optimizationStrategy,
-                originalScore: route.calculateOptimizationScore(),
-                newScore: route.calculateOptimizationScore()
-            });
 
             return route;
         } catch (error) {
@@ -361,8 +334,6 @@ const useNavigationViewModel = () => {
         const tempSuggestions = startSuggestions;
         setStartSuggestions(endSuggestions);
         setEndSuggestions(tempSuggestions);
-
-        console.log('Start and end locations swapped');
     };
 
     // Clear error after timeout
@@ -383,19 +354,6 @@ const useNavigationViewModel = () => {
             setSelectedStrategy(currentStrategyType);
         }
     }, [selectedStrategy]);
-
-    // Log route changes for debugging
-    useEffect(() => {
-        if (route instanceof Route) {
-            console.log('Route updated:', {
-                name: route.name,
-                distance: route.getDistance(),
-                duration: route.getDuration(),
-                transfers: route.getTransferCount(),
-                segments: route.getComponents().length
-            });
-        }
-    }, [route]);
 
     return {
         // Legacy path functionality (for MapView compatibility)
@@ -447,12 +405,10 @@ const useNavigationViewModel = () => {
         resetToDefaultStrategy: () => {
             routeFinderContext.resetToDefault();
             setSelectedStrategy(routeFinderContext.getCurrentStrategyType());
-            console.log('Reset to default strategy');
         },
         clearStrategyPreference: () => {
             routeFinderContext.clearUserPreference();
             setSelectedStrategy(routeFinderContext.getCurrentStrategyType());
-            console.log('Cleared strategy preferences');
         },
 
         // Route transformation utilities
@@ -540,7 +496,6 @@ const useNavigationViewModel = () => {
             setStrategyComparison([]);
             routeFinderContext.resetToDefault();
             setSelectedStrategy(routeFinderContext.getCurrentStrategyType());
-            console.log('All navigation state reset');
         }
     };
 };

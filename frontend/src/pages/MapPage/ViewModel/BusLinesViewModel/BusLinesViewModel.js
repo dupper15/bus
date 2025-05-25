@@ -223,8 +223,6 @@ const useBusLinesViewModel = () => {
             routeFinderContext.setStrategy(strategyType);
             setCurrentStrategy(strategyType);
 
-            // If there's an existing path, we could optionally recalculate it
-            console.log(`Strategy changed to: ${strategyType}`);
         } catch (error) {
             console.error("Error changing strategy:", error);
             setError("Failed to change pathfinding strategy");
