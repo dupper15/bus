@@ -1,296 +1,395 @@
+import Route from '@/components/Route/Route.jsx';
+import WalkingSegment from '@/components/Route/WalkingSegment.jsx';
+import BusSegment from '@/components/Route/BusSegment.jsx';
+import RouteComponent from '@/components/Route/RouteComponent.jsx';
+import routingService from '@/services/RoutingService.js';
+
 /**
- * PathfindingStrategy - Base class for all pathfinding strategies
- * This defines the common interface that all concrete strategies must implement
+ * PathfindingStrategy - Enhanced base class for Strategy pattern with Composite pattern support
+ * Now returns Route composite objects instead of plain segment arrays
  */
 class PathfindingStrategy {
+    constructor(name, icon = '🔍', description = '') {
+        if (this.constructor === PathfindingStrategy) {
+            throw new Error("PathfindingStrategy is an abstract class and cannot be instantiated directly");
+        }
+
+        this.name = name;
+        this.icon = icon;
+        this.description = description;
+        this.type = this.constructor.name.replace('Strategy', '').toLowerCase();
+    }
+
     /**
-     * Finds the optimal path between start and end coordinates
+     * Abstract method to find path - must be implemented by concrete strategies
      * @param {Array} startCoords - Starting coordinates [lng, lat]
      * @param {Array} endCoords - Ending coordinates [lng, lat]
      * @param {Array} busStops - Available bus stops
      * @param {Array} busLines - Available bus lines
-     * @returns {Promise<Object>} - Route object with segments and metadata
+     * @returns {Promise<Object>} - Result object with Route and metadata
      */
     async findPath(startCoords, endCoords, busStops, busLines) {
-        throw new Error("findPath method must be implemented by concrete strategy");
+        throw new Error("findPath() must be implemented by concrete strategy classes");
     }
 
     /**
-     * Calculates the score for a given path based on strategy-specific criteria
-     * @param {Object} path - Path object with segments, transfers, walking distance, etc.
-     * @returns {number} - Path score (lower is better)
+     * Creates a Route composite object from path segments
+     * @param {Array} segments - Array of route segments
+     * @param {Object} metadata - Additional route metadata
+     * @returns {Route} - Route composite object
      */
-    calculatePathScore(path) {
-        throw new Error("calculatePathScore method must be implemented by concrete strategy");
-    }
-
-    /**
-     * Gets the display name for this strategy
-     * @returns {string} - Strategy display name
-     */
-    getDisplayName() {
-        throw new Error("getDisplayName method must be implemented by concrete strategy");
-    }
-
-    /**
-     * Gets a description of what this strategy optimizes for
-     * @returns {string} - Strategy description
-     */
-    getDescription() {
-        throw new Error("getDescription method must be implemented by concrete strategy");
-    }
-
-    /**
-     * Gets the icon or symbol representing this strategy
-     * @returns {string} - Strategy icon/symbol
-     */
-    getIcon() {
-        throw new Error("getIcon method must be implemented by concrete strategy");
-    }
-
-    /**
-     * Common pathfinding logic shared across strategies
-     * This implements the core BFS algorithm, but allows strategies to customize scoring
-     */
-    async executePathfinding(startCoords, endCoords, busStops, busLines, routingService) {
+    createRoute(segments, metadata = {}) {
         try {
-            // Find nearby stops using routing service
-            const nearbyStartStops = routingService.findNearestStops(startCoords, busStops);
-            const nearbyEndStops = routingService.findNearestStops(endCoords, busStops);
+            const components = segments.map((segment, index) => {
+                return this.createRouteComponent(segment, index);
+            }).filter(component => component !== null);
 
-            if (nearbyStartStops.length === 0 || nearbyEndStops.length === 0) {
-                throw new Error("No nearby bus stops found within 1km.");
-            }
+            const route = new Route({
+                name: `${this.name} Route`,
+                components: components,
+                strategy: this.type,
+                metadata: {
+                    ...metadata,
+                    strategyUsed: {
+                        name: this.name,
+                        icon: this.icon,
+                        type: this.type,
+                        description: this.description
+                    },
+                    createdAt: new Date().toISOString()
+                }
+            });
 
-            // Build stop routes map
-            const stopRoutesMap = this.buildStopRoutesMap(busLines);
+            return route;
+        } catch (error) {
+            console.error('Error creating route from segments:', error);
+            return new Route({
+                name: 'Error Route',
+                strategy: this.type,
+                metadata: { error: error.message }
+            });
+        }
+    }
 
-            // Find best path using strategy-specific scoring
-            const bestPath = this.findBestPathWithStrategy(
-                nearbyStartStops,
-                nearbyEndStops,
-                stopRoutesMap,
-                busLines,
-                busStops,
-                routingService
-            );
-
-            if (bestPath) {
-                // Create route segments with directions from routing service
-                const formattedPath = await routingService.createRouteSegments(
-                    bestPath,
-                    startCoords,
-                    endCoords
-                );
-
-                return {
-                    path: formattedPath,
-                    metadata: {
-                        strategy: this.getDisplayName(),
-                        transfers: bestPath.transfers,
-                        totalWalking: bestPath.totalWalking,
-                        totalDistance: bestPath.totalDistance,
-                        score: this.calculatePathScore(bestPath)
-                    }
-                };
+    /**
+     * Creates individual route components from segment data
+     * @param {Object} segmentData - Segment data
+     * @param {number} index - Segment index
+     * @returns {RouteComponent} - Route component (WalkingSegment or BusSegment)
+     */
+    createRouteComponent(segmentData, index) {
+        try {
+            if (segmentData.type === 'walking') {
+                return new WalkingSegment({
+                    distance: segmentData.distance || 0,
+                    duration: segmentData.duration || 0,
+                    startPoint: segmentData.from,
+                    endPoint: segmentData.to,
+                    coordinates: segmentData.coordinates || [],
+                    terrain: segmentData.terrain || 'flat',
+                    sidewalkAvailable: segmentData.sidewalkAvailable !== false,
+                    accessibilityFeatures: segmentData.accessibilityFeatures || []
+                });
+            } else if (segmentData.type === 'bus') {
+                return new BusSegment({
+                    distance: segmentData.distance || 0,
+                    duration: segmentData.duration || 0,
+                    startPoint: segmentData.from,
+                    endPoint: segmentData.to,
+                    coordinates: segmentData.coordinates || [],
+                    busLine: segmentData.line,
+                    fare: segmentData.fare || 6000,
+                    intermediateStops: segmentData.intermediateStops || [],
+                    vehicleType: segmentData.vehicleType || 'standard',
+                    accessibility: segmentData.accessibility || []
+                });
             } else {
-                throw new Error("No valid path found.");
+                console.warn(`Unknown segment type: ${segmentData.type}`);
+                return null;
             }
         } catch (error) {
-            throw new Error(error.message || "An error occurred while finding the path.");
+            console.error(`Error creating component ${index}:`, error);
+            return null;
         }
     }
 
     /**
-     * Builds a map of stops to the bus lines that serve them
+     * Calculates optimization score for route comparison
+     * @param {Route} route - Route to score
+     * @param {Object} preferences - User preferences for scoring
+     * @returns {number} - Optimization score (lower is better)
      */
-    buildStopRoutesMap(busLines) {
-        const stopRoutes = new Map();
+    calculateScore(route, preferences = {}) {
+        if (!(route instanceof Route)) {
+            return Infinity;
+        }
 
-        busLines.forEach((line) => {
-            line.arr_stop.forEach((stop) => {
-                if (!stopRoutes.has(stop.id)) {
-                    stopRoutes.set(stop.id, new Set());
-                }
-                stopRoutes.get(stop.id).add(line);
-            });
-        });
+        const weights = {
+            distance: preferences.distanceWeight || 1.0,
+            duration: preferences.durationWeight || 1.5,
+            transfers: preferences.transferWeight || 2.0,
+            walking: preferences.walkingWeight || 1.5,
+            cost: preferences.costWeight || 0.1
+        };
 
-        return stopRoutes;
+        return (
+            (route.getDistance() * weights.distance) +
+            (route.getDuration() * weights.duration) +
+            (route.getTransferCount() * weights.transfers) +
+            (route.getWalkingDistance() * weights.walking) +
+            (route.getCost() * weights.cost)
+        );
     }
 
     /**
-     * Core pathfinding algorithm with strategy-specific scoring
+     * Finds nearby stops to a coordinate
+     * @param {Array} coordinates - [lng, lat] coordinates
+     * @param {Array} busStops - Array of bus stops
+     * @param {number} maxDistance - Maximum distance in km
+     * @returns {Array} - Array of nearby stops
      */
-    findBestPathWithStrategy(startStops, endStops, stopRoutesMap, busLines, busStops, routingService) {
-        const queue = new Queue();
-        const visited = new Map();
+    findNearbyStops(coordinates, busStops, maxDistance = 1) {
+        return routingService.findNearestStops(coordinates, busStops, maxDistance);
+    }
 
-        // Initialize queue with start stops
-        startStops.forEach(({ stop: startStop, distance: initialWalk }) => {
-            queue.enqueue({
-                currentStop: startStop,
-                path: [startStop],
-                lines: [],
-                transfers: 0,
-                totalWalking: initialWalk,
-                totalDistance: initialWalk,
-                segments: [{
-                    type: 'walking',
-                    distance: initialWalk,
-                    from: 'start',
-                    to: startStop
-                }]
-            });
-        });
+    /**
+     * Calculates distance between two coordinates
+     * @param {Array} coord1 - First coordinate [lng, lat]
+     * @param {Array} coord2 - Second coordinate [lng, lat]
+     * @returns {number} - Distance in km
+     */
+    calculateDistance(coord1, coord2) {
+        return routingService.calculateDistance(coord1, coord2);
+    }
 
-        let bestPath = null;
-        let minScore = Infinity;
+    /**
+     * Estimates travel time for different modes
+     * @param {number} distance - Distance in km
+     * @param {string} mode - Transportation mode
+     * @returns {number} - Estimated time in minutes
+     */
+    estimateTravelTime(distance, mode = 'walking') {
+        return routingService.estimateTravelTime(distance, mode);
+    }
 
-        while (!queue.isEmpty()) {
-            const current = queue.dequeue();
+    /**
+     * Finds direct bus connections between stops
+     * @param {Object} startStop - Starting bus stop
+     * @param {Object} endStop - Ending bus stop
+     * @param {Array} busLines - Available bus lines
+     * @returns {Array} - Array of connecting bus lines
+     */
+    findDirectConnections(startStop, endStop, busLines) {
+        const connections = [];
 
-            // Check if we've reached any end stop
-            const endStopMatch = endStops.find(
-                ({ stop }) => stop.id === current.currentStop.id
-            );
-
-            if (endStopMatch) {
-                const pathWithFinalWalk = {
-                    ...current,
-                    totalWalking: current.totalWalking + endStopMatch.distance,
-                    totalDistance: current.totalDistance + endStopMatch.distance
-                };
-
-                const finalScore = this.calculatePathScore(pathWithFinalWalk);
-
-                if (finalScore < minScore) {
-                    minScore = finalScore;
-                    bestPath = {
-                        ...pathWithFinalWalk,
-                        segments: [...current.segments],
-                        finalWalkDistance: endStopMatch.distance
-                    };
-                }
-                continue;
-            }
-
-            // Don't explore if we've exceeded reasonable limits
-            if (current.transfers >= 3 || current.totalWalking >= 4) continue;
-
-            const currentRoutes = stopRoutesMap.get(current.currentStop.id);
-            if (!currentRoutes) continue;
-
-            // Explore bus routes
-            currentRoutes.forEach(line => {
-                const lineStops = line.arr_stop;
-                const currentStopIndex = lineStops.findIndex(
-                    s => s.id === current.currentStop.id
+        for (let line of busLines) {
+            if (line.arr_stop && Array.isArray(line.arr_stop)) {
+                const startIndex = line.arr_stop.findIndex(stop =>
+                    stop.id === startStop.id || stop.name === startStop.name
+                );
+                const endIndex = line.arr_stop.findIndex(stop =>
+                    stop.id === endStop.id || stop.name === endStop.name
                 );
 
-                if (currentStopIndex === -1) return;
-
-                // Try both directions
-                [lineStops, [...lineStops].reverse()].forEach(stops => {
-                    const stopIndex = stops.findIndex(
-                        s => s.id === current.currentStop.id
-                    );
-
-                    // Explore next stops in this direction
-                    for (let i = stopIndex + 1; i < stops.length; i++) {
-                        const nextStop = stops[i];
-                        const key = `${nextStop.id}-${current.transfers}`;
-
-                        if (visited.has(key)) continue;
-                        visited.set(key, true);
-
-                        const isNewLine = !current.lines.includes(line);
-                        const newTransfers = isNewLine ?
-                            current.transfers + 1 :
-                            current.transfers;
-
-                        // Get intermediate stops
-                        const intermediateStops = stops.slice(stopIndex, i + 1);
-
-                        queue.enqueue({
-                            currentStop: nextStop,
-                            path: [...current.path, nextStop],
-                            lines: isNewLine ?
-                                [...current.lines, line] :
-                                current.lines,
-                            transfers: newTransfers,
-                            totalWalking: current.totalWalking,
-                            totalDistance: current.totalDistance,
-                            segments: [
-                                ...current.segments,
-                                {
-                                    type: 'bus',
-                                    line: line,
-                                    from: current.currentStop,
-                                    to: nextStop,
-                                    intermediateStops: intermediateStops
-                                }
-                            ]
+                if (startIndex !== -1 && endIndex !== -1 && startIndex !== endIndex) {
+                    // Ensure proper direction (start comes before end in route)
+                    if (startIndex < endIndex ||
+                        (line.circular && Math.abs(startIndex - endIndex) > line.arr_stop.length / 2)) {
+                        connections.push({
+                            line: line,
+                            startIndex: startIndex,
+                            endIndex: endIndex,
+                            intermediateStops: this.getIntermediateStops(line.arr_stop, startIndex, endIndex)
                         });
                     }
-                });
-            });
-
-            // Explore walking transfers
-            const nearbyStops = routingService.findNearestStops(
-                [current.currentStop.pointX, current.currentStop.pointY],
-                busStops
-            );
-
-            nearbyStops.forEach(({ stop: nearStop, distance }) => {
-                if (distance > 1 || nearStop.id === current.currentStop.id) return;
-
-                const totalWalking = current.totalWalking + distance;
-                if (totalWalking > 4) return;
-
-                const key = `${nearStop.id}-${current.transfers}`;
-                if (visited.has(key)) return;
-
-                queue.enqueue({
-                    currentStop: nearStop,
-                    path: [...current.path, nearStop],
-                    lines: current.lines,
-                    transfers: current.transfers,
-                    totalWalking: totalWalking,
-                    totalDistance: current.totalDistance + distance,
-                    segments: [
-                        ...current.segments,
-                        {
-                            type: 'walking',
-                            distance: distance,
-                            from: current.currentStop,
-                            to: nearStop
-                        }
-                    ]
-                });
-            });
+                }
+            }
         }
 
-        return bestPath;
-    }
-}
-
-// Queue implementation for pathfinding
-class Queue {
-    constructor() {
-        this.items = [];
+        return connections;
     }
 
-    enqueue(item) {
-        this.items.push(item);
+    /**
+     * Gets intermediate stops between two stops on a line
+     * @param {Array} allStops - All stops on the line
+     * @param {number} startIndex - Start stop index
+     * @param {number} endIndex - End stop index
+     * @returns {Array} - Intermediate stops
+     */
+    getIntermediateStops(allStops, startIndex, endIndex) {
+        if (startIndex < endIndex) {
+            return allStops.slice(startIndex + 1, endIndex);
+        } else {
+            // Handle circular routes
+            return [
+                ...allStops.slice(startIndex + 1),
+                ...allStops.slice(0, endIndex)
+            ];
+        }
     }
 
-    dequeue() {
-        return this.items.shift();
+    /**
+     * Creates walking segment between two points
+     * @param {Object} from - Starting point
+     * @param {Object} to - Ending point
+     * @param {Object} options - Additional options
+     * @returns {Object} - Walking segment data
+     */
+    async createWalkingSegment(from, to, options = {}) {
+        const fromCoords = this.extractCoordinates(from);
+        const toCoords = this.extractCoordinates(to);
+
+        if (!fromCoords || !toCoords) {
+            return null;
+        }
+
+        const distance = this.calculateDistance(fromCoords, toCoords);
+        const duration = this.estimateTravelTime(distance, 'walking');
+
+        // Get enhanced walking route if possible
+        let coordinates = [fromCoords, toCoords];
+        try {
+            const walkingRoute = await routingService.getWalkingRoute(fromCoords, toCoords);
+            if (walkingRoute && walkingRoute.coordinates) {
+                coordinates = walkingRoute.coordinates;
+            }
+        } catch (error) {
+            console.warn('Could not get enhanced walking route:', error);
+        }
+
+        return {
+            type: 'walking',
+            from: from,
+            to: to,
+            distance: distance,
+            duration: duration,
+            coordinates: coordinates,
+            ...options
+        };
     }
 
-    isEmpty() {
-        return this.items.length === 0;
+    /**
+     * Creates bus segment between stops
+     * @param {Object} from - Starting stop
+     * @param {Object} to - Ending stop
+     * @param {Object} line - Bus line
+     * @param {Array} intermediateStops - Stops between from and to
+     * @param {Object} options - Additional options
+     * @returns {Object} - Bus segment data
+     */
+    async createBusSegment(from, to, line, intermediateStops = [], options = {}) {
+        const fromCoords = this.extractCoordinates(from);
+        const toCoords = this.extractCoordinates(to);
+
+        if (!fromCoords || !toCoords) {
+            return null;
+        }
+
+        const distance = this.calculateDistance(fromCoords, toCoords);
+        let duration = this.estimateTravelTime(distance, 'bus');
+
+        // Add time for intermediate stops
+        duration += intermediateStops.length * 1; // 1 minute per stop
+
+        // Get enhanced bus route if possible
+        let coordinates = [fromCoords, toCoords];
+        try {
+            const allStops = [from, ...intermediateStops, to];
+            const busRoute = await routingService.getBusRoute(allStops);
+            if (busRoute && busRoute.coordinates) {
+                coordinates = busRoute.coordinates;
+            }
+        } catch (error) {
+            console.warn('Could not get enhanced bus route:', error);
+        }
+
+        return {
+            type: 'bus',
+            from: from,
+            to: to,
+            line: line,
+            distance: distance,
+            duration: duration,
+            coordinates: coordinates,
+            intermediateStops: intermediateStops,
+            fare: options.fare || 6000,
+            ...options
+        };
+    }
+
+    /**
+     * Extracts coordinates from location objects with standardized format
+     * @param {Object|Array} location - Location object
+     * @returns {Array|null} - [lng, lat] coordinates
+     */
+    extractCoordinates(location) {
+        const coords = routingService.extractCoordinates(location);
+        return coords ? RouteComponent.ensureLngLat(coords) : null;
+    }
+
+    /**
+     * Validates that a route meets basic requirements
+     * @param {Route} route - Route to validate
+     * @param {Object} constraints - Validation constraints
+     * @returns {boolean} - Whether route is valid
+     */
+    validateRoute(route, constraints = {}) {
+        if (!(route instanceof Route)) {
+            return false;
+        }
+
+        // Default constraints
+        const maxWalkingDistance = constraints.maxWalkingDistance || 5; // km
+        const maxTransfers = constraints.maxTransfers || 3;
+        const maxTotalDuration = constraints.maxTotalDuration || 180; // minutes
+
+        return (
+            route.isValid() &&
+            route.getWalkingDistance() <= maxWalkingDistance &&
+            route.getTransferCount() <= maxTransfers &&
+            route.getDuration() <= maxTotalDuration
+        );
+    }
+
+    /**
+     * Gets strategy information for UI display
+     * @returns {Object} - Strategy information
+     */
+    getInfo() {
+        return {
+            name: this.name,
+            icon: this.icon,
+            type: this.type,
+            description: this.description
+        };
+    }
+
+    /**
+     * Gets user-friendly explanation of what this strategy optimizes for
+     * @returns {string} - Strategy explanation
+     */
+    getExplanation() {
+        return this.description;
+    }
+
+    /**
+     * Determines if this strategy is suitable for given conditions
+     * @param {Object} conditions - Route conditions (distance, time constraints, etc.)
+     * @returns {boolean} - Whether strategy is suitable
+     */
+    isSuitableFor(conditions = {}) {
+        // Base implementation - can be overridden by specific strategies
+        return true;
+    }
+
+    /**
+     * Gets the priority order for this strategy (lower numbers = higher priority)
+     * @param {Object} context - Route context
+     * @returns {number} - Priority order
+     */
+    getPriority(context = {}) {
+        // Base implementation - can be overridden by specific strategies
+        return 100;
     }
 }
 

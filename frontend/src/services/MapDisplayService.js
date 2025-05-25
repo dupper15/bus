@@ -264,9 +264,6 @@ class MapDisplayService {
             const length = Math.sqrt(dx * dx + dy * dy);
 
             if (length < 0.0001) continue;
-
-            const dirX = dx / length;
-            const dirY = dy / length;
             const numArrows = Math.floor(length * 111000 / spacing);
 
             for (let j = 1; j <= numArrows; j++) {
