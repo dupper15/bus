@@ -1,132 +1,190 @@
 import React, { useState } from 'react';
-import { FaWalking, FaBus, FaCircle } from 'react-icons/fa';
+import PropTypes from 'prop-types';
+import Route from '@/components/Route/Route.jsx';
+import WalkingSegment from '@/components/Route/WalkingSegment.jsx';
+import BusSegment from '@/components/Route/BusSegment.jsx';
 
-const calculateWalkingTime = (distanceKm) => {
-    const walkingTimeHours = distanceKm / 5;
-    return Math.round(walkingTimeHours * 60);
-};
-
-const calculateBusTime = (distanceKm) => {
-    const busTimeHours = distanceKm / 20;
-    return Math.round(busTimeHours * 60);
-};
-
-const RouteDetails = ({ path, fare = "6k VND" }) => {
+/**
+ * RouteDetails component - Displays detailed route information
+ * Enhanced to work with Composite pattern
+ *
+ * @param {Object} props - Component properties
+ * @returns {JSX.Element} - Route details component
+ */
+const RouteDetails = ({ path, route, fare = "6k VND" }) => {
     const [activeTab, setActiveTab] = useState('details');
-    if (!path || path.length === 0) return null;
 
-    const renderRouteDetails = () => (
-        <div className="p-6 space-y-6">
-            {path.map((segment, index) => {
-                const isWalking = segment.type === 'walking';
-                const distance = segment.distance;
-                const time = isWalking
-                    ? calculateWalkingTime(distance)
-                    : calculateBusTime(distance);
+    // Handle both legacy and composite pattern data
+    const routeObject = getRouteObject(path, route);
 
-                return (
-                    <div key={index} className="flex items-start gap-5">
-                        <div className="mt-1">
-                            {isWalking ? (
-                                <FaWalking className="text-gray-600 text-xl" />
-                            ) : (
-                                <FaBus className="text-gray-600 text-xl" />
-                            )}
-                        </div>
+    // Safety check for route data
+    if (!routeObject || !routeObject.isValid()) {
+        return (
+            <div className="bg-white rounded-lg shadow p-6">
+                <p className="text-gray-500 text-center">No valid route information available</p>
+            </div>
+        );
+    }
 
-                        <div className="flex-1">
-                            <div className="flex justify-between items-start mb-2">
-                                <div className="flex-1">
-                                    <p className="text-gray-900 font-medium text-base">
-                                        {isWalking ? (
-                                            `Walk to ${segment.to?.name || 'destination'}`
-                                        ) : (
-                                            `Take ${segment.line?.name || 'Bus'} towards ${segment.to[segment.to.length - 1].name}`
-                                        )}
-                                    </p>
-                                    <p className="text-gray-500 mt-1">
-                                        {isWalking ? (
-                                            `From ${segment.from?.name || 'current location'}`
-                                        ) : (
-                                            `From ${segment.from?.name} to ${segment.to[segment.to.length - 1].name}`
-                                        )}
-                                    </p>
-                                </div>
-                                <div className="text-right ml-4">
-                                    <p className="text-green-600 font-medium">{time} mins</p>
-                                    <p className="text-gray-500 mt-1">
-                                        {distance.toFixed(1)}km
-                                    </p>
-                                </div>
+    /**
+     * Renders route details using Composite pattern
+     * @returns {JSX.Element} - Route details content
+     */
+    const renderRouteDetails = () => {
+        // Use the composite pattern's render method
+        return (
+            <div className="p-6">
+                {routeObject.render()}
+            </div>
+        );
+    };
+
+    /**
+     * Renders all stops in the route
+     * @returns {JSX.Element} - Stops list content
+     */
+    const renderPassingStops = () => {
+        // Use the composite pattern's renderAllStops method
+        return (
+            <div className="p-6">
+                {routeObject.renderAllStops()}
+            </div>
+        );
+    };
+
+    /**
+     * Renders route summary information
+     * @returns {JSX.Element} - Route summary content
+     */
+    const renderRouteSummary = () => {
+        const summary = routeObject.getSummary();
+
+        return (
+            <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-6">
+                    {/* Basic Info */}
+                    <div className="space-y-3">
+                        <h3 className="font-medium text-gray-900">Route Information</h3>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Strategy:</span>
+                                <span className="font-medium">{summary.strategy}</span>
                             </div>
-
-                            {!isWalking && (
-                                <div className="flex items-center gap-3 mt-3">
-                                    <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                                        {fare}
-                                    </span>
-                                    <span className="text-gray-500">
-                                        • Next bus in {Math.floor(Math.random() * 10) + 1} mins
-                                    </span>
-                                    {segment.to.length > 2 && (
-                                        <span className="text-gray-500">
-                                            • {segment.to.length - 2} stops
-                                        </span>
-                                    )}
-                                </div>
-                            )}
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Segments:</span>
+                                <span className="font-medium">{summary.segments}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Confidence:</span>
+                                <span className="font-medium">{(summary.confidence * 100).toFixed(0)}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Score:</span>
+                                <span className="font-medium">{summary.optimizationScore?.toFixed(1)}</span>
+                            </div>
                         </div>
                     </div>
-                );
-            })}
 
-            <div className="pt-4 border-t mt-6">
-                <div className="flex justify-between text-sm text-gray-500">
-                    <span>Total distance: {path.reduce((acc, seg) => acc + (seg.distance || 0), 0).toFixed(1)}km</span>
-                    <span>Total time: {path.reduce((acc, seg) => {
-                        const dist = seg.distance || 0;
-                        return acc + (seg.type === 'walking' ? calculateWalkingTime(dist) : calculateBusTime(dist));
-                    }, 0)} mins</span>
-                </div>
-            </div>
-        </div>
-    );
-
-    const renderPassingStops = () => (
-        <div className="p-6">
-            {path.map((segment, segmentIndex) => (
-                <div key={segmentIndex} className="mb-6 last:mb-0">
-                    {segment.type === 'bus' && (
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3 mb-4">
-                                <FaBus className="text-gray-600 text-xl" />
-                                <span className="font-medium">{segment.line?.name}</span>
+                    {/* Transportation Breakdown */}
+                    <div className="space-y-3">
+                        <h3 className="font-medium text-gray-900">Transportation</h3>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Walking segments:</span>
+                                <span className="font-medium">{summary.walkingSegments}</span>
                             </div>
-                            <div className="space-y-3 pl-8">
-                                {segment.to.map((stop, stopIndex) => (
-                                    <div key={stopIndex} className="flex items-center gap-3">
-                                        <div className="relative flex items-center">
-                                            <FaCircle className={`w-2 h-2 ${stopIndex === 0 || stopIndex === segment.to.length - 1 ? 'text-green-500' : 'text-gray-400'}`} />
-                                            {stopIndex !== segment.to.length - 1 && (
-                                                <div className="absolute top-3 left-1 w-px h-6 bg-gray-300" />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-gray-900">{stop.name}</p>
-                                            <p className="text-sm text-gray-500">{stop.address}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Bus segments:</span>
+                                <span className="font-medium">{summary.busSegments}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Walking distance:</span>
+                                <span className="font-medium">{summary.walkingDistance?.toFixed(1)}km</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Bus distance:</span>
+                                <span className="font-medium">{summary.busDistance?.toFixed(1)}km</span>
                             </div>
                         </div>
-                    )}
+                    </div>
                 </div>
-            ))}
-        </div>
-    );
+
+                {/* Bus Lines Used */}
+                {summary.busLines && summary.busLines.length > 0 && (
+                    <div className="pt-4 border-t">
+                        <h3 className="font-medium text-gray-900 mb-3">Bus Lines Used</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {summary.busLines.map((line, index) => (
+                                <span
+                                    key={index}
+                                    className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium"
+                                >
+                                    {line}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Environmental Impact */}
+                <div className="pt-4 border-t">
+                    <h3 className="font-medium text-gray-900 mb-3">Environmental Impact</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="bg-green-50 p-3 rounded-lg">
+                            <div className="font-medium text-green-800">CO₂ Saved</div>
+                            <div className="text-green-600 mt-1">
+                                ~{(summary.busDistance * 0.12).toFixed(1)} kg
+                            </div>
+                            <div className="text-green-500 text-xs mt-1">vs. driving alone</div>
+                        </div>
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                            <div className="font-medium text-blue-800">Steps Taken</div>
+                            <div className="text-blue-600 mt-1">
+                                ~{Math.round(summary.walkingDistance * 1300)}
+                            </div>
+                            <div className="text-blue-500 text-xs mt-1">walking distance</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="bg-white rounded-lg shadow">
+            {/* Route header with composite pattern summary */}
+            <div className="p-4 border-b bg-gray-50">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-semibold text-gray-900">
+                        {routeObject.name || 'Your Route'}
+                    </h2>
+                    <div className="text-sm text-gray-600">
+                        Strategy: {routeObject.strategy}
+                    </div>
+                </div>
+
+                {/* Quick summary */}
+                <div className="mt-3 grid grid-cols-4 gap-4 text-sm">
+                    <div className="text-center">
+                        <div className="font-medium text-gray-900">{routeObject.getDistance().toFixed(1)}km</div>
+                        <div className="text-gray-500">Distance</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="font-medium text-gray-900">{routeObject.getDuration()} min</div>
+                        <div className="text-gray-500">Duration</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="font-medium text-gray-900">{routeObject.getTransferCount()}</div>
+                        <div className="text-gray-500">Transfers</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="font-medium text-gray-900">{(routeObject.getCost() / 1000).toFixed(0)}k</div>
+                        <div className="text-gray-500">VND</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tab navigation */}
             <div className="flex border-b">
                 <button
                     onClick={() => setActiveTab('details')}
@@ -146,11 +204,69 @@ const RouteDetails = ({ path, fare = "6k VND" }) => {
                 >
                     Passing stops
                 </button>
+                <button
+                    onClick={() => setActiveTab('summary')}
+                    className={`flex-1 py-4 text-center font-medium transition-colors
+                        ${activeTab === 'summary'
+                        ? 'text-green-600 border-b-2 border-green-500'
+                        : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Summary
+                </button>
             </div>
 
-            {activeTab === 'details' ? renderRouteDetails() : renderPassingStops()}
+            {/* Tab content */}
+            {activeTab === 'details' && renderRouteDetails()}
+            {activeTab === 'stops' && renderPassingStops()}
+            {activeTab === 'summary' && renderRouteSummary()}
         </div>
     );
 };
 
+/**
+ * Helper function to convert legacy path data to Route composite object
+ * @param {Array} path - Legacy path array
+ * @param {Route} route - Route composite object
+ * @returns {Route} - Route composite object
+ */
+function getRouteObject(path, route) {
+    // If already a Route composite object, return it
+    if (route instanceof Route) {
+        return route;
+    }
+
+    // If we have a legacy path array, convert it to Route object
+    if (Array.isArray(path) && path.length > 0) {
+        return Route.fromLegacyData({ segments: path });
+    }
+
+    // If route is a plain object, try to construct from it
+    if (route && typeof route === 'object') {
+        if (route.components || route.segments) {
+            return Route.fromJSON(route);
+        }
+        // Try to treat as legacy data
+        return Route.fromLegacyData(route);
+    }
+
+    return null;
+}
+
+RouteDetails.propTypes = {
+    path: PropTypes.array,
+    route: PropTypes.oneOfType([
+        PropTypes.instanceOf(Route),
+        PropTypes.object
+    ]),
+    fare: PropTypes.string
+};
+
+/**
+ * Legacy compatibility wrapper - maintains backward compatibility
+ */
+const LegacyRouteDetails = ({ path, fare }) => {
+    return <RouteDetails path={path} fare={fare} />;
+};
+
 export default RouteDetails;
+export { LegacyRouteDetails };

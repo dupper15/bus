@@ -3,7 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
-mapboxgl.accessToken = "pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg";
+mapboxgl.accessToken =  import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const LineDetailsPopup = ({ line, onClose }) => {
     const mapContainerRef = useRef(null);
