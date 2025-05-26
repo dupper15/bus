@@ -14,11 +14,7 @@ import {
 } from "@/components/ui/loadingSkeletons.jsx";
 
 /**
- * NavigationTab component - Handles route finding and pathfinding functionality
- * Enhanced with loading skeletons for better UX
- *
- * @param {Object} props - Component properties
- * @returns {JSX.Element} - Navigation tab component
+ * NavigationTab component - Enhanced with map click coordinate selection
  */
 const NavigationTab = ({
                            onFindPath,
@@ -27,11 +23,13 @@ const NavigationTab = ({
                            startCoordinates,
                            endCoordinates,
                            lines,
+                           onMapClick, // New prop to handle map clicks
+                           mapRef // Reference to the map instance
                        }) => {
-    // Use enhanced NavigationViewModel with Strategy and Composite patterns
+    // Use enhanced NavigationViewModel
     const {
         path,
-        route, // New Route composite object
+        route,
         findPath,
         error,
         start,
@@ -44,15 +42,11 @@ const NavigationTab = ({
         handleStartSuggestionClick,
         handleSwap,
         setError,
-
-        // Strategy-related functionality
         selectedStrategy,
         handleStrategyChange,
         getAvailableStrategies,
         getStrategyExplanation,
         routeMetadata,
-
-        // Strategy comparison
         isComparing,
         strategyComparison,
         compareAllStrategies,
@@ -60,36 +54,178 @@ const NavigationTab = ({
         clearStrategyComparison,
     } = useNavigationViewModel();
 
-    const [startClicked, setStartClicked] = useState(false);
-    const [endClicked, setEndClicked] = useState(false);
+    // Map interaction states
     const [pickingStart, setPickingStart] = useState(false);
     const [pickingEnd, setPickingEnd] = useState(false);
-    const [showStrategyInfo, setShowStrategyInfo] = useState(false);
-    const [showComparison, setShowComparison] = useState(false);
+    const [mapClickHandler, setMapClickHandler] = useState(null);
 
-    // Loading states for search suggestions
+    // Loading states
     const [startLoading, setStartLoading] = useState(false);
     const [endLoading, setEndLoading] = useState(false);
-
-    // Show/hide states for suggestion boxes
     const [showStartSuggestions, setShowStartSuggestions] = useState(false);
     const [showEndSuggestions, setShowEndSuggestions] = useState(false);
-
-    // Route finding loading state
     const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+    const [showStrategyInfo, setShowStrategyInfo] = useState(false);
+    const [showComparison, setShowComparison] = useState(false);
 
     // Refs for suggestion containers
     const startSuggestionsRef = useRef(null);
     const endSuggestionsRef = useRef(null);
 
+    // Handle map click for location selection
+    const handleMapClickForLocation = (coordinates) => {
+        console.log('HandleMapClickForLocation received:', coordinates, typeof coordinates);
+
+        // Ensure coordinates is an array
+        if (!Array.isArray(coordinates) || coordinates.length < 2) {
+            console.error('Invalid coordinates received:', coordinates);
+            return;
+        }
+
+        const [lng, lat] = coordinates;
+        const locationName = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+        if (pickingStart) {
+            // Set start location from map click
+            handleStartSuggestionClick({
+                name: locationName,
+                coordinates: [lat, lng], // Note: handleStartSuggestionClick expects [lat, lng]
+                address: 'Selected on map'
+            });
+            setPickingStart(false);
+            console.log('Start location set from map:', { lat, lng, name: locationName });
+        } else if (pickingEnd) {
+            // Set end location from map click
+            handleEndSuggestionClick({
+                name: locationName,
+                coordinates: [lat, lng], // Note: handleEndSuggestionClick expects [lat, lng]
+                address: 'Selected on map'
+            });
+            setPickingEnd(false);
+            console.log('End location set from map:', { lat, lng, name: locationName });
+        }
+
+        // Reset cursor and clear picking states
+        resetMapCursor();
+    };
+
+    // Reset map cursor to default
+    const resetMapCursor = () => {
+        if (mapRef && mapRef.current) {
+            mapRef.current.getCanvas().style.cursor = '';
+        }
+        document.body.style.cursor = 'default';
+    };
+
+    // Set map cursor to crosshair
+    const setMapCursorToCrosshair = () => {
+        if (mapRef && mapRef.current) {
+            mapRef.current.getCanvas().style.cursor = 'crosshair';
+        }
+        document.body.style.cursor = 'crosshair';
+    };
+
+    // Handle picking locations on map
+    const handlePickLocation = (type) => {
+        console.log(`Starting to pick ${type} location`);
+
+        if (type === 'start') {
+            setPickingStart(true);
+            setPickingEnd(false);
+            onInputFocus('start'); // Notify parent about input focus
+        } else {
+            setPickingStart(false);
+            setPickingEnd(true);
+            onInputFocus('end'); // Notify parent about input focus
+        }
+
+        setMapCursorToCrosshair();
+    };
+
+    // Cancel picking location
+    const cancelPickingLocation = () => {
+        setPickingStart(false);
+        setPickingEnd(false);
+        resetMapCursor();
+        onInputFocus(null); // Clear input focus
+        console.log('Location picking cancelled');
+    };
+
+    // Setup map click handler
+    useEffect(() => {
+        if (pickingStart || pickingEnd) {
+            // Create a new map click handler
+            const clickHandler = (coordinates) => {
+                handleMapClickForLocation(coordinates);
+            };
+
+            setMapClickHandler(() => clickHandler);
+
+            // Set up the click handler with parent component
+            if (onMapClick) {
+                onMapClick(clickHandler);
+            }
+
+            setMapCursorToCrosshair();
+        } else {
+            // Clear the click handler
+            setMapClickHandler(null);
+            if (onMapClick) {
+                onMapClick(null);
+            }
+            resetMapCursor();
+        }
+
+        // Cleanup function
+        return () => {
+            if (!pickingStart && !pickingEnd) {
+                resetMapCursor();
+            }
+        };
+    }, [pickingStart, pickingEnd]); // Remove onMapClick from dependencies to prevent infinite loop
+
+    // Handle escape key to cancel location picking
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape' && (pickingStart || pickingEnd)) {
+                cancelPickingLocation();
+            }
+        };
+
+        if (pickingStart || pickingEnd) {
+            document.addEventListener('keydown', handleKeyDown);
+            return () => {
+                document.removeEventListener('keydown', handleKeyDown);
+            };
+        }
+    }, [pickingStart, pickingEnd]);
+
     // Update local state when props change
     useEffect(() => {
-        if (startCoordinates) handleStartChange(startCoordinates);
-    }, [startCoordinates, handleStartChange]);
+        if (startCoordinates && !pickingStart) {
+            const coords = startCoordinates.split(', ').map(Number);
+            if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                handleStartSuggestionClick({
+                    name: `${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}`,
+                    coordinates: coords,
+                    address: 'From external input'
+                });
+            }
+        }
+    }, [startCoordinates, pickingStart]);
 
     useEffect(() => {
-        if (endCoordinates) handleEndChange(endCoordinates);
-    }, [endCoordinates, handleEndChange]);
+        if (endCoordinates && !pickingEnd) {
+            const coords = endCoordinates.split(', ').map(Number);
+            if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                handleEndSuggestionClick({
+                    name: `${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}`,
+                    coordinates: coords,
+                    address: 'From external input'
+                });
+            }
+        }
+    }, [endCoordinates, pickingEnd]);
 
     // Handle clicks outside suggestion boxes
     useEffect(() => {
@@ -108,14 +244,15 @@ const NavigationTab = ({
         };
     }, []);
 
-    // Handle input changes with sustained search box visibility
+    // Handle input changes
     const handleStartInputChange = (value) => {
-        handleStartChange(value);
+        // Don't handle input changes when picking from map
+        if (pickingStart) return;
 
+        handleStartChange(value);
         if (value.trim()) {
             setShowStartSuggestions(true);
             setStartLoading(true);
-            // Loading will be set to false when suggestions arrive
         } else {
             setShowStartSuggestions(false);
             setStartLoading(false);
@@ -123,12 +260,13 @@ const NavigationTab = ({
     };
 
     const handleEndInputChange = (value) => {
-        handleEndChange(value);
+        // Don't handle input changes when picking from map
+        if (pickingEnd) return;
 
+        handleEndChange(value);
         if (value.trim()) {
             setShowEndSuggestions(true);
             setEndLoading(true);
-            // Loading will be set to false when suggestions arrive
         } else {
             setShowEndSuggestions(false);
             setEndLoading(false);
@@ -148,51 +286,49 @@ const NavigationTab = ({
         }
     }, [endSuggestions, end.name]);
 
-    // Handle picking locations on map
-    const handlePickLocation = (type) => {
-        if (type === 'start') {
-            setPickingStart(true);
-            setPickingEnd(false);
-        } else {
-            setPickingStart(false);
-            setPickingEnd(true);
-        }
-        document.body.style.cursor = 'crosshair';
-    };
-
-    // Reset cursor when not picking
-    useEffect(() => {
-        if (!pickingStart && !pickingEnd) {
-            document.body.style.cursor = 'default';
-        }
-    }, [pickingStart, pickingEnd]);
-
     // Find path using selected strategy
     const handleFindPath = async () => {
-        if (!start || !end) return;
+        if (!start || !end || !start.coordinates || !end.coordinates) {
+            setError('Please select both start and end locations');
+            return;
+        }
 
         setIsLoadingRoute(true);
         try {
             const [startLat, startLng] = start.coordinates.map(Number);
             const [endLat, endLng] = end.coordinates.map(Number);
 
+            console.log('Finding path with coordinates:', {
+                start: { lat: startLat, lng: startLng },
+                end: { lat: endLat, lng: endLng }
+            });
+
             // Use strategy pattern to find path
             const strategyResult = await findPath(
-                [startLng, startLat],
+                [startLng, startLat], // Note: findPath expects [lng, lat]
                 [endLng, endLat],
                 busStops,
                 lines
             );
 
-            if (strategyResult) {
-                // Transform Route object to MapView format using PathTransformerService
+            if (strategyResult && strategyResult.length > 0) {
+                // Transform to MapView format
                 const mapViewPath = pathTransformerService.transformForMapView(strategyResult);
-                // Pass the transformed path to the parent component
-                onFindPath(mapViewPath, error, routeMetadata);
+
+                console.log('Route found:', strategyResult);
+                console.log('Transformed MapView Path:', mapViewPath);
+
+                // Pass to parent component
+                onFindPath(mapViewPath, null, routeMetadata);
+            } else {
+                setError('No route found between the selected locations');
             }
 
             setShowComparison(false);
             clearStrategyComparison();
+        } catch (err) {
+            console.error('Error finding path:', err);
+            setError(err.message || 'Failed to find route');
         } finally {
             setIsLoadingRoute(false);
         }
@@ -200,12 +336,14 @@ const NavigationTab = ({
 
     // Compare all available strategies
     const handleCompareStrategies = async () => {
-        if (!start || !end) return;
+        if (!start || !end || !start.coordinates || !end.coordinates) {
+            setError('Please select both start and end locations');
+            return;
+        }
 
         const [startLat, startLng] = start.coordinates.map(Number);
         const [endLat, endLng] = end.coordinates.map(Number);
 
-        // Use Strategy pattern to compare all strategies
         const results = await compareAllStrategies(
             [startLng, startLat],
             [endLng, endLat],
@@ -214,9 +352,9 @@ const NavigationTab = ({
         );
 
         if (results.length > 0) {
-            // Transform the best result for MapView
             const bestStrategyPath = results[0].path;
             const mapViewPath = pathTransformerService.transformForMapView(bestStrategyPath);
+
             onFindPath(mapViewPath, null, results[0].metadata);
             setShowComparison(true);
         }
@@ -227,7 +365,6 @@ const NavigationTab = ({
         selectRouteFromComparison(index);
 
         if (strategyComparison[index]) {
-            // Transform the selected route for MapView
             const selectedStrategyPath = strategyComparison[index].path;
             const mapViewPath = pathTransformerService.transformForMapView(selectedStrategyPath);
 
@@ -237,6 +374,26 @@ const NavigationTab = ({
 
     return (
         <div className="p-4">
+            {/* Location picking notification */}
+            {(pickingStart || pickingEnd) && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-blue-800">
+                            📍 Click on the map to select {pickingStart ? 'starting point' : 'destination'}
+                        </p>
+                        <button
+                            onClick={cancelPickingLocation}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-1">
+                        Press Escape to cancel selection
+                    </p>
+                </div>
+            )}
+
             {/* Location Input Section */}
             <div className="flex items-start gap-3 mb-4">
                 <div className="flex flex-col items-center pt-3">
@@ -250,27 +407,36 @@ const NavigationTab = ({
                     <div className="relative flex gap-2" ref={startSuggestionsRef}>
                         <input
                             type="text"
-                            placeholder="Choose starting point..."
+                            placeholder={pickingStart ? "Click on map to select..." : "Choose starting point..."}
                             value={start.name || ""}
                             onChange={(e) => handleStartInputChange(e.target.value)}
                             onFocus={() => {
-                                onInputFocus("start");
-                                if (start.name && start.name.trim()) {
-                                    setShowStartSuggestions(true);
+                                if (!pickingStart) {
+                                    onInputFocus("start");
+                                    if (start.name && start.name.trim()) {
+                                        setShowStartSuggestions(true);
+                                    }
                                 }
                             }}
-                            className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 placeholder:text-gray-400"
+                            disabled={pickingStart}
+                            className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 placeholder:text-gray-400 ${
+                                pickingStart ? 'bg-blue-50 border-blue-300' : ''
+                            }`}
                         />
                         <button
-                            onClick={() => handlePickLocation('start')}
-                            aria-label="Pick start location on map"
-                            className={`p-2 rounded-md transition-colors ${pickingStart ? 'bg-green-100' : 'hover:bg-green-50'}`}
+                            onClick={() => pickingStart ? cancelPickingLocation() : handlePickLocation('start')}
+                            aria-label={pickingStart ? "Cancel start location selection" : "Pick start location on map"}
+                            className={`p-2 rounded-md transition-colors ${
+                                pickingStart
+                                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                    : 'hover:bg-green-50 text-green-500'
+                            }`}
                         >
-                            <FiCrosshair className="text-green-500" />
+                            <FiCrosshair className={pickingStart ? "text-white" : "text-green-500"} />
                         </button>
 
-                        {/* Start location suggestions - positioned below input */}
-                        {showStartSuggestions && (
+                        {/* Start location suggestions */}
+                        {showStartSuggestions && !pickingStart && (
                             startLoading ? (
                                 <SearchSuggestionsListSkeleton count={3} />
                             ) : (
@@ -305,27 +471,36 @@ const NavigationTab = ({
                     <div className="relative flex gap-2" ref={endSuggestionsRef}>
                         <input
                             type="text"
-                            placeholder="Choose destination..."
+                            placeholder={pickingEnd ? "Click on map to select..." : "Choose destination..."}
                             value={end.name || ""}
                             onChange={(e) => handleEndInputChange(e.target.value)}
                             onFocus={() => {
-                                onInputFocus("end");
-                                if (end.name && end.name.trim()) {
-                                    setShowEndSuggestions(true);
+                                if (!pickingEnd) {
+                                    onInputFocus("end");
+                                    if (end.name && end.name.trim()) {
+                                        setShowEndSuggestions(true);
+                                    }
                                 }
                             }}
-                            className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 placeholder:text-gray-400"
+                            disabled={pickingEnd}
+                            className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 placeholder:text-gray-400 ${
+                                pickingEnd ? 'bg-blue-50 border-blue-300' : ''
+                            }`}
                         />
                         <button
-                            onClick={() => handlePickLocation('end')}
-                            aria-label="Pick end location on map"
-                            className={`p-2 rounded-md transition-colors ${pickingEnd ? 'bg-green-100' : 'hover:bg-green-50'}`}
+                            onClick={() => pickingEnd ? cancelPickingLocation() : handlePickLocation('end')}
+                            aria-label={pickingEnd ? "Cancel end location selection" : "Pick end location on map"}
+                            className={`p-2 rounded-md transition-colors ${
+                                pickingEnd
+                                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                    : 'hover:bg-green-50 text-green-500'
+                            }`}
                         >
-                            <FiCrosshair className="text-green-500" />
+                            <FiCrosshair className={pickingEnd ? "text-white" : "text-green-500"} />
                         </button>
 
-                        {/* End location suggestions - positioned below input */}
-                        {showEndSuggestions && (
+                        {/* End location suggestions */}
+                        {showEndSuggestions && !pickingEnd && (
                             endLoading ? (
                                 <SearchSuggestionsListSkeleton count={3} />
                             ) : (
@@ -359,8 +534,9 @@ const NavigationTab = ({
 
                 <button
                     onClick={handleSwap}
+                    disabled={pickingStart || pickingEnd}
                     aria-label="Swap start and end locations"
-                    className="p-2 hover:bg-green-50 rounded-md transition-colors mt-auto mb-auto"
+                    className="p-2 hover:bg-green-50 rounded-md transition-colors mt-auto mb-auto disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <FaArrowsUpDown className="text-green-500" />
                 </button>
@@ -384,7 +560,8 @@ const NavigationTab = ({
                 <select
                     value={selectedStrategy}
                     onChange={(e) => handleStrategyChange(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                    disabled={pickingStart || pickingEnd}
+                    className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Select route strategy"
                 >
                     {getAvailableStrategies().map((strategy) => (
@@ -415,7 +592,7 @@ const NavigationTab = ({
             <div className="flex gap-2 mb-4">
                 <button
                     onClick={handleFindPath}
-                    disabled={!start || !end || isLoadingRoute}
+                    disabled={!start || !end || !start.coordinates || !end.coordinates || isLoadingRoute || pickingStart || pickingEnd}
                     className="flex-1 py-2 bg-green-500 text-white text-sm font-medium rounded-md hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                     {isLoadingRoute ? (
@@ -430,7 +607,7 @@ const NavigationTab = ({
 
                 <button
                     onClick={handleCompareStrategies}
-                    disabled={!start || !end || isComparing || isLoadingRoute}
+                    disabled={!start || !end || !start.coordinates || !end.coordinates || isComparing || isLoadingRoute || pickingStart || pickingEnd}
                     className="px-3 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
                     title="Compare all strategies"
                 >
@@ -499,14 +676,14 @@ const NavigationTab = ({
                 </div>
             )}
 
-            {/* Route Details - Using enhanced RouteDetails component with Composite pattern */}
+            {/* Route Details */}
             {isLoadingRoute ? (
                 <RouteDetailsSkeleton />
             ) : path && path.length > 0 ? (
                 <div className="mt-4">
                     <RouteDetails
                         path={path}
-                        route={route} // Pass Route composite object if available
+                        route={route}
                     />
                 </div>
             ) : null}
@@ -521,6 +698,8 @@ NavigationTab.propTypes = {
     onInputFocus: PropTypes.func.isRequired,
     startCoordinates: PropTypes.string,
     endCoordinates: PropTypes.string,
+    onMapClick: PropTypes.func, // New prop for handling map clicks
+    mapRef: PropTypes.object, // Reference to map instance
 };
 
 export default NavigationTab;

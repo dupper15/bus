@@ -10,10 +10,7 @@ const pathPropType = PropTypes.arrayOf(PropTypes.shape({
 }).isRequired);
 
 /**
- * MapView component - Displays the interactive map with bus routes, stops, and navigation paths
- *
- * @param {Object} props - Component properties
- * @returns {JSX.Element} - Map view component
+ * MapView component - Enhanced with click handler support for coordinate selection
  */
 const MapView = ({
                      mapData,
@@ -22,17 +19,21 @@ const MapView = ({
                      selectedStopCoordinates,
                      mode,
                      path,
-                     onMapClick
+                     onMapClick,
+                     clickHandler, // New prop for custom click handlers
+                     mapRef // Ref to expose map instance
                  }) => {
-    // Use refactored MapViewModel hook with Facade pattern
-    const { mapContainerRef, error } = useMapViewModel({
+    // Use enhanced MapViewModel hook
+    const { mapContainerRef, error, mapInstance } = useMapViewModel({
         mapData,
         busLines,
         stops,
         selectedStopCoordinates,
         mode,
         path,
-        onMapClick
+        onMapClick,
+        clickHandler,
+        mapRef
     });
 
     // Display error message if there is an error
@@ -65,6 +66,8 @@ MapView.propTypes = {
     path: pathPropType.isRequired,
     error: PropTypes.string,
     onMapClick: PropTypes.func.isRequired,
+    clickHandler: PropTypes.func, // Custom click handler function
+    mapRef: PropTypes.object, // Map instance reference
 };
 
 export default MapView;

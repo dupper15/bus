@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { useState } from "react";
 import NavigationTab from "@/pages/MapPage/PathfindingTab/NavigationTab.jsx";
-import {BusLinesListSkeleton} from "@/components/ui/loadingSkeletons.jsx";
+import {BusLinesListSkeleton, NavigationTabSkeleton} from "@/components/ui/loadingSkeletons.jsx";
 
 const Sidebar = ({
                      lines,
@@ -13,14 +13,16 @@ const Sidebar = ({
                      startCoordinates,
                      endCoordinates,
                      onClearPath,
-                     isLoading = false, // Add loading prop
+                     onMapClick, // New prop for map click handling
+                     mapRef, // Map reference
+                     isLoading = false,
                  }) => {
     const [activeTab, setActiveTab] = useState("lines");
     const [searchTerm, setSearchTerm] = useState("");
 
     const resetSearch = () => {
-        setSearchTerm(""); // Reset giá trị tìm kiếm
-        onSearch(""); // Gọi hàm để cập nhật kết quả tìm kiếm
+        setSearchTerm("");
+        onSearch("");
     };
 
     const tabs = [
@@ -51,7 +53,7 @@ const Sidebar = ({
                         <button
                             key={tab.key}
                             onClick={() => handleTabSelect(tab.key)}
-                            className={`flex-1 py-4 px-6  font-medium transition-colors
+                            className={`flex-1 py-4 px-6 font-medium transition-colors
                                 ${
                                 activeTab === tab.key
                                     ? "text-green-500 border-b-2 border-green-500"
@@ -93,7 +95,7 @@ const Sidebar = ({
                         </div>
 
                         {/* Lines List */}
-                        <div className='flex-1  overflow-y-auto'>
+                        <div className='flex-1 overflow-y-auto'>
                             {isLoading ? (
                                 <BusLinesListSkeleton count={8} />
                             ) : (
@@ -148,6 +150,8 @@ const Sidebar = ({
                                 startCoordinates={startCoordinates}
                                 endCoordinates={endCoordinates}
                                 lines={lines}
+                                onMapClick={onMapClick} // Pass map click handler
+                                mapRef={mapRef} // Pass map reference
                             />
                         )}
                     </div>
@@ -167,6 +171,8 @@ Sidebar.propTypes = {
     startCoordinates: PropTypes.string,
     endCoordinates: PropTypes.string,
     onClearPath: PropTypes.func.isRequired,
+    onMapClick: PropTypes.func, // Map click handler
+    mapRef: PropTypes.object, // Map reference
     isLoading: PropTypes.bool,
 };
 

@@ -24,19 +24,21 @@ class MapDisplayService {
         this.currentBounds = null;
         this.isUpdatingStops = false;
 
+        // Click handler management
+        this.currentClickHandler = null;
+        this.activeMap = null; // Store active map reference
+
         // Zoom-based stop density configuration
-        // Lower zoom = zoomed out = fewer stops
-        // Higher zoom = zoomed in = more stops
         this.zoomConfig = {
-            9: { maxStops: 10, gridSize: 0.05, showOnlyMajor: true },    // Very zoomed out - major hubs only
-            10: { maxStops: 20, gridSize: 0.03, showOnlyMajor: true },   // Zoomed out - important stops
-            11: { maxStops: 50, gridSize: 0.02, showOnlyMajor: false },  // Medium-far
-            12: { maxStops: 100, gridSize: 0.015, showOnlyMajor: false }, // Medium
-            13: { maxStops: 200, gridSize: 0.01, showOnlyMajor: false },  // Default zoom
-            14: { maxStops: 400, gridSize: 0.008, showOnlyMajor: false }, // Zoomed in
-            15: { maxStops: 600, gridSize: 0.005, showOnlyMajor: false }, // Very zoomed in
-            16: { maxStops: 1000, gridSize: 0.003, showOnlyMajor: false }, // Maximum detail
-            17: { maxStops: 1500, gridSize: 0.002, showOnlyMajor: false }  // Street level
+            9: { maxStops: 10, gridSize: 0.05, showOnlyMajor: true },
+            10: { maxStops: 20, gridSize: 0.03, showOnlyMajor: true },
+            11: { maxStops: 50, gridSize: 0.02, showOnlyMajor: false },
+            12: { maxStops: 100, gridSize: 0.015, showOnlyMajor: false },
+            13: { maxStops: 200, gridSize: 0.01, showOnlyMajor: false },
+            14: { maxStops: 400, gridSize: 0.008, showOnlyMajor: false },
+            15: { maxStops: 600, gridSize: 0.005, showOnlyMajor: false },
+            16: { maxStops: 1000, gridSize: 0.003, showOnlyMajor: false },
+            17: { maxStops: 1500, gridSize: 0.002, showOnlyMajor: false }
         };
     }
 
@@ -49,6 +51,7 @@ class MapDisplayService {
     initializeMap(container, options = {}) {
         const map = this.mapBoxFacade.createMap(container, options);
         this.mapBoxFacade.addNavigationControls(map);
+        this.activeMap = map; // Store map reference
 
         // Set up event listeners for smart stop filtering
         this.setupStopFiltering(map);
@@ -67,17 +70,17 @@ class MapDisplayService {
             clearTimeout(updateTimeout);
             updateTimeout = setTimeout(() => {
                 this.updateVisibleStops(map);
-            }, 150); // 150ms debounce
+            }, 150);
         };
 
-        // Listen for zoom changes
-        this.mapBoxFacade.setMapEventHandler(map, 'zoom', () => {
+        // Listen for zoom changes using direct MapBox event handlers
+        map.on('zoom', () => {
             this.currentZoom = this.mapBoxFacade.getZoom(map);
             debouncedUpdate();
         });
 
         // Listen for pan/move events
-        this.mapBoxFacade.setMapEventHandler(map, 'moveend', () => {
+        map.on('moveend', () => {
             this.currentBounds = map.getBounds();
             debouncedUpdate();
         });
@@ -90,6 +93,83 @@ class MapDisplayService {
                 this.updateVisibleStops(map);
             }
         });
+    }
+
+    /**
+     * Sets up click handler for location selection with proper cleanup
+     * @param {Object} map - Map instance
+     * @param {Function} callback - Click handler callback
+     */
+    setLocationClickHandler(map, callback) {
+        console.log('Setting location click handler:', callback ? 'provided' : 'null');
+
+        // Remove any existing click handlers first
+        if (this.currentClickHandler && this.activeMap) {
+            console.log('Removing existing click handler');
+            this.removeLocationClickHandler(this.activeMap, this.currentClickHandler);
+        }
+
+        if (callback && typeof callback === 'function') {
+            // Create wrapped handler for proper cleanup tracking
+            const wrappedHandler = (e) => {
+                // Extract coordinates from MapBox event
+                const coordinates = [e.lngLat.lng, e.lngLat.lat];
+                console.log('MapBox click event - coordinates extracted:', coordinates);
+
+                // Ensure we have valid coordinates before calling callback
+                if (Array.isArray(coordinates) && coordinates.length === 2 &&
+                    typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
+                    callback(coordinates);
+                } else {
+                    console.error('Invalid coordinates extracted from MapBox event:', coordinates);
+                }
+            };
+
+            // Store reference for cleanup
+            this.currentClickHandler = wrappedHandler;
+            this.activeMap = map;
+
+            // Add the event listener directly to the map
+            map.on("click", wrappedHandler);
+            console.log('Click handler set successfully');
+        } else {
+            this.currentClickHandler = null;
+        }
+    }
+
+    /**
+     * Removes click handler from map
+     * @param {Object} map - Map instance
+     * @param {Function} callback - Handler to remove
+     */
+    removeLocationClickHandler(map, callback) {
+        console.log('Removing location click handler');
+
+        if (callback && map) {
+            try {
+                // Remove the event listener directly from the map
+                map.off("click", callback);
+                console.log('Click handler removed successfully');
+            } catch (error) {
+                console.warn('Error removing click handler:', error);
+            }
+        }
+
+        // Clear stored reference if it matches
+        if (this.currentClickHandler === callback) {
+            this.currentClickHandler = null;
+        }
+    }
+
+    /**
+     * Clears all click handlers
+     * @param {Object} map - Map instance
+     */
+    clearAllClickHandlers(map) {
+        console.log('Clearing all click handlers');
+        if (this.currentClickHandler && map) {
+            this.removeLocationClickHandler(map, this.currentClickHandler);
+        }
     }
 
     /**
@@ -431,7 +511,7 @@ class MapDisplayService {
         // Clear existing paths
         this.clearRoute(map);
 
-        console.log('MapDisplayService received path segments:', pathSegments); // Debug log
+        console.log('MapDisplayService received path segments:', pathSegments);
 
         const allCoordinates = [];
 
@@ -493,11 +573,11 @@ class MapDisplayService {
     getSegmentWidth(segmentType) {
         switch (segmentType) {
             case 'walking':
-                return 3; // Slightly thinner for walking
+                return 3;
             case 'bus':
-                return 4; // Standard width for bus
+                return 4;
             case 'transfer':
-                return 2; // Thin for transfers
+                return 2;
             default:
                 return 4;
         }
@@ -607,7 +687,7 @@ class MapDisplayService {
         // Remove markers from MapBox
         this.stopMarkers.forEach((marker, id) => {
             try {
-                marker.remove(); // Remove the marker from the map
+                marker.remove();
             } catch (error) {
                 console.warn(`Failed to remove marker ${id}:`, error);
             }
@@ -637,27 +717,6 @@ class MapDisplayService {
     }
 
     /**
-     * Sets up click handler for location selection
-     * @param {Object} map - Map instance
-     * @param {Function} callback - Click handler callback
-     */
-    setLocationClickHandler(map, callback) {
-        this.mapBoxFacade.setMapEventHandler(map, "click", (e) => {
-            const coordinates = [e.lngLat.lng, e.lngLat.lat];
-            callback(coordinates);
-        });
-    }
-
-    /**
-     * Removes click handler from map
-     * @param {Object} map - Map instance
-     * @param {Function} callback - Handler to remove
-     */
-    removeLocationClickHandler(map, callback) {
-        this.mapBoxFacade.removeMapEventHandler(map, "click", callback);
-    }
-
-    /**
      * Gets stops that are part of a navigation path
      * @param {Array} path - Navigation path segments
      * @returns {Set} - Set of stop IDs in the path
@@ -679,7 +738,7 @@ class MapDisplayService {
      * @param {Object} map - Map instance
      */
     forceStopUpdate(map) {
-        this.isUpdatingStops = false; // Reset flag
+        this.isUpdatingStops = false;
         this.updateVisibleStops(map);
     }
 
@@ -703,8 +762,10 @@ class MapDisplayService {
     cleanup(map) {
         this.clearRoute(map);
         this.clearStopMarkers();
+        this.clearAllClickHandlers(map);
         this.allStops = [];
         this.currentBounds = null;
+        this.activeMap = null;
     }
 }
 

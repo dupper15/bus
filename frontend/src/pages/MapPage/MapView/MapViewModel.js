@@ -1,12 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import mapDisplayService from "@/services/MapDisplayService.js";
 
 /**
- * Custom hook for MapView component
- * Refactored to use Facade pattern with MapDisplayService
- *
- * @param {Object} props - Component properties
- * @returns {Object} - Map container reference and error state
+ * Enhanced MapViewModel hook with support for custom click handlers
  */
 const useMapViewModel = ({
                              mapData,
@@ -15,31 +11,38 @@ const useMapViewModel = ({
                              selectedStopCoordinates,
                              mode,
                              path,
-                             onMapClick
+                             onMapClick,
+                             clickHandler, // Custom click handler from NavigationTab
+                             mapRef // Reference to expose map instance
                          }) => {
     const mapContainerRef = useRef(null);
-    const mapRef = useRef(null);
+    const mapInstanceRef = useRef(null);
     const [error, setError] = useState(null);
 
     // Initialize map on component mount
     useEffect(() => {
         try {
             // Initialize map using MapDisplayService
-            mapRef.current = mapDisplayService.initializeMap(mapContainerRef.current, {
+            mapInstanceRef.current = mapDisplayService.initializeMap(mapContainerRef.current, {
                 center: [106.70098, 10.77584], // Ho Chi Minh City
                 zoom: 13,
                 maxZoom: 17,
                 minZoom: 9
             });
 
-            // Set up click handler for location selection
-            mapDisplayService.setLocationClickHandler(mapRef.current, onMapClick);
+            // Expose map instance to parent via ref
+            if (mapRef) {
+                mapRef.current = mapInstanceRef.current;
+            }
 
             return () => {
                 // Clean up resources when component unmounts
-                if (mapRef.current) {
-                    mapDisplayService.cleanup(mapRef.current);
-                    mapRef.current.remove();
+                if (mapInstanceRef.current) {
+                    mapDisplayService.cleanup(mapInstanceRef.current);
+                    mapInstanceRef.current.remove();
+                }
+                if (mapRef) {
+                    mapRef.current = null;
                 }
             };
         } catch (err) {
@@ -48,17 +51,52 @@ const useMapViewModel = ({
         }
     }, []);
 
+    // Stable callback for default map clicks
+    const handleDefaultMapClick = useCallback((coordinates) => {
+        console.log('Default map click:', coordinates);
+        if (onMapClick && Array.isArray(coordinates) && coordinates.length >= 2) {
+            onMapClick(coordinates);
+        }
+    }, [onMapClick]);
+
+    // Stable callback for custom map clicks
+    const handleCustomMapClick = useCallback((coordinates) => {
+        console.log('Custom map click:', coordinates);
+        if (clickHandler && Array.isArray(coordinates) && coordinates.length >= 2) {
+            clickHandler(coordinates);
+        } else {
+            console.error('Invalid coordinates or no click handler:', { coordinates, hasHandler: !!clickHandler });
+        }
+    }, [clickHandler]);
+
+    // Handle click handler setup
+    useEffect(() => {
+        if (!mapInstanceRef.current) return;
+
+        console.log('Setting up click handler:', clickHandler ? 'custom' : 'default');
+
+        // Use custom handler if provided, otherwise use default
+        const activeHandler = clickHandler ? handleCustomMapClick : handleDefaultMapClick;
+
+        mapDisplayService.setLocationClickHandler(mapInstanceRef.current, activeHandler);
+
+        // Cleanup function
+        return () => {
+            if (mapInstanceRef.current) {
+                mapDisplayService.clearAllClickHandlers(mapInstanceRef.current);
+            }
+        };
+    }, [clickHandler, handleCustomMapClick, handleDefaultMapClick]);
+
     // Handle bus stops display
     useEffect(() => {
-        if (mapRef.current && stops && stops.length > 0) {
-            const map = mapRef.current;
-
+        if (mapInstanceRef.current && stops && stops.length > 0) {
             try {
                 // Get stops that are part of the current navigation path
                 const stopsInPath = mapDisplayService.getStopsInPath(path);
 
                 // Display bus stops with highlighted stops in path
-                mapDisplayService.displayBusStops(map, stops, {
+                mapDisplayService.displayBusStops(mapInstanceRef.current, stops, {
                     highlightStops: stopsInPath
                 });
             } catch (err) {
@@ -69,9 +107,9 @@ const useMapViewModel = ({
 
     // Focus map on selected stop
     useEffect(() => {
-        if (mapRef.current && selectedStopCoordinates) {
+        if (mapInstanceRef.current && selectedStopCoordinates) {
             try {
-                mapDisplayService.focusOnLocation(mapRef.current, selectedStopCoordinates, {
+                mapDisplayService.focusOnLocation(mapInstanceRef.current, selectedStopCoordinates, {
                     zoom: 15,
                     essential: true
                 });
@@ -83,12 +121,12 @@ const useMapViewModel = ({
 
     // Handle bus route drawing
     useEffect(() => {
-        if (mapRef.current && busLines && busLines.length > 0) {
+        if (mapInstanceRef.current && busLines && busLines.length > 0) {
             try {
                 const line = busLines[0];
 
                 // Display bus route with correct direction
-                mapDisplayService.displayRoute(mapRef.current, {
+                mapDisplayService.displayRoute(mapInstanceRef.current, {
                     id: line.id,
                     coordinates: line.route.coordinates,
                     mode: mode
@@ -103,10 +141,11 @@ const useMapViewModel = ({
 
     // Handle navigation path display
     useEffect(() => {
-        if (mapRef.current && Array.isArray(path) && path.length > 0) {
+        if (mapInstanceRef.current && Array.isArray(path) && path.length > 0) {
             try {
+                console.log('Displaying navigation path:', path);
                 // Display navigation path segments
-                mapDisplayService.displayNavigationPath(mapRef.current, path);
+                mapDisplayService.displayNavigationPath(mapInstanceRef.current, path);
             } catch (err) {
                 console.error("Error displaying navigation path:", err);
                 setError("Failed to display navigation path");
@@ -116,7 +155,8 @@ const useMapViewModel = ({
 
     return {
         mapContainerRef,
-        error
+        error,
+        mapInstance: mapInstanceRef.current // Expose map instance
     };
 };
 
