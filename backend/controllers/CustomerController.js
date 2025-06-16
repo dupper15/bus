@@ -1,10 +1,11 @@
-const CustomerService = require('../services/CustomerService')
 const JwtService = require('../services/JwtService')
+const AccountFactory = require('../services/factoryMethod/AccountFactory')
+const AccountService = AccountFactory.createAccountService('Customer')
 
 const createCustomer = async (req, res) => {
     try {
         const data = req.body
-        const response = await CustomerService.createCustomer(data)
+        const response = await AccountService.createAccount(data)
         return res.status(201).json(response)
     } catch (e) {
         console.error(e)
@@ -24,7 +25,7 @@ const loginCustomer = async (req, res) => {
                 message: 'ID card and password are required.'
             })
         }
-        const response = await CustomerService.loginCustomer(req.body)
+        const response = await AccountService.login(req.body)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -45,7 +46,7 @@ const updateCustomer = async (req, res) => {
                 message: 'Customer ID is required.'
             })
         }
-        const response = await CustomerService.updateCustomer(customerId, data)
+        const response = await AccountService.updateAccount(customerId, data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -65,7 +66,7 @@ const changeStatus = async (req, res) => {
                 message: 'Customer ID is required.'
             })
         }
-        const response = await CustomerService.changeStatus(customerId)
+        const response = await AccountService.changeStatus(customerId)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -85,7 +86,7 @@ const deleteCustomer = async (req, res) => {
                 message: 'Customer ID is required.'
             })
         }
-        const response = await CustomerService.deleteCustomer(customerId)
+        const response = await AccountService.deleteAccount(customerId)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -129,7 +130,7 @@ const deleteCustomer = async (req, res) => {
 
 const getAllCustomer = async (req, res) => {
     try {
-        const response = await CustomerService.getAllCustomer()
+        const response = await AccountService.getAllAccounts()
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -149,7 +150,7 @@ const getDetailCustomer = async (req, res) => {
                 message: 'Customer ID is required.'
             })
         }
-        const response = await CustomerService.getDetailCustomer(customerId)
+        const response = await AccountService.getDetailAccount(customerId)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
