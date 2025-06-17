@@ -59,10 +59,10 @@ const loginAccount = async (data) => {
     }
 
     const access_token = await generalAccessToken({
-      id: checkAccount._id,
+      id: account.id,
     });
     const refresh_token = await generalRefreshToken({
-      id: checkAccount._id,
+      id: account.id,
     });
 
     return {

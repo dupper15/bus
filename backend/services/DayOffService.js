@@ -83,7 +83,7 @@ const getAllDayOff = async () => {
 const updateDayOff = async (data) => {
   try {
     const checkDayOff = await DayOff.findOne({ id: data.id });
-    if (checkDayOff === null) {
+    if (!checkDayOff) {
       return {
         status: "ERROR",
         message: "No request leave found with the provided ID.",
@@ -105,27 +105,6 @@ const updateDayOff = async (data) => {
       };
     }
 
-    // const updatedDayOff = await DayOff.findByIdAndUpdate(
-    //   checkDayOff._id,
-    //   {
-    //     manager: data.manager,
-    //     status: data.status,
-    //     feedback: data.feedback,
-    //     date_resolved: new Date(),
-    //   },
-    //   { new: true }
-    // );
-    // if (!updatedDayOff) {
-    //   return {
-    //     status: "ERROR",
-    //     message: "Failed to update the DayOff or DayOff not found.",
-    //   };
-    // }
-    // return {
-    //   status: "OK",
-    //   message: "Resolved request leave successfully.",
-    //   data: updatedDayOff,
-    // };
     return {
       status: "OK",
       message: "Resolved request leave successfully.",

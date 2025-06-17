@@ -59,6 +59,7 @@ const SignInPage = () => {
       return await Account.loginAccount(data);
     },
     onSuccess: (data) => {
+      console.log("data login", data);
       if (data.status === "OK" || data.message === "Login successfully.") {
         Message.success(data.message);
         localStorage.setItem(
