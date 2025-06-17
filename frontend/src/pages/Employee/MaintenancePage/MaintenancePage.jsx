@@ -99,7 +99,7 @@ const RequestPage = () => {
                       className={`text-sm font-semibold mt-2 ${
                         item.status === "Pending"
                           ? "text-yellow-600"
-                          : item.status === "Approved"
+                          : item.status === "Approve"
                           ? "text-green-600"
                           : "text-red-600"
                       }`}>
