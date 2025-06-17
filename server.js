@@ -5,6 +5,7 @@ const routes = require("./backend/routes");
 const cors = require('cors');
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const db = require("./backend/config/database");
 dotenv.config()
 
 const app = express()
@@ -21,13 +22,7 @@ app.use(cookieParser());
 
 routes(app);
 
-mongoose.connect(`mongodb+srv://22520734:${process.env.MONGO_DB}@bus.cujvx.mongodb.net/?retryWrites=true&w=majority&appName=Bus`)
-    .then(()=> {
-        console.log('Database connection successful!')
-    })
-    .catch((err) => {
-        console.error('Database connection error:', err)
-    })
+db.connect();
 
 app.listen(port, () => {
     console.log('Server is running on port:', port)

@@ -1,9 +1,11 @@
-const EmployeeService = require("../services/EmployeeService");
+const AccountFactory = require('../services/factoryMethod/AccountFactory')
+const AccountService = AccountFactory.createAccountService('Employee')
+const JwtService = require("../services/JwtService");
 
 const createEmployee = async (req, res) => {
     try {
         const data = req.body
-        const response = await EmployeeService.createEmployee(data)
+        const response = await AccountService.createAccount(data)
         return res.status(201).json(response)
     } catch (e) {
         console.error(e)
@@ -24,7 +26,7 @@ const loginEmployee = async (req, res) => {
         message: "ID card and password are required.",
       });
     }
-    const response = await EmployeeService.loginEmployee(req.body);
+    const response = await AccountService.login(req.body);
     return res.status(200).json(response);
   } catch (e) {
     console.error(e);
@@ -40,7 +42,7 @@ const updateEmployee = async (req, res) => {
     try {
         const employeeId = req.params.id
         const data = req.body
-        const response = await EmployeeService.updateEmployee(data)
+        const response = await AccountService.updateAccount(employeeId, data)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -55,7 +57,7 @@ const updateEmployee = async (req, res) => {
 const changeStatus = async (req, res) => {
   try {
       const employeeId = req.params.id
-      const response = await EmployeeService.changeStatus(employeeId)
+      const response = await AccountService.changeStatus(employeeId)
       return res.status(200).json(response)
   } catch (e) {
       console.error(e)
@@ -69,7 +71,7 @@ const changeStatus = async (req, res) => {
 
 const getAllEmployee = async (req, res) => {
   try {
-    const response = await EmployeeService.getAllEmployee();
+    const response = await AccountService.getAllAccounts();
     return res.status(200).json(response);
   } catch (e) {
     console.error(e);
@@ -84,8 +86,7 @@ const getAllEmployee = async (req, res) => {
 const getDetailEmployee = async (req, res) => {
     try {
         const employeeId = req.params.id;
-        const data = req.body;
-        const response = await EmployeeService.getDetailEmployee(data)
+        const response = await AccountService.getDetailAccount(employeeId);
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
@@ -121,7 +122,7 @@ const refreshTokenJwtEmployee = async (req, res) => {
 const deleteEmployee = async (req, res) => {
     try {
         const employeeId = req.params.id
-        const response = await EmployeeService.deleteEmployee(employeeId)
+        const response = await AccountService.deleteAccount(employeeId)
         return res.status(200).json(response)
     } catch (e) {
         console.error(e)
