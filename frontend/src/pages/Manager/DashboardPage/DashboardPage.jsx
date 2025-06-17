@@ -38,6 +38,7 @@ import { TrendingUp } from "lucide-react"
 import { useEffect, useState } from "react";
 import { useMutation } from "react-query";
 import * as DashboardService from "@/services/dashboardService";
+import { useNavigate } from "react-router-dom";
 
 const chartReportConfig = {
   revenue: {
@@ -96,6 +97,7 @@ const DashboardPage = () => {
       total: 0,
       color: "bg-sky-300",
       iconColor: "text-sky-700",
+      onClick: () => nav("/manage/employee")
     },
     {
       title: "Total Buses",
@@ -103,6 +105,8 @@ const DashboardPage = () => {
       total: 0,
       color: "bg-emerald-300",
       iconColor: "text-emerald-700",
+      onClick: () => nav("/manage/bus")
+
     },
     {
       title: "Pending Requests",
@@ -110,6 +114,8 @@ const DashboardPage = () => {
       total: 0,
       color: "bg-amber-300",
       iconColor: "text-amber-700",
+      onClick: () => nav("/manage/employee")
+
     },
     {
       title: "Opinions",
@@ -117,6 +123,8 @@ const DashboardPage = () => {
       total: 0,
       color: "bg-amber-300",
       iconColor: "text-amber-700",
+      onClick: () => nav("/manage/opinion")
+
     },
   ]);
   const [chartReportData, setChartReportData] = useState([]);
@@ -182,7 +190,7 @@ const DashboardPage = () => {
         updatedData[0].lineData.forEach((item, index) => {
           const lineKey = `Line${index + 1}`; 
           const lineName = item.lineName; 
-          const lineColor = `hsl(var(--chart-${index + 1}))`; 
+          const lineColor = `hsl(var(--chart-${index % 5 + 1}))`; 
   
           newChartLineConfig[lineKey] = {
             label: lineName,
@@ -264,6 +272,7 @@ const DashboardPage = () => {
     startDate.setDate(currentDate.getDate() - daysToSubtract);
     return date >= startDate;
   });
+  const nav = useNavigate();
 
   return (
     <div className='flex justify-center min-h-screen w-full bg-gray-100 px-8 py-4'>
@@ -274,6 +283,7 @@ const DashboardPage = () => {
             {items.map((item, index) => (
               <Card
                 key={index}
+                onClick ={item.onClick}
                 className={`${item.color} hover:scale-105 transition-transform duration-200`}>
                 <CardHeader>
                   <div className='flex items-center justify-between w-full'>
@@ -448,10 +458,11 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
           <div className="flex gap-4">
+
            {/* Chart Line */}
           <Card className="flex-1">
             <CardHeader>
-              <CardTitle>Bar Chart - Active</CardTitle>
+              <CardTitle>Ridership Report</CardTitle>
               <CardDescription>January 2025</CardDescription>
             </CardHeader>
             <CardContent>
@@ -507,7 +518,7 @@ const DashboardPage = () => {
           {/* Chart Bus */}
           <Card className="flex flex-col">
             <CardHeader className="items-center pb-0">
-              <CardTitle>Pie Chart - Separator None</CardTitle>
+              <CardTitle>Utilization Rate</CardTitle>
               <CardDescription>January 2025</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-0">
