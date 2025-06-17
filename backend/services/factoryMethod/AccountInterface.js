@@ -1,5 +1,7 @@
-const { getDetailAccount } = require("../AccountService");
-
+/**
+ * Interface for Account Service
+ * @interface IAccount
+ */
 class IAccount {
   /**
    * Creates a new account.
