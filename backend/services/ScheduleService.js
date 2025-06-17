@@ -3,6 +3,8 @@ const Employee = require("../models/EmployeeModel");
 const Line = require("../models/LineModel");
 const Schedule = require("../models/ScheduleModel");
 const Stop = require("../models/StopModel");
+const ScheduleContext = require("./flyweight/ScheduleContext");
+const flyweightFactory = require("./flyweight/FlyweightFactory");
 
 const getEmployeeTask = async (employeeId) => {
   try {
@@ -80,133 +82,129 @@ const getEmployeeTask = async (employeeId) => {
 
 const createSchedule = async (data) => {
   try {
-    const checkSchedule = await Schedule.findOne({
-      line: data.line,
+    const scheduleContext = new ScheduleContext({
+      id: "",
+      status: "Pending",
       time_start: data.time_start,
-    })
-      .populate("line", "name")
-      .populate("bus", "license_plate");
+    });
+
+    await scheduleContext.loadFlyweights({
+      busId: data.bus,
+      lineId: data.line,
+      driverId: data.driver,
+      busboyId: data.busboy,
+    });
+
+    const { line, bus, driver, busboy } = scheduleContext.getSharedEntities();
+
+    // 1. Check trùng lịch chạy trên cùng line & time_start
+    const checkSchedule = await Schedule.findOne({
+      line: line._id,
+      time_start: data.time_start,
+    });
+
     if (checkSchedule) {
+      const conflictLine = await flyweightFactory.getFlyweight(
+        "line",
+        checkSchedule.line
+      );
+      const conflictBus = await flyweightFactory.getFlyweight(
+        "bus",
+        checkSchedule.bus
+      );
       return {
         status: "ERROR",
-        message: `Schedule already exists on line ${checkSchedule.line.name} at ${checkSchedule.time_start} with bus ${checkSchedule.bus.license_plate}.`,
+        message: `Schedule already exists on line ${
+          conflictLine.getRepeatingState().name
+        } at ${data.time_start} with bus ${
+          conflictBus.getRepeatingState().license_plate
+        }.`,
       };
     }
 
-    const lineCheck = await Line.findById(data.line);
-
+    // 2. Kiểm tra xung đột thời gian cho driver & busboy
     const parseTime = (timeStr) => {
       const [hours, minutes] = timeStr.split(":").map(Number);
       return hours * 60 + minutes;
     };
 
-    const newScheduleStart = parseTime(data.time_start);
-    const newScheduleEnd = newScheduleStart + lineCheck.time;
+    const newStart = parseTime(data.time_start);
+    const newEnd = newStart + line.time;
 
-    const allScheduleBusboy = await Schedule.find({ busboy: data.busboy })
-      .populate("busboy", "name")
-      .populate("line", "time name");
+    const checkConflicts = async (type, personId, name) => {
+      const schedules = await Schedule.find({ [type]: personId });
 
-    const allScheduleDriver = await Schedule.find({ driver: data.driver })
-      .populate("driver", "name")
-      .populate("line", "time name");
+      for (const schedule of schedules) {
+        const line = await flyweightFactory.getFlyweight("line", schedule.line);
 
-    for (const schedule of allScheduleBusboy) {
-      const existingStart = parseTime(schedule.time_start);
-      const existingEnd = existingStart + schedule.line.time;
+        const existStart = parseTime(schedule.time_start);
+        const existEnd = existStart + line.getRepeatingState().time;
+        const isOverlap = !(newStart > existEnd || newEnd < existStart);
 
-      if (newScheduleStart > existingEnd || newScheduleEnd < existingStart) {
-        continue;
-      } else {
-        return {
-          status: "ERROR",
-          message: `Busboy ${
-            schedule.busboy.name
-          } is already assigned to another schedule from ${
-            schedule.time_start
-          } to ${String(Math.floor(existingEnd / 60)).padStart(
-            2,
-            "0"
-          )}:${String(existingEnd % 60).padStart(2, "0")} on line ${
-            schedule.line.name
-          }.`,
-        };
+        if (isOverlap) {
+          return {
+            status: "ERROR",
+            message: `${name} is already assigned to another schedule from ${
+              schedule.time_start
+            } to ${String(Math.floor(existEnd / 60)).padStart(2, "0")}:${String(
+              existEnd % 60
+            ).padStart(2, "0")} on line ${line.getRepeatingState().name}.`,
+          };
+        }
       }
-    }
+      return null;
+    };
 
-    for (const schedule of allScheduleDriver) {
-      const existingStart = parseTime(schedule.time_start);
-      const existingEnd = existingStart + schedule.line.time;
-
-      // Nếu khoảng thời gian bị chồng lấn
-      if (newScheduleStart > existingEnd || newScheduleEnd < existingStart) {
-        continue;
-      } else {
-        return {
-          status: "ERROR",
-          message: `Driver ${
-            schedule.driver.name
-          } is already assigned to another schedule from ${
-            schedule.time_start
-          } to ${String(Math.floor(existingEnd / 60)).padStart(
-            2,
-            "0"
-          )}:${String(existingEnd % 60).padStart(2, "0")} on line ${
-            schedule.line.name
-          }.`,
-        };
-      }
-    }
-
-    const schedules = await Schedule.find({}, { id: 1, _id: 0 }).sort({ id: 1 });
-    const uniqueSchedules = Array.from(
-      new Set(schedules.map((schedule) => schedule.id))
+    const conflictBusboy = await checkConflicts(
+      "busboy",
+      busboy._id,
+      `Busboy ${busboy.name}`
     );
-    console.log("Unique Schedules:", uniqueSchedules);
+    if (conflictBusboy) return conflictBusboy;
 
-    // Chuyển đổi sang số và sắp xếp
-    const ids = uniqueSchedules.map((id) => parseInt(id.replace("S", ""), 10));
-    ids.sort((a, b) => a - b);
-    console.log("Sorted IDs:", ids);
+    const conflictDriver = await checkConflicts(
+      "driver",
+      driver._id,
+      `Driver ${driver.name}`
+    );
+    if (conflictDriver) return conflictDriver;
 
-    // Tìm ID mới
-    let newIdNumber = 1;
-    for (const id of ids) {
-      if (id === newIdNumber) {
-        newIdNumber++;
-      } else {
-        break;
-      }
-    }
-    const newId = `S${String(newIdNumber).padStart(3, "0")}`;
-
-    // const yesterday = new Date();
-    // yesterday.setDate(yesterday.getDate() - 1); // Lùi lại 1 ngày
-
-    const createdSchedule = await Schedule.create({
-      id: newId,
-      bus: data.bus,
-      line: data.line,
-      driver: data.driver,
-      busboy: data.busboy,
-      status: "Pending",
-      time_start: data.time_start,
-      time: data.time,
-      // date: yesterday, // Ngày hôm qua
-    });
-
-    if (createdSchedule) {
+    // 3. Kiểm tra trạng thái bus
+    if (bus.status !== "Active") {
       return {
-        status: "OK",
-        message: "Schedule created successfully.",
-        data: createdSchedule,
+        status: "ERROR",
+        message: `Bus ${bus.license_plate} is not active.`,
       };
     }
-  } catch (e) {
+
+    // 4. Sinh ID schedule mới (S001, S002,...)
+    const schedules = await Schedule.find({}, { id: 1, _id: 0 }).sort({
+      id: 1,
+    });
+    const existingIds = schedules
+      .map((s) => parseInt(s.id.replace("S", ""), 10))
+      .sort((a, b) => a - b);
+    let newIdNum = 1;
+    for (const id of existingIds) {
+      if (id === newIdNum) newIdNum++;
+      else break;
+    }
+    const newId = `S${String(newIdNum).padStart(3, "0")}`;
+    scheduleContext.uniqueState.id = newId;
+
+    // 4. Tạo lịch trình
+    const created = await Schedule.create(scheduleContext.getDataForSchedule());
+
+    return {
+      status: "OK",
+      message: "Schedule created successfully.",
+      data: created,
+    };
+  } catch (error) {
     return {
       status: "ERROR",
       message: "An error occurred while creating the schedule.",
-      error: e,
+      error,
     };
   }
 };
@@ -269,18 +267,24 @@ const getAllSchedule = async () => {
       await Schedule.insertMany(newSchedules);
     }
     // Cập nhật trạng thái cho các schedule hiện tại
-    const currentTotalMinutes = localTime.getUTCHours() * 60 + localTime.getUTCMinutes();
+    const currentTotalMinutes =
+      localTime.getUTCHours() * 60 + localTime.getUTCMinutes();
 
     for (const schedule of allSchedule) {
       // Bỏ qua nếu trạng thái không phải "Not start yet" hoặc "In Progress"
-      if (schedule.status !== "Not start yet" && schedule.status !== "In Progress") {
+      if (
+        schedule.status !== "Not start yet" &&
+        schedule.status !== "In Progress"
+      ) {
         continue;
       }
-    
-      const [startHours, startMinutes] = schedule.time_start.split(":").map(Number);
+
+      const [startHours, startMinutes] = schedule.time_start
+        .split(":")
+        .map(Number);
       const startTotalMinutes = startHours * 60 + startMinutes;
       const finishTotalMinutes = startTotalMinutes + schedule.line.time;
-    
+
       if (finishTotalMinutes <= currentTotalMinutes) {
         schedule.status = "Completed";
       } else if (startTotalMinutes <= currentTotalMinutes) {
@@ -288,14 +292,14 @@ const getAllSchedule = async () => {
       } else {
         schedule.status = "Not start yet";
       }
-    
+
       try {
         await schedule.save();
       } catch (error) {
         console.error("Error saving schedule:", schedule.id, error);
       }
     }
-    
+
     return {
       status: "OK",
       message: "Schedules retrieved and updated successfully.",
@@ -345,93 +349,113 @@ const getAllAdd = async () => {
 
 const updateSchedule = async (data) => {
   try {
-    const checkSchedule = await Schedule.findOne({
-      line: data.line,
+    // 1. Khởi tạo ScheduleContext (Flyweight Pattern)
+    const scheduleContext = new ScheduleContext({
       time_start: data.time_start,
-    })
-      .populate("line", "name")
-      .populate("bus", "license_plate");
-    if (checkSchedule) {
+    });
+
+    await scheduleContext.loadFlyweights({
+      busId: data.bus,
+      lineId: data.line,
+      driverId: data.driver,
+      busboyId: data.busboy,
+    });
+
+    const { line, bus, driver, busboy } = scheduleContext.getSharedEntities();
+
+    // 2. Kiểm tra trùng line + time_start (trừ chính nó ra)
+    const conflictSchedule = await Schedule.findOne({
+      line: line._id,
+      time_start: data.time_start,
+      _id: { $ne: data._id },
+    });
+
+    if (conflictSchedule) {
+      const conflictLine = await flyweightFactory.getFlyweight(
+        "line",
+        conflictSchedule.line
+      );
+      const conflictBus = await flyweightFactory.getFlyweight(
+        "bus",
+        conflictSchedule.bus
+      );
       return {
         status: "ERROR",
-        message: `Schedule already exists on line ${checkSchedule.line.name} at ${checkSchedule.time_start} with bus ${checkSchedule.bus.license_plate}.`,
+        message: `Schedule already exists on line ${
+          conflictLine.getRepeatingState().name
+        } at ${data.time_start} with bus ${
+          conflictBus.getRepeatingState().license_plate
+        }.`,
       };
     }
 
-    const lineCheck = await Line.findById(data.line);
-
+    // 3. Xử lý xung đột thời gian với driver, busboy (trừ lịch đang cập nhật)
     const parseTime = (timeStr) => {
       const [hours, minutes] = timeStr.split(":").map(Number);
       return hours * 60 + minutes;
     };
 
-    const newScheduleStart = parseTime(data.time_start);
-    const newScheduleEnd = newScheduleStart + lineCheck.time;
+    const newStart = parseTime(data.time_start);
+    const newEnd = newStart + line.time;
 
-    const allScheduleBusboy = await Schedule.find({
-      busboy: data.busboy,
-      _id: { $ne: data._id },
-    })
-      .populate("busboy", "name")
-      .populate("line", "time name");
+    const checkConflicts = async (type, personId, name) => {
+      const schedules = await Schedule.find({
+        [type]: personId,
+        _id: { $ne: data._id },
+      });
 
-    const allScheduleDriver = await Schedule.find({
-      driver: data.driver,
-      _id: { $ne: data._id },
-    })
-      .populate("driver", "name")
-      .populate("line", "time name");
-
-    for (const schedule of allScheduleBusboy) {
-      const existingStart = parseTime(schedule.time_start);
-      const existingEnd = existingStart + schedule.line.time;
-
-      if (newScheduleStart > existingEnd || newScheduleEnd < existingStart) {
-        continue;
-      } else {
-        return {
-          status: "ERROR",
-          message: `Busboy ${
-            schedule.busboy.name
-          } is already assigned to another schedule from ${
-            schedule.time_start
-          } to ${String(Math.floor(existingEnd / 60)).padStart(
-            2,
-            "0"
-          )}:${String(existingEnd % 60).padStart(2, "0")} on line ${
-            schedule.line.name
-          }.`,
-        };
+      for (const schedule of schedules) {
+        const lineFlyweight = await flyweightFactory.getFlyweight(
+          "line",
+          schedule.line
+        );
+        const existStart = parseTime(schedule.time_start);
+        const existEnd = existStart + lineFlyweight.getRepeatingState().time;
+        const isOverlap = !(newStart > existEnd || newEnd < existStart);
+        if (isOverlap) {
+          return {
+            status: "ERROR",
+            message: `${name} is already assigned to another schedule from ${
+              schedule.time_start
+            } to ${String(Math.floor(existEnd / 60)).padStart(2, "0")}:${String(
+              existEnd % 60
+            ).padStart(2, "0")} on line ${
+              lineFlyweight.getRepeatingState().name
+            }.`,
+          };
+        }
       }
+
+      return null;
+    };
+
+    const conflictBusboy = await checkConflicts(
+      "busboy",
+      busboy._id,
+      `Busboy ${busboy.name}`
+    );
+    if (conflictBusboy) return conflictBusboy;
+
+    const conflictDriver = await checkConflicts(
+      "driver",
+      driver._id,
+      `Driver ${driver.name}`
+    );
+    if (conflictDriver) return conflictDriver;
+    // 4. Kiểm tra trạng thái bus
+    if (bus.status !== "Active") {
+      return {
+        status: "ERROR",
+        message: `Bus ${bus.license_plate} is not active.`,
+      };
     }
 
-    for (const schedule of allScheduleDriver) {
-      const existingStart = parseTime(schedule.time_start);
-      const existingEnd = existingStart + schedule.line.time;
-
-      // Nếu khoảng thời gian bị chồng lấn
-      if (newScheduleStart > existingEnd || newScheduleEnd < existingStart) {
-        continue;
-      } else {
-        return {
-          status: "ERROR",
-          message: `Driver ${
-            schedule.driver.name
-          } is already assigned to another schedule from ${
-            schedule.time_start
-          } to ${String(Math.floor(existingEnd / 60)).padStart(
-            2,
-            "0"
-          )}:${String(existingEnd % 60).padStart(2, "0")} on line ${
-            schedule.line.name
-          }.`,
-        };
-      }
-    }
-
-    const updatedSchedule = await Schedule.findByIdAndUpdate(data._id, data, {
-      new: true,
-    });
+    // 5. Cập nhật lịch trình
+    const updatedSchedule = await Schedule.findByIdAndUpdate(
+      data._id,
+      scheduleContext.getDataForSchedule(),
+      { new: true }
+    );
 
     if (!updatedSchedule) {
       return {
@@ -439,16 +463,17 @@ const updateSchedule = async (data) => {
         message: "Failed to update the schedule or schedule not found.",
       };
     }
+    
     return {
       status: "OK",
       message: "Schedule updated successfully.",
       data: updatedSchedule,
     };
-  } catch (e) {
+  } catch (error) {
     return {
       status: "ERROR",
       message: "An error occurred while updating the schedule.",
-      error: e,
+      error,
     };
   }
 };
@@ -584,5 +609,3 @@ module.exports = {
   employeeCheckIn,
   getEmployeeTask,
 };
-
-

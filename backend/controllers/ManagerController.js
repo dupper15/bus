@@ -1,10 +1,11 @@
-const ManagerService = require("../services/ManagerService");
-const JwtService = require("../services/jwtService");
+const AccountFactory = require("../services/factoryMethod/AccountFactory");
+const AccountService = AccountFactory.createAccountService("Manager");
+const JwtService = require("../services/JwtService");
 
 const createManager = async (req, res) => {
   try {
     const data = req.body;
-    const response = await ManagerService.createManager(data);
+    const response = await AccountService.createAccount(data);
     return res.status(201).json(response);
   } catch (e) {
     console.error(e);
@@ -25,7 +26,7 @@ const loginManager = async (req, res) => {
         message: "ID card and password are required.",
       });
     }
-    const response = await ManagerService.loginManager(req.body);
+    const response = await AccountService.login(req.body);
     return res.status(200).json(response);
   } catch (e) {
     console.error(e);
@@ -39,8 +40,9 @@ const loginManager = async (req, res) => {
 
 const updateManager = async (req, res) => {
   try {
+    const managerId = req.params.id;
     const data = req.body;
-    const response = await ManagerService.updateManager(data);
+    const response = await AccountService.updateAccount(managerId, data);
     return res.status(200).json(response);
   } catch (e) {
     console.error(e);
@@ -61,7 +63,7 @@ const changeStatusManager = async (req, res) => {
         message: "Manager ID is required.",
       });
     }
-    const response = await ManagerService.changeStatusManager(managerId);
+    const response = await AccountService.changeStatus(managerId);
     return res.status(200).json(response);
   } catch (e) {
     console.error(e);
@@ -83,7 +85,7 @@ const deleteManager = async (req, res) => {
       });
     }
 
-    const response = await ManagerService.deleteManager(managerId);
+    const response = await AccountService.deleteAccount(managerId);
     return res.status(200).json(response);
   } catch (e) {
     console.error(e);
@@ -97,7 +99,7 @@ const deleteManager = async (req, res) => {
 
 const getAllManager = async (req, res) => {
   try {
-    const response = await ManagerService.getAllManager();
+    const response = await AccountService.getAllAccounts();
     return res.status(200).json(response);
   } catch (e) {
     console.error(e);
@@ -118,7 +120,7 @@ const getDetailManager = async (req, res) => {
         message: "Manager ID is required.",
       });
     }
-    const response = await ManagerService.getDetailManager(managerId);
+    const response = await AccountService.getDetailAccount(managerId);
     return res.status(200).json(response);
   } catch (e) {
     console.error(e);

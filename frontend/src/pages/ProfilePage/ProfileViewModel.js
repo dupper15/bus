@@ -17,6 +17,7 @@ const useProfileViewModel = () => {
         const fetchProfile = async () => {
             try {
                 const cachedProfile = localStorage.getItem('profile');
+                console.log("Cached profile:", cachedProfile);
                 if (cachedProfile) {
                     setProfile(JSON.parse(cachedProfile));
                     setLoading(false);
