@@ -39,7 +39,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ChevronUp, ChevronDown, X, AlertCircle, ChevronsUpDown } from "lucide-react";
+import {
+  ChevronUp,
+  ChevronDown,
+  X,
+  AlertCircle,
+  ChevronsUpDown,
+} from "lucide-react";
 import StopService from "@/services/StopService.js";
 import { warning, error } from "@/components/ui/alert.jsx";
 import { cn } from "@/lib/utils";
@@ -49,28 +55,28 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 const formSchema = z.object({
   name: z.string().nonempty({ message: "Name is required." }),
   start_place: z
-      .object({
-        _id: z.string(),
-        name: z.string(),
-        pointX: z.number(),
-        pointY: z.number(),
-      })
-      .nullable(),
+    .object({
+      _id: z.string(),
+      name: z.string(),
+      pointX: z.number(),
+      pointY: z.number(),
+    })
+    .nullable(),
   end_place: z
-      .object({
-        _id: z.string(),
-        name: z.string(),
-        pointX: z.number(),
-        pointY: z.number(),
-      })
-      .nullable(),
+    .object({
+      _id: z.string(),
+      name: z.string(),
+      pointX: z.number(),
+      pointY: z.number(),
+    })
+    .nullable(),
   arr_stop: z.array(
-      z.object({
-        _id: z.string(),
-        name: z.string(),
-        pointX: z.number(),
-        pointY: z.number(),
-      })
+    z.object({
+      _id: z.string(),
+      name: z.string(),
+      pointX: z.number(),
+      pointY: z.number(),
+    })
   ),
   time: z.number().min(0, { message: "Time must be a positive number." }),
 });
@@ -80,6 +86,7 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
   const mapRef = useRef(null);
   const [stops, setStops] = useState([]);
   const [stations, setStations] = useState([]);
+  const [submitType, setSubmitType] = useState("drafted");
   const [validationErrors, setValidationErrors] = useState([]);
 
   const isStopValid = (stop, index, values) => {
@@ -134,7 +141,7 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
     try {
       const response = await StopService.getStops();
       const rawStops = response.data;
-      setStations(rawStops.filter(stop => stop.isStation));
+      setStations(rawStops.filter((stop) => stop.isStation));
       setStops(rawStops);
     } catch (error) {
       console.error("Failed to fetch stops:", error);
@@ -202,16 +209,16 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
       el.style.height = "20px";
       el.style.borderRadius = "50%";
       el.style.backgroundColor =
-          index === 0
-              ? "#22c55e"
-              : index === allStops.length - 1
-                  ? "#ef4444"
-                  : "#3b82f6";
+        index === 0
+          ? "#22c55e"
+          : index === allStops.length - 1
+          ? "#ef4444"
+          : "#3b82f6";
 
       new mapboxgl.Marker(el)
-          .setLngLat([stop.pointX, stop.pointY])
-          .setPopup(new mapboxgl.Popup().setHTML(`<h3>${stop.name}</h3>`))
-          .addTo(mapRef.current);
+        .setLngLat([stop.pointX, stop.pointY])
+        .setPopup(new mapboxgl.Popup().setHTML(`<h3>${stop.name}</h3>`))
+        .addTo(mapRef.current);
     });
 
     if (allStops.length >= 2) {
@@ -220,11 +227,11 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
       const fetchRoute = async () => {
         try {
           const coordinateString = coordinates
-              .map((coord) => coord.join(","))
-              .join(";");
+            .map((coord) => coord.join(","))
+            .join(";");
 
           const response = await fetch(
-              `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinateString}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+            `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinateString}?geometries=geojson&access_token=${mapboxgl.accessToken}`
           );
           const data = await response.json();
 
@@ -264,9 +271,7 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
             coordinates.forEach((coord) => bounds.extend(coord));
             mapRef.current.fitBounds(bounds, { padding: 50 });
           }
-        } catch (err) {
-
-        }
+        } catch (err) {}
       };
 
       fetchRoute();
@@ -280,23 +285,23 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
     try {
       const errors = validateRouteConnections();
       if (errors.length > 0) {
-        errors.forEach(err => warning(err));
+        errors.forEach((err) => warning(err));
         return;
       }
 
       const arrStopIds = values.arr_stop.map((stop) => stop?._id);
       const isValid =
-          (!values.start_place || arrStopIds[0] === values.start_place._id) &&
-          (!values.end_place ||
-              arrStopIds[arrStopIds.length - 1] === values.end_place._id) &&
-          new Set(arrStopIds).size === arrStopIds.length;
+        (!values.start_place || arrStopIds[0] === values.start_place._id) &&
+        (!values.end_place ||
+          arrStopIds[arrStopIds.length - 1] === values.end_place._id) &&
+        new Set(arrStopIds).size === arrStopIds.length;
 
       if (!isValid) {
         error("Invalid route configuration");
         return;
       }
 
-      await onSubmit(values);
+      await onSubmit({ ...values, type: submitType });
     } catch (err) {
       error("An error occurred while saving the line");
       console.error("Error submitting form:", err);
@@ -313,8 +318,8 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
     }
 
     if (
-        values.end_place &&
-        arrStopIds[arrStopIds.length - 1] !== values.end_place._id
+      values.end_place &&
+      arrStopIds[arrStopIds.length - 1] !== values.end_place._id
     ) {
       errors.push("End place should be the last stop");
     }
@@ -328,259 +333,276 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
   };
 
   return (
-      <div className='absolute inset-0 px-2 py-8 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
-        <div className='w-full max-w-4xl overflow-y-auto scrollbar-hide  bg-white shadow-lg border rounded-lg p-4 mx-4 mb-4'>
-          <h1 className='text-lg font-bold text-green-500 text-center mb-2'>
-            {isAdd ? "Add New Line" : "Edit Line"}
-          </h1>
+    <div className='absolute inset-0 px-2 py-8 bg-black bg-opacity-80 -top-10 backdrop-blur-sm flex justify-center items-center'>
+      <div className='w-full max-w-4xl overflow-y-auto scrollbar-hide  bg-white shadow-lg border rounded-lg p-4 mx-4 mb-4'>
+        <h1 className='text-lg font-bold text-green-500 text-center mb-2'>
+          {isAdd ? "Add New Line" : "Edit Line"}
+        </h1>
 
-          <div className='grid grid-cols-5 gap-4'>
-            <div className='col-span-2'>
-              <Form {...form}>
-                <form
-                    onSubmit={form.handleSubmit(handleSubmit)}
-                    className='space-y-2'>
-                  <FormField
-                      control={form.control}
-                      name='name'
-                      render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className='text-sm'>Name</FormLabel>
-                            <FormControl>
-                              <Input
-                                  className='h-8 text-sm'
-                                  placeholder='Enter Line Name'
-                                  {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                      )}
-                  />
+        <div className='grid grid-cols-5 gap-4'>
+          <div className='col-span-2'>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(handleSubmit)}
+                className='space-y-2'>
+                <FormField
+                  control={form.control}
+                  name='name'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm'>Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          className='h-8 text-sm'
+                          placeholder='Enter Line Name'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <FormField
-                      control={form.control}
-                      name='start_place'
-                      render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className='text-sm'>
-                              Start Place
-                              {form.watch("arr_stop")[0]?._id !==
-                                  field.value?._id && (
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger>
-                                            <AlertCircle className='h-4 w-4 text-amber-500' />
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>Start place should be the first stop</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                  )}
-                            </FormLabel>
-                            <Select
-                                value={field.value?._id}
-                                onValueChange={(value) => {
-                                  const station = stations.find((s) => s._id === value);
-                                  field.onChange(station);
-                                }}>
-                              <SelectTrigger
-                                  className={`h-8 text-sm ${
-                                      form.watch("arr_stop")[0]?._id !== field.value?._id
-                                          ? "border-red-500 ring-red-200"
-                                          : ""
-                                  }`}>
-                                <SelectValue placeholder='Select start stop' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {stations.map((station) => (
-                                    <SelectItem key={station._id} value={station._id}>
-                                      {station.name}
-                                    </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                      )}
-                  />
+                <FormField
+                  control={form.control}
+                  name='start_place'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm'>
+                        Start Place
+                        {form.watch("arr_stop")[0]?._id !==
+                          field.value?._id && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <AlertCircle className='h-4 w-4 text-amber-500' />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Start place should be the first stop</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </FormLabel>
+                      <Select
+                        value={field.value?._id}
+                        onValueChange={(value) => {
+                          const station = stations.find((s) => s._id === value);
+                          field.onChange(station);
+                        }}>
+                        <SelectTrigger
+                          className={`h-8 text-sm ${
+                            form.watch("arr_stop")[0]?._id !== field.value?._id
+                              ? "border-red-500 ring-red-200"
+                              : ""
+                          }`}>
+                          <SelectValue placeholder='Select start stop' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stations.map((station) => (
+                            <SelectItem key={station._id} value={station._id}>
+                              {station.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <div className='space-y-2 h-40 overflow-y-auto border rounded p-1'>
-                    {form.watch("arr_stop").map((stop, index) => {
-                      const isValid = isStopValid(stop, index, form.getValues());
-                      return (
-                          <div
-                              key={stop?._id || index}
-                              className='flex items-center gap-1 bg-gray-50 p-1 rounded'>
-                            <div className='flex flex-col'>
-                              <Button
-                                  type='button'
-                                  variant='ghost'
-                                  size='icon'
-                                  className='h-6 w-6'
-                                  onClick={() => moveStopUp(index)}
-                                  disabled={index === 0}>
-                                <ChevronUp className='h-4 w-4' />
-                              </Button>
-                              <Button
-                                  type='button'
-                                  variant='ghost'
-                                  size='icon'
-                                  className='h-6 w-6'
-                                  onClick={() => moveStopDown(index)}
-                                  disabled={
-                                      index === form.watch("arr_stop").length - 1
-                                  }>
-                                <ChevronDown className='h-4 w-4' />
-                              </Button>
-                            </div>
-                            <Select
-                                value={stop?._id}
-                                onValueChange={(value) => {
-                                  const newStop = stops.find((s) => s._id === value);
-                                  const arr_stop = form.getValues("arr_stop");
-                                  arr_stop[index] = newStop;
-                                  form.setValue("arr_stop", arr_stop);
-                                }}>
-                              <SelectTrigger
-                                  className={`h-8 text-sm flex-1 ${
-                                      !isValid ? "border-red-500 ring-red-200" : ""
-                                  }`}>
-                                <SelectValue
-                                    placeholder={`Select stop ${index + 1}`}
-                                />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {stops.map((s) => (
-                                    <SelectItem key={s._id} value={s._id}>
-                                      {s.name}
-                                    </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Button
-                                variant='ghost'
-                                size='icon'
-                                className='h-8 w-8'
-                                onClick={() => {
-                                  const arr_stop = form.getValues("arr_stop");
-                                  form.setValue(
-                                      "arr_stop",
-                                      arr_stop.filter((_, i) => i !== index)
-                                  );
-                                }}>
-                              <X className='h-4 w-4' />
-                            </Button>
-                          </div>
-                      );
-                    })}
-                  </div>
+                <div className='space-y-2 h-40 overflow-y-auto border rounded p-1'>
+                  {form.watch("arr_stop").map((stop, index) => {
+                    const isValid = isStopValid(stop, index, form.getValues());
+                    return (
+                      <div
+                        key={stop?._id || index}
+                        className='flex items-center gap-1 bg-gray-50 p-1 rounded'>
+                        <div className='flex flex-col'>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='icon'
+                            className='h-6 w-6'
+                            onClick={() => moveStopUp(index)}
+                            disabled={index === 0}>
+                            <ChevronUp className='h-4 w-4' />
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='icon'
+                            className='h-6 w-6'
+                            onClick={() => moveStopDown(index)}
+                            disabled={
+                              index === form.watch("arr_stop").length - 1
+                            }>
+                            <ChevronDown className='h-4 w-4' />
+                          </Button>
+                        </div>
+                        <Select
+                          value={stop?._id}
+                          onValueChange={(value) => {
+                            const newStop = stops.find((s) => s._id === value);
+                            const arr_stop = form.getValues("arr_stop");
+                            arr_stop[index] = newStop;
+                            form.setValue("arr_stop", arr_stop);
+                          }}>
+                          <SelectTrigger
+                            className={`h-8 text-sm flex-1 ${
+                              !isValid ? "border-red-500 ring-red-200" : ""
+                            }`}>
+                            <SelectValue
+                              placeholder={`Select stop ${index + 1}`}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {stops.map((s) => (
+                              <SelectItem key={s._id} value={s._id}>
+                                {s.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          className='h-8 w-8'
+                          onClick={() => {
+                            const arr_stop = form.getValues("arr_stop");
+                            form.setValue(
+                              "arr_stop",
+                              arr_stop.filter((_, i) => i !== index)
+                            );
+                          }}>
+                          <X className='h-4 w-4' />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
 
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    const arr_stop = form.getValues("arr_stop");
+                    form.setValue("arr_stop", [...arr_stop, null]);
+                  }}>
+                  Add Stop
+                </Button>
+
+                <FormField
+                  control={form.control}
+                  name='end_place'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm'>
+                        End Place
+                        {form.watch("arr_stop").slice(-1)[0]?._id !==
+                          field.value?._id && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <AlertCircle className='h-4 w-4 text-amber-500' />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>End place should be the last stop</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </FormLabel>
+                      <Select
+                        value={field.value?._id}
+                        onValueChange={(value) => {
+                          const station = stations.find((s) => s._id === value);
+                          field.onChange(station);
+                        }}>
+                        <SelectTrigger
+                          className={`h-8 text-sm ${
+                            form.watch("arr_stop").slice(-1)[0]?._id !==
+                            field.value?._id
+                              ? "border-red-500 ring-red-200"
+                              : ""
+                          }`}>
+                          <SelectValue placeholder='Select end stop' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stations.map((station) => (
+                            <SelectItem key={station._id} value={station._id}>
+                              {station.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='time'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='text-sm'>Time (minutes)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='number'
+                          min='0'
+                          className='h-8 text-sm'
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className='flex justify-end gap-2'>
                   <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        const arr_stop = form.getValues('arr_stop');
-                        form.setValue('arr_stop', [...arr_stop, null]);
-                      }}>
-                    Add Stop
+                    type='button'
+                    variant='outline'
+                    onClick={handleClose}
+                    className='h-8 text-sm'>
+                    Cancel
                   </Button>
 
-                  <FormField
-                      control={form.control}
-                      name='end_place'
-                      render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className='text-sm'>
-                              End Place
-                              {form.watch("arr_stop").slice(-1)[0]?._id !==
-                                  field.value?._id && (
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger>
-                                            <AlertCircle className='h-4 w-4 text-amber-500' />
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>End place should be the last stop</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                  )}
-                            </FormLabel>
-                            <Select
-                                value={field.value?._id}
-                                onValueChange={(value) => {
-                                  const station = stations.find((s) => s._id === value);
-                                  field.onChange(station);
-                                }}>
-                              <SelectTrigger
-                                  className={`h-8 text-sm ${
-                                      form.watch("arr_stop").slice(-1)[0]?._id !==
-                                      field.value?._id
-                                          ? "border-red-500 ring-red-200"
-                                          : ""
-                                  }`}>
-                                <SelectValue placeholder='Select end stop' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {stations.map((station) => (
-                                    <SelectItem key={station._id} value={station._id}>
-                                      {station.name}
-                                    </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                      )}
-                  />
+                  <Button
+                    type='button'
+                    variant='secondary'
+                    onClick={() => {
+                      setSubmitType("draft");
+                      form.handleSubmit(handleSubmit)();
+                    }}
+                    className='h-8 text-sm'>
+                    Save Draft
+                  </Button>
 
-                  <FormField
-                      control={form.control}
-                      name='time'
-                      render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className='text-sm'>Time (minutes)</FormLabel>
-                            <FormControl>
-                              <Input
-                                  type='number'
-                                  min='0'
-                                  className='h-8 text-sm'
-                                  {...field}
-                                  onChange={(e) =>
-                                      field.onChange(Number(e.target.value))
-                                  }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                      )}
-                  />
+                  <Button
+                    type='button'
+                    onClick={() => {
+                      setSubmitType("published");
+                      form.handleSubmit(handleSubmit)();
+                    }}
+                    className='h-8 text-sm bg-green-500 hover:bg-green-600'>
+                    Submit
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
 
-                  <div className='flex justify-end gap-2'>
-                    <Button
-                        variant='outline'
-                        onClick={handleClose}
-                        className='h-8 text-sm'>
-                      Cancel
-                    </Button>
-                    <Button
-                        type='submit'
-                        className='h-8 text-sm bg-green-500 hover:bg-green-600'>
-                      Submit
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </div>
-
-            <div className='col-span-3 relative'>
-              <div ref={mapContainerRef} className='h-full rounded-lg border' />
-            </div>
+          <div className='col-span-3 relative'>
+            <div ref={mapContainerRef} className='h-full rounded-lg border' />
           </div>
         </div>
       </div>
+    </div>
   );
 };
 

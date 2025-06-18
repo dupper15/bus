@@ -2,7 +2,7 @@ const Account = require("../../models/AccountModel");
 const AccountFactory = require("./AccountFactory");
 
 const loginAccount = async (data) => {
-  try { 
+  try {
     const checkAccount = await Account.findOne({
       user: data.id_card,
     });
@@ -12,11 +12,13 @@ const loginAccount = async (data) => {
         message: "No account found.",
       };
     }
-
+    console.log("Account found:", checkAccount);
     const type = checkAccount.userType;
+    console.log("Account type:", type);
     const accountService = AccountFactory.createAccountService(type);
+    console.log("Account service created:", accountService);
     const response = await accountService.login(data);
-
+    console.log("Login response:", response);
     if (response.status === "ERROR") {
       return {
         status: "ERROR",
