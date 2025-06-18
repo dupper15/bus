@@ -98,7 +98,7 @@ class CustomerService extends IAccount {
       if (!comparePassword) {
         return {
           status: "ERROR",
-          message: "Incorrect ID card or password.",
+          message: "Incorrect password.",
         };
       }
 
