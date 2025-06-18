@@ -10,11 +10,11 @@ class DayOffContext {
 
   mapState(status) {
     switch (status) {
-      case "pending":
+      case "Pending":
         return new PendingState();
-      case "approved":
+      case "Approved":
         return new ApprovedState();
-      case "rejected":
+      case "Rejected":
         return new RejectedState();
       default:
         throw new Error("Trạng thái không hợp lệ.");
