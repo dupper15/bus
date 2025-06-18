@@ -1,5 +1,5 @@
-const DayOff = require("../models/DayOffModel");
-const DayOffContext = require("./states/DayOffContext");
+const DayOff = require("../../models/DayOffModel");
+const DayOffContext = require("../states/DayOffContext");
 
 const getNoCondition = async () => {
   return new Promise(async (resolve, reject) => {
