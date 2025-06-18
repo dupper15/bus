@@ -5,6 +5,7 @@ const loginAccount = async (req, res) => {
   try {
     const data = req.body;
     const response = await AccountService.loginAccount(data);
+    console.log("Login response:", response);
     const { refresh_token, ...newResponse } = response;
     res.cookie("refresh_token", refresh_token, {
       httpOnly: true,
