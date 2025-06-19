@@ -35,6 +35,14 @@ class FlyweightFactory {
 
     return this.cache[type].get(key);
   }
+
+  clearCache(type, id) {
+    if (this.cache[type]) {
+      if (id) {
+        this.cache[type].delete(id.toString());
+      }
+    }
+  }
 }
 
 module.exports = new FlyweightFactory();

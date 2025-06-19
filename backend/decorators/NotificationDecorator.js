@@ -1,4 +1,4 @@
-const EmailService = require('./EmailService');
+const EmailService = require('../services/EmailService');
 
 /**
  * Base User Interface

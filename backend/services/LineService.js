@@ -3,6 +3,8 @@ const Schedule = require("../models/ScheduleModel");
 const LineDirector = require("./builder/LineDirector");
 const LineDraftBuilder = require("./builder/LineDraftBuilder");
 const LinePublishedBuilder = require("./builder/LinePublishedBuilder");
+const flyweightFactory = require("./flyweight/FlyweightFactory");
+
 const createLine = (newLine) => {
   return new Promise(async (resolve, reject) => {
     const {
@@ -91,6 +93,7 @@ const updateLine = (LineId, data) => {
         return;
       }
 
+      flyweightFactory.clearCache("line", updatedLine._id);
       resolve({
         status: "OK",
         message: "Line updated successfully.",
@@ -172,6 +175,7 @@ const deleteLine = (LineId) => {
       }
 
       await Line.findByIdAndDelete(LineId);
+      flyweightFactory.clearCache("line", LineId);
       resolve({
         status: "OK",
         message: "Line deleted successfully.",

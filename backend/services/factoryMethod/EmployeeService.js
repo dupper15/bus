@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const { generalAccessToken, generalRefreshToken } = require("../JwtService");
 const Account = require("../../models/AccountModel");
 const IAccount = require("./AccountInterface");
+const flyweightFactory = require("../flyweight/FlyweightFactory");
 
 class EmployeeService extends IAccount {
   /**
@@ -180,6 +181,7 @@ class EmployeeService extends IAccount {
         };
       }
 
+      flyweightFactory.clearCache("employee", updatedEmployee._id);
       return {
         status: "OK",
         message: "Employee updated successfully.",
@@ -228,6 +230,7 @@ class EmployeeService extends IAccount {
         };
       }
 
+      flyweightFactory.clearCache("employee", updatedEmployee._id);
       return {
         status: "OK",
         message: "Employee change status successfully.",
@@ -260,6 +263,7 @@ class EmployeeService extends IAccount {
 
       await Account.findOneAndDelete({ user: employee.id_card });
 
+      flyweightFactory.clearCache("employee", accountId);
       return {
         status: "OK",
         message: "Employee deleted successfully.",

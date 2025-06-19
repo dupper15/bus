@@ -1,5 +1,6 @@
 const Bus = require("../models/BusModel");
 const Bill = require("../models/MaintenanceBillModel");
+const flyweightFactory = require("./flyweight/FlyweightFactory");
 
 const createBus = async (data) => {
     try {
@@ -72,6 +73,7 @@ const updateBus = async (data) => {
             };
         }
 
+        flyweightFactory.clearCache("bus", updatedBus._id);
         return {
             status: "OK",
             message: "Bus updated successfully.",
@@ -149,6 +151,7 @@ const deleteBus = async (data) => {
         // Tìm và xóa bus bằng ID
         await Bus.findByIdAndDelete(data._id);
 
+        flyweightFactory.clearCache("bus", data._id);
         return {
             status: "OK",
             message: "Bus deleted successfully."
