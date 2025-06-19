@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import StopService from "@/services/StopService.js";
 import { transformStop } from "@/utils/Transformer.js";
 
-mapboxgl.accessToken = 'pk.eyJ1IjoibGR2MTIiLCJhIjoiY200eTRtdmRtMHJiOTJrcTc1dW15cG5teiJ9.MMYAJ5OuU2cXhgydFpRXHg';
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const useStopMapViewModel = ({
                                  selectedStopCoordinates,

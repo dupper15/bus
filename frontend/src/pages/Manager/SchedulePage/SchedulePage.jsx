@@ -49,8 +49,11 @@ import * as ScheduleService from "@/services/scheduleService";
 import * as Message from "@/components/ui/alert";
 import { format } from "date-fns";
 import dayjs from "dayjs";
-
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 const SchedulePage = () => {
+    const [isLoading, setIsLoading] = useState(true);
+  
   const ITEMS_PER_PAGE = 10;
   const [items, setItems] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -131,9 +134,12 @@ const SchedulePage = () => {
     mutationFn: () => ScheduleService.getAllSchedule(),
     onSuccess: (data) => {
       setRawItems(data.data);
+      setIsLoading(false);
     },
     onError: (error) => {
       console.error("Error fetching schedules:", error);
+      setIsLoading(false);
+
     },
   });
 
@@ -246,7 +252,47 @@ const SchedulePage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentItems.map((item, index) => (
+             {isLoading
+                             ? Array(5)
+                                 .fill()
+                                 .map((_, idx) => (
+                                   <TableRow key={idx}>
+                                     <TableCell>
+                                       <Skeleton height={20} width='50%' />
+                                     </TableCell>
+                                     <TableCell>
+                                       <Skeleton height={20} width='50%' />
+                                     </TableCell>
+                                     <TableCell>
+                                       <Skeleton height={20} width='50%' />
+                                     </TableCell>
+                                     <TableCell>
+                                     <Skeleton height={20} width='80%' />
+                                     </TableCell>
+                                     <TableCell>
+                                       <Skeleton height={20} width='80%' />
+                                     </TableCell>
+                                     <TableCell>
+                                       <Skeleton height={20} width='50%' />
+                                     </TableCell>
+                                     <TableCell>
+                                       <Skeleton height={20} width='60%' />
+                                     </TableCell>
+                                     <TableCell>
+                                       <Skeleton height={20} width='30%' />
+                                     </TableCell>
+                                     <TableCell>
+                                       <Skeleton height={20} width='30%' />
+                                     </TableCell>
+                                     <TableCell>
+                                       <Skeleton height={20} width='30%' />
+                                     </TableCell>
+                                     <TableCell>
+                                       <Skeleton height={20} width='30%' />
+                                     </TableCell>
+                                   </TableRow>
+                                 ))
+                             :currentItems.map((item, index) => (
                 <TableRow
                   key={index}
                   onClick={() => setSelected(item)}

@@ -39,7 +39,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useMutation } from "react-query";
-import * as CustomerService from "../../../services/customerService";
+import * as AccountService from "../../../services/accountService";
 import * as Message from "../../../components/ui/alert";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -51,8 +51,8 @@ const CustomerPage = () => {
   const [refresh, setRefresh] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: () => {
-      return CustomerService.getAllCustomer();
+    mutationFn: (data) => {
+      return AccountService.getAllAccounts(data);
     },
     onError: (error) => {
       console.log(error);
@@ -109,7 +109,7 @@ const CustomerPage = () => {
     getAll();
   }, [refresh]);
   const getAll = () => {
-    mutation.mutate();
+    mutation.mutate("Customer");
   };
 
   const [searchWord, setSearchWord] = useState("");

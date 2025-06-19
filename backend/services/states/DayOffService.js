@@ -1,4 +1,5 @@
-const DayOff = require("../models/DayOffModel");
+const DayOff = require("../../models/DayOffModel");
+const DayOffContext = require("../states/DayOffContext");
 
 const getNoCondition = async () => {
   return new Promise(async (resolve, reject) => {
@@ -82,35 +83,33 @@ const getAllDayOff = async () => {
 const updateDayOff = async (data) => {
   try {
     const checkDayOff = await DayOff.findOne({ id: data.id });
-    if (checkDayOff === null) {
+    if (!checkDayOff) {
       return {
         status: "ERROR",
         message: "No request leave found with the provided ID.",
       };
     }
-    const updatedDayOff = await DayOff.findByIdAndUpdate(
-      checkDayOff._id,
-      {
-        manager: data.manager,
-        status: data.status,
-        feedback: data.feedback,
-        date_resolved: new Date(),
-      },
-      { new: true }
-    );
-    if (!updatedDayOff) {
+
+    const context = new DayOffContext(checkDayOff.status);
+
+    if (data.status === "Approved") {
+      await context.approve(data);
+    } else if (data.status === "Rejected") {
+      await context.reject(data);
+    } else if (data.status === "Pending") {
+      await context.resubmit(data);
+    } else {
       return {
         status: "ERROR",
-        message: "Failed to update the DayOff or DayOff not found.",
+        message: "Invalid status update request.",
       };
     }
+
     return {
       status: "OK",
       message: "Resolved request leave successfully.",
-      data: updatedDayOff,
     };
   } catch (error) {
-    // Xử lý lỗi và trả về phản hồi lỗi
     return {
       status: "ERROR",
       message: "An error occurred while updating the DayOff.",

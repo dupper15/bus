@@ -1,32 +1,41 @@
 import { useState, useCallback, useEffect } from "react";
-import GeoapifyService from "@/services/GeoapifyService";
+import geolocationService from "../../../services/GeolocationService";
+import routeFinderContext from "../../../services/strategies/RouteFinderContext";
+import Route from '@/components/Route/Route.jsx';
+import RouteComponent from '@/components/Route/RouteComponent.jsx';
+import pathTransformerService from "../../../services/PathTransformerService";
 
+/**
+ * NavigationViewModel - Enhanced to work with Composite pattern Route objects
+ * Handles navigation state and manages Route composite objects from strategies
+ */
 const useNavigationViewModel = () => {
-    const [path, setPath] = useState([]);
+    const [path, setPath] = useState([]); // Legacy path array for MapView compatibility
+    const [route, setRoute] = useState(null); // New Route composite object
     const [error, setError] = useState(null);
     const [start, setStart] = useState({ name: "", coordinates: [] });
     const [end, setEnd] = useState({ name: "", coordinates: [] });
     const [startSuggestions, setStartSuggestions] = useState([]);
     const [endSuggestions, setEndSuggestions] = useState([]);
+    const [selectedStrategy, setSelectedStrategy] = useState(routeFinderContext.getCurrentStrategyType());
+    const [routeMetadata, setRouteMetadata] = useState(null);
+    const [isComparing, setIsComparing] = useState(false);
+    const [strategyComparison, setStrategyComparison] = useState([]);
 
-    const debounce = (func, delay) => {
-        let timeoutId;
-        return (...args) => {
-            if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                func(...args);
-            }, delay);
-        };
-    };
+    // Debounced search function
+    const debouncedFetchSuggestions = useCallback(
+        geolocationService.debounceSearch(async (query, setSuggestions) => {
+            if (!query) {
+                setSuggestions([]);
+                return;
+            }
 
-    const fetchSuggestions = async (query, setSuggestions) => {
-        if (!query) return;
-        const bbox = [106.491, 10.348, 107.020, 11.160]; // Ho Chi Minh City bounding box
-        const suggestions = await GeoapifyService.fetchSuggestions(query, bbox);
-        setSuggestions(suggestions);
-    };
-
-    const debouncedFetchSuggestions = useCallback(debounce(fetchSuggestions, 300), []);
+            const bbox = geolocationService.getHCMCBoundingBox();
+            const suggestions = await geolocationService.searchLocations(query, bbox);
+            setSuggestions(suggestions);
+        }, 300),
+        []
+    );
 
     const handleChange = (value, setField, setSuggestions) => {
         setField((prev) => ({ ...prev, name: value }));
@@ -38,327 +47,324 @@ const useNavigationViewModel = () => {
         setSuggestions([]);
     };
 
-    const findNearestBusStops = (coords, busStops, maxDistance = 1) => {
-        const nearbyStops = [];
+    /**
+     * Changes the pathfinding strategy
+     * @param {string} strategyType - The strategy type to use
+     */
+    const handleStrategyChange = (strategyType) => {
+        try {
+            routeFinderContext.setStrategy(strategyType);
+            setSelectedStrategy(strategyType);
 
-        busStops.forEach((stop) => {
-            const distance = Math.sqrt(
-                Math.pow(stop.pointX - coords[1], 2) +
-                Math.pow(stop.pointY - coords[0], 2)
-            ) * 111; // Convert to km
-
-            if (distance <= maxDistance) {
-                nearbyStops.push({ stop, distance });
+            // If there's an existing route, inform user they can recalculate
+            if (route && route instanceof Route) {
+                console.log('Strategy changed. Click "Find Route" to recalculate with new strategy.');
             }
-        });
-
-        return nearbyStops.sort((a, b) => a.distance - b.distance);
+        } catch (error) {
+            console.error('Error changing strategy:', error);
+            setError('Failed to change pathfinding strategy');
+        }
     };
 
-    const buildStopRoutesMap = (busLines) => {
-        const stopRoutes = new Map();
-
-        busLines.forEach((line) => {
-            const allStopsIterator = line.getAllStopsIterator();
-            allStopsIterator.forEach((stop) => {
-                if (!stopRoutes.has(stop.id)) {
-                    stopRoutes.set(stop.id, new Set());
-                }
-                stopRoutes.get(stop.id).add(line);
-            });
-        });
-
-        return stopRoutes;
+    /**
+     * Gets available pathfinding strategies for UI display
+     * @returns {Array} - Array of available strategies
+     */
+    const getAvailableStrategies = () => {
+        return routeFinderContext.getAvailableStrategies();
     };
 
+    /**
+     * Gets explanation for a specific strategy
+     * @param {string} strategyType - Strategy type to explain
+     * @returns {string} - Strategy explanation
+     */
+    const getStrategyExplanation = (strategyType) => {
+        return routeFinderContext.getStrategyExplanation(strategyType);
+    };
+
+    /**
+     * Finds path using the selected strategy and returns both Route object and legacy path
+     * @param {Array} startCoords - Starting coordinates
+     * @param {Array} endCoords - Ending coordinates
+     * @param {Array} busStops - Available bus stops
+     * @param {Array} busLines - Available bus lines
+     * @returns {Promise<Array>} - Legacy path array for MapView compatibility
+     */
     const findPath = async (startCoords, endCoords, busStops, busLines) => {
         try {
-            const nearbyStartStops = findNearestBusStops(startCoords, busStops);
-            const nearbyEndStops = findNearestBusStops(endCoords, busStops);
+            setError(null);
+            setRouteMetadata(null);
+            setRoute(null);
 
-            if (nearbyStartStops.length === 0 || nearbyEndStops.length === 0) {
-                handleError("No nearby bus stops found within 1km.");
-                return;
-            }
-
-            const stopRoutesMap = buildStopRoutesMap(busLines);
-            const bestPath = findBestPath(
-                nearbyStartStops,
-                nearbyEndStops,
-                stopRoutesMap,
-                busLines,
-                busStops
+            const result = await routeFinderContext.findPath(
+                startCoords,
+                endCoords,
+                busStops,
+                busLines
             );
-            if (bestPath) {
-                const formattedPath = formatFullPath(
-                    bestPath,
-                    startCoords,
-                    endCoords
-                );
-                setPath(formattedPath);
+
+            if (result && result.path instanceof Route) {
+                // Store the Route composite object
+                setRoute(result.path);
+                setRouteMetadata(result.metadata);
+
+                // Transform Route object to legacy path format for MapView
+                const legacyPath = pathTransformerService.transformForMapView(result.path);
+                setPath(legacyPath);
                 setError(null);
-                return formattedPath;
+
+                return legacyPath;
             } else {
-                handleError("No valid path found.");
+                handleError("No valid path found with the selected strategy.");
+                return [];
             }
         } catch (err) {
-            handleError(err.message || "An error occurred.");
+            handleError(err.message || "An error occurred while finding the path.");
+            return [];
         }
     };
 
-    const findBestPath = (startStops, endStops, stopRoutesMap, busLines, busStops) => {
-        const queue = new Queue();
-        const visited = new Map();
+    /**
+     * Compares all available strategies and shows results
+     * @param {Array} startCoords - Starting coordinates
+     * @param {Array} endCoords - Ending coordinates
+     * @param {Array} busStops - Available bus stops
+     * @param {Array} busLines - Available bus lines
+     * @returns {Promise<Array>} - Array of comparison results
+     */
+    const compareAllStrategies = async (startCoords, endCoords, busStops, busLines) => {
+        try {
+            setIsComparing(true);
+            setError(null);
 
-        // Try each possible start stop
-        startStops.forEach(({ stop: startStop, distance: initialWalk }) => {
-            queue.enqueue({
-                currentStop: startStop,
-                path: [startStop],
-                lines: [],
-                transfers: 0,
-                totalWalking: initialWalk,
-                segments: [{
-                    type: 'walking',
-                    distance: initialWalk,
-                    from: 'start',
-                    to: startStop
-                }]
-            });
-        });
-
-        let bestPath = null;
-        let minScore = Infinity;
-
-        while (!queue.isEmpty()) {
-            const current = queue.dequeue();
-
-            // Check if we've reached any end stop
-            const endStopMatch = endStops.find(
-                ({ stop }) => stop.id === current.currentStop.id
+            const results = await routeFinderContext.compareStrategies(
+                startCoords,
+                endCoords,
+                busStops,
+                busLines
             );
 
-            if (endStopMatch) {
-                const finalScore = calculatePathScore(
-                    current.transfers,
-                    current.totalWalking
-                );
-                if (finalScore < minScore) {
-                    minScore = finalScore;
-                    bestPath = {
-                        ...current,
-                        segments: [...current.segments]
-                    };
-                }
-                continue;
+            // Transform Route objects to include legacy path for each result
+            const enhancedResults = results.map(result => ({
+                ...result,
+                legacyPath: pathTransformerService.transformForMapView(result.path)
+            }));
+
+            setStrategyComparison(enhancedResults);
+
+            // Set the best result as the current route
+            if (enhancedResults.length > 0) {
+                const bestResult = enhancedResults[0];
+                setRoute(bestResult.path);
+                setPath(bestResult.legacyPath);
+                setRouteMetadata(bestResult.metadata);
             }
 
-            // Don't explore if we've exceeded limits
-            if (current.transfers >= 3 || current.totalWalking >= 4) continue;
+            return enhancedResults;
+        } catch (err) {
+            handleError(err.message || "An error occurred while comparing strategies.");
+            return [];
+        } finally {
+            setIsComparing(false);
+        }
+    };
 
-            const currentRoutes = stopRoutesMap.get(current.currentStop.id);
-            if (!currentRoutes) continue;
+    /**
+     * Selects a specific route from strategy comparison
+     * @param {number} routeIndex - Index of route to select
+     */
+    const selectRouteFromComparison = (routeIndex) => {
+        if (strategyComparison[routeIndex]) {
+            const selectedResult = strategyComparison[routeIndex];
+            setRoute(selectedResult.path);
+            setPath(selectedResult.legacyPath || pathTransformerService.transformForMapView(selectedResult.path));
+            setRouteMetadata(selectedResult.metadata);
 
-            // Explore each possible route from current stop
-            currentRoutes.forEach(line => {
-                // Try both directions using iterators
-                const iterators = [
-                    line.getAllStopsIterator(),
-                    line.getInboundIterator()
-                ];
+            // Update the current strategy to match the selected route
+            if (selectedResult.strategyUsed && selectedResult.strategyUsed.type) {
+                handleStrategyChange(selectedResult.strategyUsed.type);
+            }
+        }
+    };
 
-                iterators.forEach(iterator => {
-                    const stops = iterator.toArray();
-                    const currentStopIndex = stops.findIndex(
-                        s => s.id === current.currentStop.id
-                    );
+    /**
+     * Gets strategy recommendations based on current context
+     * @param {Object} context - Additional context for recommendations
+     * @returns {Array} - Array of strategy recommendations
+     */
+    const getStrategyRecommendations = (context = {}) => {
+        return routeFinderContext.getStrategyRecommendations(context);
+    };
 
-                    if (currentStopIndex === -1) return;
+    /**
+     * Clears strategy comparison results
+     */
+    const clearStrategyComparison = () => {
+        setStrategyComparison([]);
+    };
 
-                    // Explore next stops in this direction
-                    for (let i = currentStopIndex + 1; i < stops.length; i++) {
-                        const nextStop = stops[i];
-                        const key = `${nextStop.id}-${current.transfers}`;
+    /**
+     * Gets the current Route composite object
+     * @returns {Route|null} - Current Route object
+     */
+    const getCurrentRoute = () => {
+        return route;
+    };
 
-                        if (visited.has(key)) continue;
-                        visited.set(key, true);
+    /**
+     * Gets route statistics from the current Route object
+     * @returns {Object|null} - Route statistics
+     */
+    const getRouteStatistics = () => {
+        if (!route || !(route instanceof Route)) {
+            return null;
+        }
 
-                        const isNewLine = !current.lines.includes(line);
-                        const newTransfers = isNewLine ?
-                            current.transfers + 1 :
-                            current.transfers;
+        return route.getSummary();
+    };
 
-                        // Get all intermediate stops between current and next stop
-                        const intermediateStops = stops.slice(currentStopIndex, i + 1);
+    /**
+     * Validates the current route
+     * @param {Object} constraints - Validation constraints
+     * @returns {boolean} - Whether route is valid
+     */
+    const validateCurrentRoute = (constraints = {}) => {
+        if (!route || !(route instanceof Route)) {
+            return false;
+        }
 
-                        queue.enqueue({
-                            currentStop: nextStop,
-                            path: [...current.path, nextStop],
-                            lines: isNewLine ?
-                                [...current.lines, line] :
-                                current.lines,
-                            transfers: newTransfers,
-                            totalWalking: current.totalWalking,
-                            segments: [
-                                ...current.segments,
-                                {
-                                    type: 'bus',
-                                    line: line,
-                                    from: current.currentStop,
-                                    to: nextStop,
-                                    intermediateStops: intermediateStops // Add intermediate stops
-                                }
-                            ]
-                        });
-                    }
-                });
-            });
+        return route.isValid() &&
+            route.getWalkingDistance() <= (constraints.maxWalkingDistance || 5) &&
+            route.getTransferCount() <= (constraints.maxTransfers || 3) &&
+            route.getDuration() <= (constraints.maxDuration || 180);
+    };
 
-            // Explore walking transfers to nearby stops
-            const nearbyStops = findNearestBusStops(
-                [current.currentStop.pointY, current.currentStop.pointX],
-                busStops
+    /**
+     * Optimizes the current route using a different strategy
+     * @param {string} optimizationStrategy - Strategy to use for optimization
+     * @returns {Promise<Route|null>} - Optimized route
+     */
+    const optimizeCurrentRoute = async (optimizationStrategy, busStops = [], busLines = []) => {
+        if (!route || start.coordinates.length === 0 || end.coordinates.length === 0) {
+            return null;
+        }
+
+        try {
+            const originalStrategy = selectedStrategy;
+            handleStrategyChange(optimizationStrategy);
+
+            // Ensure coordinates are in [lng, lat] format
+            let startCoords, endCoords;
+
+            if (Array.isArray(start.coordinates) && start.coordinates.length >= 2) {
+                startCoords = RouteComponent.ensureLngLat(start.coordinates);
+            } else {
+                startCoords = [106.70098, 10.77584]; // Default Ho Chi Minh City center
+            }
+
+            if (Array.isArray(end.coordinates) && end.coordinates.length >= 2) {
+                endCoords = RouteComponent.ensureLngLat(end.coordinates);
+            } else {
+                endCoords = [106.70598, 10.78084]; // Default nearby location
+            }
+
+            const optimizedPath = await findPath(
+                startCoords,
+                endCoords,
+                busStops,
+                busLines
             );
 
-            nearbyStops.forEach(({ stop: nearStop, distance }) => {
-                if (distance > 1) return; // Skip if walking distance > 1km
-                if (nearStop.id === current.currentStop.id) return; // Skip same stop
-
-                const totalWalking = current.totalWalking + distance;
-                if (totalWalking > 4) return; // Skip if total walking > 4km
-
-                const key = `${nearStop.id}-${current.transfers}`;
-                if (visited.has(key)) return;
-
-                queue.enqueue({
-                    currentStop: nearStop,
-                    path: [...current.path, nearStop],
-                    lines: current.lines,
-                    transfers: current.transfers,
-                    totalWalking: totalWalking,
-                    segments: [
-                        ...current.segments,
-                        {
-                            type: 'walking',
-                            distance: distance,
-                            from: current.currentStop,
-                            to: nearStop
-                        }
-                    ]
-                });
-            });
-        }
-
-        return bestPath;
-    };
-
-    const calculatePathScore = (transfers, totalWalking) => {
-        // Weighted scoring - lower is better
-        // Prioritize fewer transfers over walking distance
-        return transfers * 2 + totalWalking;
-    };
-
-    const formatFullPath = (pathData, startCoords, endCoords) => {
-        const formattedSegments = [];
-
-        // Add initial walking segment
-        if (pathData.segments[0].type === 'walking') {
-            formattedSegments.push({
-                type: 'walking',
-                distance: pathData.segments[0].distance,
-                coords: [
-                    startCoords,
-                    [pathData.segments[0].to.pointY, pathData.segments[0].to.pointX]
-                ],
-                from: { name: 'Current Location' },  // Added for RouteDetails
-                to: pathData.segments[0].to         // Added complete stop object for RouteDetails
-            });
-        }
-
-        // Format middle segments
-        for (let i = 1; i < pathData.segments.length; i++) {
-            const segment = pathData.segments[i];
-
-            if (segment.type === 'walking') {
-                formattedSegments.push({
-                    type: 'walking',
-                    distance: segment.distance,
-                    coords: [
-                        [segment.from.pointY, segment.from.pointX],
-                        [segment.to.pointY, segment.to.pointX]
-                    ],
-                    from: segment.from,  // Added complete stop object for RouteDetails
-                    to: segment.to      // Added complete stop object for RouteDetails
-                });
-            } else { // bus segment
-                // Calculate the actual distance for the bus segment
-                const busStops = segment.intermediateStops;
-                let busDistance = 0;
-                for (let j = 0; j < busStops.length - 1; j++) {
-                    const currentStop = busStops[j];
-                    const nextStop = busStops[j + 1];
-                    busDistance += Math.sqrt(
-                        Math.pow(nextStop.pointX - currentStop.pointX, 2) +
-                        Math.pow(nextStop.pointY - currentStop.pointY, 2)
-                    ) * 111; // Convert to km
-                }
-
-                formattedSegments.push({
-                    type: 'bus',
-                    line: segment.line,
-                    distance: busDistance,  // Added calculated distance
-                    endStop: segment.to,
-                    to: segment.intermediateStops,
-                    coords: segment.intermediateStops.map(stop => [stop.pointY, stop.pointX]),
-                    from: segment.from,     // Added complete stop object for RouteDetails
-                    routeNumber: segment.line.routeNumber  // Added route number for RouteDetails
-                });
+            // Restore original strategy if optimization failed
+            if (!optimizedPath || optimizedPath.length === 0) {
+                handleStrategyChange(originalStrategy);
+                return null;
             }
+
+            return route;
+        } catch (error) {
+            console.error('Error optimizing route:', error);
+            return null;
         }
-
-        // Add final walking segment
-        const lastStop = pathData.segments[pathData.segments.length - 1].to;
-        formattedSegments.push({
-            type: 'walking',
-            distance: Math.sqrt(
-                Math.pow(endCoords[0] - lastStop.pointY, 2) +
-                Math.pow(endCoords[1] - lastStop.pointX, 2)
-            ) * 111,  // Calculate actual distance for final walking segment
-            coords: [
-                [lastStop.pointY, lastStop.pointX],
-                endCoords
-            ],
-            from: lastStop,           // Added complete stop object for RouteDetails
-            to: { name: 'Destination' }  // Added for RouteDetails
-        });
-
-        return formattedSegments;
     };
+
+    /**
+     * Creates a Route object from legacy path data
+     * @param {Array} legacyPath - Legacy path array
+     * @param {Object} options - Creation options
+     * @returns {Route} - New Route object
+     */
+    const createRouteFromPath = (legacyPath, options = {}) => {
+        try {
+            return pathTransformerService.transformToRoute(legacyPath, {
+                name: options.name || 'Custom Route',
+                strategy: selectedStrategy,
+                metadata: options.metadata || {}
+            });
+        } catch (error) {
+            console.error('Error creating route from path:', error);
+            return new Route({
+                name: 'Error Route',
+                metadata: { error: error.message }
+            });
+        }
+    };
+
+    /**
+     * Handles errors consistently
+     * @param {string} message - Error message
+     */
     const handleError = (message) => {
-        console.error(message);
+        console.error('NavigationViewModel Error:', message);
         setPath([]);
+        setRoute(null);
+        setRouteMetadata(null);
         setError(message);
     };
 
+    /**
+     * Swaps start and end locations
+     */
     const handleSwap = () => {
         const temp = start;
         setStart(end);
         setEnd(temp);
+
+        const tempSuggestions = startSuggestions;
+        setStartSuggestions(endSuggestions);
+        setEndSuggestions(tempSuggestions);
     };
 
+    // Clear error after timeout
     useEffect(() => {
         if (error) {
             const timer = setTimeout(() => {
                 setError(null);
-            }, 5000); // Clear error after 5 seconds
+            }, 5000);
 
             return () => clearTimeout(timer);
         }
     }, [error]);
 
+    // Update selected strategy when context changes
+    useEffect(() => {
+        const currentStrategyType = routeFinderContext.getCurrentStrategyType();
+        if (currentStrategyType !== selectedStrategy) {
+            setSelectedStrategy(currentStrategyType);
+        }
+    }, [selectedStrategy]);
+
     return {
+        // Legacy path functionality (for MapView compatibility)
         path,
         setPath,
+
+        // New Route composite functionality
+        route,
+        setRoute,
+
+        // Common functionality
         error,
         start,
         end,
@@ -370,26 +376,128 @@ const useNavigationViewModel = () => {
         handleStartSuggestionClick: (suggestion) => handleSuggestionClick(suggestion, setStart, setStartSuggestions),
         handleEndSuggestionClick: (suggestion) => handleSuggestionClick(suggestion, setEnd, setEndSuggestions),
         handleSwap,
-        setError
+        setError,
+
+        // Strategy-related functionality
+        selectedStrategy,
+        handleStrategyChange,
+        getAvailableStrategies,
+        getStrategyExplanation,
+        routeMetadata,
+
+        // Strategy comparison functionality
+        isComparing,
+        strategyComparison,
+        compareAllStrategies,
+        selectRouteFromComparison,
+        clearStrategyComparison,
+        getStrategyRecommendations,
+
+        // New Route composite functionality
+        getCurrentRoute,
+        getRouteStatistics,
+        validateCurrentRoute,
+        optimizeCurrentRoute,
+        createRouteFromPath,
+
+        // Enhanced utility functions
+        getCurrentStrategy: () => routeFinderContext.getCurrentStrategy(),
+        resetToDefaultStrategy: () => {
+            routeFinderContext.resetToDefault();
+            setSelectedStrategy(routeFinderContext.getCurrentStrategyType());
+        },
+        clearStrategyPreference: () => {
+            routeFinderContext.clearUserPreference();
+            setSelectedStrategy(routeFinderContext.getCurrentStrategyType());
+        },
+
+        // Route transformation utilities
+        transformRouteToLegacy: (routeObj) => {
+            try {
+                return pathTransformerService.transformFromRoute(routeObj);
+            } catch (error) {
+                console.error('Error transforming route to legacy format:', error);
+                return [];
+            }
+        },
+        transformLegacyToRoute: (legacyPath, options) => {
+            try {
+                return pathTransformerService.transformToRoute(legacyPath, options);
+            } catch (error) {
+                console.error('Error transforming legacy path to route:', error);
+                return new Route({ name: 'Error Route' });
+            }
+        },
+
+        // Route analysis
+        getRouteComplexity: () => {
+            return route instanceof Route ? route.getComponents().length : 0;
+        },
+        getRouteConfidence: () => {
+            return route instanceof Route ? (route.confidence || 0.8) : 0;
+        },
+        getRouteScore: () => {
+            return route instanceof Route ? route.calculateOptimizationScore() : Infinity;
+        },
+
+        // Route operations
+        cloneCurrentRoute: () => {
+            return route instanceof Route ? route.clone() : null;
+        },
+        validateRoute: (routeObj, constraints) => {
+            if (!(routeObj instanceof Route)) return false;
+            return routeObj.isValid();
+        },
+
+        // Export/Import functionality for route sharing
+        exportRoute: () => {
+            try {
+                return route instanceof Route ? route.toJSON() : null;
+            } catch (error) {
+                console.error('Error exporting route:', error);
+                return null;
+            }
+        },
+        importRoute: (routeData) => {
+            try {
+                const importedRoute = Route.fromJSON(routeData);
+                setRoute(importedRoute);
+                setPath(pathTransformerService.transformForMapView(importedRoute));
+                setRouteMetadata(importedRoute.metadata);
+                console.log('Route imported successfully');
+                return true;
+            } catch (error) {
+                console.error('Error importing route:', error);
+                setError('Failed to import route');
+                return false;
+            }
+        },
+
+        // Debug utilities
+        getDebugInfo: () => ({
+            hasRoute: route instanceof Route,
+            routeName: route?.name,
+            pathLength: path.length,
+            selectedStrategy,
+            errorState: error,
+            comparisonResults: strategyComparison.length
+        }),
+
+        // Reset all state
+        resetAll: () => {
+            setPath([]);
+            setRoute(null);
+            setError(null);
+            setStart({ name: "", coordinates: [] });
+            setEnd({ name: "", coordinates: [] });
+            setStartSuggestions([]);
+            setEndSuggestions([]);
+            setRouteMetadata(null);
+            setStrategyComparison([]);
+            routeFinderContext.resetToDefault();
+            setSelectedStrategy(routeFinderContext.getCurrentStrategyType());
+        }
     };
 };
-
-class Queue {
-    constructor() {
-        this.items = [];
-    }
-
-    enqueue(item) {
-        this.items.push(item);
-    }
-
-    dequeue() {
-        return this.items.shift();
-    }
-
-    isEmpty() {
-        return this.items.length === 0;
-    }
-}
 
 export default useNavigationViewModel;

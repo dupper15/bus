@@ -1,23 +1,55 @@
-const GeoapifyApiKey = "e3576034d5864c2f82e871596c0652f7";
+import geolocationService from './GeolocationService';
 
+/**
+ * GeoapifyService - Refactored to delegate to GeolocationService
+ * Maintains backward compatibility while using the facade pattern
+ */
 const GeoapifyService = {
-    fetchSuggestions: async (query) => {
-        if (!query) return [];
-
-        const bbox = [106.491, 10.348, 107.020, 11.160]; // Ho Chi Minh City bounding box
-        const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(query)}&filter=rect:${bbox.join(",")}&apiKey=${GeoapifyApiKey}`;
-        const response = await fetch(url);
-        const data = await response.json();
-
-        return data.features.map(feature => ({
-            id: feature.properties.osm_id,
-            name: feature.properties.formatted,
-            coordinates: [
-                feature.geometry.coordinates[0],
-                feature.geometry.coordinates[1],
-            ],
-        }));
+    /**
+     * Fetches location suggestions based on query
+     * @param {string} query - Search query
+     * @param {Array} bbox - Bounding box for search area
+     * @returns {Promise<Array>} - Array of location suggestions
+     */
+    fetchSuggestions: async (query, bbox) => {
+        return await geolocationService.searchLocations(query, bbox);
     },
+
+    /**
+     * Gets current user location
+     * @returns {Promise<Object>} - Current location object
+     */
+    getCurrentLocation: async () => {
+        return await geolocationService.getCurrentLocation();
+    },
+
+    /**
+     * Reverse geocodes coordinates to get location details
+     * @param {Array} coordinates - [lat, lng] coordinates
+     * @returns {Promise<Object>} - Location details
+     */
+    reverseGeocode: async (coordinates) => {
+        return await geolocationService.reverseGeocode(coordinates);
+    },
+
+    /**
+     * Validates coordinate format
+     * @param {Array} coordinates - Coordinates to validate
+     * @returns {boolean} - Whether coordinates are valid
+     */
+    validateCoordinates: (coordinates) => {
+        return geolocationService.validateCoordinates(coordinates);
+    },
+
+    /**
+     * Formats coordinates for display
+     * @param {Array} coordinates - Coordinates to format
+     * @param {number} precision - Decimal precision
+     * @returns {string} - Formatted coordinate string
+     */
+    formatCoordinates: (coordinates, precision = 6) => {
+        return geolocationService.formatCoordinates(coordinates, precision);
+    }
 };
 
 export default GeoapifyService;

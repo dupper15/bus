@@ -48,15 +48,15 @@ export const disableManager = async (id) => {
     throw error;
   }
 };
-export const updateManager = async (data) => {
+export const updateManager = async (id, data) => {
   try {
     const response = await axios.put(
-      `${API_KEY}/manager/edit`,
+      `${API_KEY}/manager/edit/${id}`,
       data // Gửi dữ liệu trong body của request
     );
     return response.data;
   } catch (error) {
-    console.error("Failed to delete manager", error);
+    console.error("Failed to update manager", error);
     throw error;
   }
 };
