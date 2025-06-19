@@ -9,5 +9,6 @@ router.get('/get-detail/:id', authMiddleware, accountController.getDetailAccount
 router.post('/refresh-token' , accountController.refreshTokenJwt);
 router.put('/update' , accountController.updateAccount);
 router.put('/change-password' , accountController.changePassword);
+router.get('/get-all', accountController.getAllAccounts);
 
 module.exports = router
