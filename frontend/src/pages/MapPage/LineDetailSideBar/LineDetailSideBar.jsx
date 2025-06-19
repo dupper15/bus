@@ -112,7 +112,7 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
                 {activeTab === "outbound" && (
                     <div className="py-2">
                         <StopList
-                            stops={line.arr_stop.map(stop => stop.name)}
+                            stops={line.getIntermediateStopsIterator().map(stop => stop.name).toArray()}
                             selectedStop={selectedStop}
                             onSelectStop={onSelectStop}
                         />
@@ -122,7 +122,7 @@ const LineDetailSideBar = ({ line, onBack, selectedStop, onSelectStop, onTabSele
                 {activeTab === "inbound" && (
                     <div className="py-2">
                         <StopList
-                            stops={line.arr_stop.map(stop => stop.name).reverse()}
+                            stops={line.getIntermediateStopsIterator().reverse().map(stop => stop.name).toArray()}
                             selectedStop={selectedStop}
                             onSelectStop={onSelectStop}
                         />

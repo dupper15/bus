@@ -1,4 +1,4 @@
-// frontend/src/utils/transformers.js
+
 import StopModel from "@/models/StopModel";
 import LineModel from "@/models/LineModel";
 
@@ -9,6 +9,7 @@ export const transformLine = (line) => {
         pointX: line.start_place.pointX,
         pointY: line.start_place.pointY,
         address: line.start_place.address,
+        district: line.start_place.district,
         isStation: line.start_place.isStation,
     });
 
@@ -18,15 +19,16 @@ export const transformLine = (line) => {
         pointX: line.end_place.pointX,
         pointY: line.end_place.pointY,
         address: line.end_place.address,
+        district: line.end_place.district,
         isStation: line.end_place.isStation,
     });
-
     const arr_stop = line.arr_stop.map((stop) => new StopModel({
-        id: String(stop._id), // Ensure id is a string
+        id: String(stop._id),
         name: stop.name,
         pointX: stop.pointX,
         pointY: stop.pointY,
         address: stop.address,
+        district: stop.district,
         isStation: stop.isStation,
     }));
 
@@ -40,11 +42,14 @@ export const transformLine = (line) => {
     });
 };
 
-export const transformStop = (stop) => new StopModel({
-    id: String(stop._id),
-    name: stop.name,
-    pointX: stop.pointX,
-    pointY: stop.pointY,
-    address: stop.address,
-    isStation: stop.isStation,
-});
+export const transformStop = (stop) => {
+    return new StopModel({
+        id: String(stop._id),
+        name: stop.name,
+        address: stop.address,
+        district: stop.district,
+        pointX: stop.pointX,
+        pointY: stop.pointY,
+        isStation: stop.isStation,
+    });
+};

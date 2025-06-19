@@ -19,6 +19,7 @@ const useBusLinesViewModel = () => {
     const [startCoordinates, setStartCoordinates] = useState("");
     const [endCoordinates, setEndCoordinates] = useState("");
     const [viewMode, setViewMode] = useState("outbound");
+    const [activeTab, setActiveTab] = useState("search");
 
     // Fetch lines
     const fetchLines = useCallback(async () => {
@@ -51,7 +52,10 @@ const useBusLinesViewModel = () => {
     // Fetch bus line route
     const fetchBusLine = async (line) => {
         try {
-            const stopsSequence = viewMode === "outbound" ? [line.end_place, ...line.arr_stop.slice().reverse(), line.start_place] : [line.start_place, ...line.arr_stop, line.end_place];
+            const iterator = viewMode === "outbound" 
+                ? line.getAllStopsIterator() 
+                : line.getInboundIterator();
+            const stopsSequence = iterator.toArray();
             const route = await MapBoxService.fetchBusLineRoute(stopsSequence);
             setBusLines([{...line, route}]);
         } catch (error) {
@@ -82,12 +86,29 @@ const useBusLinesViewModel = () => {
         setSelectedStopCoordinates(null);
     };
 
-    // Handle stop selection
+    // Handle tab change
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        // Reset selections when changing tabs
+        setSelectedLine(null);
+        setSelectedStop(null);
+        setSelectedStopCoordinates(null);
+        setBusLines([]);
+        setPath([]);
+    };
+
+    // Handle stop selection (updated to handle object)
     const handleSelectStop = (stop) => {
-        setSelectedStop(stop);
-        const selectedStopData = stops.find((s) => s.name === stop);
-        if (selectedStopData) {
-            setSelectedStopCoordinates([selectedStopData.pointX, selectedStopData.pointY]);
+        if (stop && stop.name) {
+            setSelectedStop(stop.name);
+            setSelectedStopCoordinates([stop.pointX, stop.pointY]);
+        } else {
+            // Handle cases where stop might be just a name (legacy)
+            const selectedStopData = stops.find((s) => s.name === stop);
+            if (selectedStopData) {
+                setSelectedStop(selectedStopData.name);
+                setSelectedStopCoordinates([selectedStopData.pointX, selectedStopData.pointY]);
+            }
         }
     };
 
@@ -167,7 +188,9 @@ const useBusLinesViewModel = () => {
         viewMode,
         setViewMode,
         setError,
-        setPath
+        setPath,
+        activeTab,
+        handleTabChange
     };
 };
 

@@ -2,6 +2,8 @@ import PropTypes from "prop-types";
 import { useState } from "react";
 import TabSwitch from "@/pages/MapPage/SubComponents/TabSwitch/TabSwitch.jsx";
 import NavigationTab from "@/pages/MapPage/PathfindingTab/NavigationTab.jsx";
+import DistrictTab from "../DistrictTab/DistrictTab.jsx";
+import { linePropTypes, stopPropTypes } from "@/utils/PropTypes.js";
 
 const Sidebar = ({
   lines,
@@ -13,8 +15,9 @@ const Sidebar = ({
   startCoordinates,
   endCoordinates,
   onClearPath,
+  activeTab,
+  onTabChange,
 }) => {
-  const [activeTab, setActiveTab] = useState("lines");
   const [searchTerm, setSearchTerm] = useState("");
 
   const resetSearch = () => {
@@ -23,15 +26,16 @@ const Sidebar = ({
   };
 
   const tabs = [
-    { key: "lines", label: "Lines" },
-    { key: "pathfinding", label: "Navigation" },
+    { key: 'search', label: 'Tìm Tuyến' },
+    { key: 'pathfinding', label: 'Tìm Đường' },
+    { key: 'districts', label: 'Quận' },
   ];
 
   const handleTabSelect = (key) => {
-    if (activeTab === "pathfinding" && key === "lines") {
+    if (activeTab === "pathfinding" && key === "search") {
       onClearPath();
     }
-    setActiveTab(key);
+    onTabChange(key);
   };
 
   const handleSearchChange = (e) => {
@@ -40,30 +44,23 @@ const Sidebar = ({
     onSearch(value);
   };
 
+  // Filter lines based on the search query
+  const filteredLines = lines.filter((line) =>
+    line.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <aside className='w-full bg-white border-r border-gray-200 h-full flex flex-col'>
       {/* Tab Switch */}
       <div className='border-b border-gray-200'>
         <div className='flex'>
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => handleTabSelect(tab.key)}
-              className={`flex-1 py-4 px-6  font-medium transition-colors
-                                ${
-                                  activeTab === tab.key
-                                    ? "text-green-500 border-b-2 border-green-500"
-                                    : "text-gray-500 hover:text-gray-700"
-                                }`}>
-              {tab.label}
-            </button>
-          ))}
+          <TabSwitch tabs={tabs} activeTab={activeTab} onTabChange={handleTabSelect} />
         </div>
       </div>
 
       {/* Content Area */}
       <div className='flex-1 overflow-hidden'>
-        {activeTab === "lines" && (
+        {activeTab === "search" && (
           <div className='flex flex-col h-full'>
             {/* Search Box */}
             <div className='p-4 border-b border-gray-200'>
@@ -93,7 +90,7 @@ const Sidebar = ({
             {/* Lines List */}
             <div className='flex-1  overflow-y-auto'>
               <ul className='p-2 space-y-2'>
-                {lines.map((line) => (
+                {filteredLines.map((line) => (
                   <li key={line.id}>
                     <button
                       onClick={() => {
@@ -129,6 +126,10 @@ const Sidebar = ({
             />
           </div>
         )}
+
+        {activeTab === "districts" && (
+          <DistrictTab lines={lines} />
+        )}
       </div>
     </aside>
   );
@@ -144,6 +145,8 @@ Sidebar.propTypes = {
   startCoordinates: PropTypes.string,
   endCoordinates: PropTypes.string,
   onClearPath: PropTypes.func.isRequired,
+  activeTab: PropTypes.string.isRequired,
+  onTabChange: PropTypes.func.isRequired,
 };
 
 export default Sidebar;

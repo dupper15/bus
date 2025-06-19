@@ -1,4 +1,6 @@
 const Ticket = require("../models/TicketModel");
+const Customer = require("../models/CustomerModel");
+const { BaseUser, NotificationDecorator } = require('../decorators/NotificationDecorator');
 
 const createTicket = async (data) => {
     try {
@@ -34,6 +36,29 @@ const createTicket = async (data) => {
             effective_date: effectiveDate,
             expiration_date: expirationDate,
         });
+
+        if (createdTicket) {
+            const customerInfo = await Customer.findById(data.customer);
+
+            if (customerInfo && customerInfo.email) {
+                const customerUser = new BaseUser({
+                    id: customerInfo.id,
+                    name: customerInfo.name,
+                    email: customerInfo.email,
+                    userType: 'Customer'
+                });
+
+                const notifiedUser = new NotificationDecorator(customerUser);
+
+                notifiedUser.performAction('buyTicket', {
+                    ticketId: createdTicket.id,
+                    price: createdTicket.price,
+                    effectiveDate: createdTicket.effective_date.toLocaleDateString('vi-VN')
+                });
+            } else {
+                console.log(`Ticket ${createdTicket.id} created, but no email sent (customer or email not found).`);
+            }
+        }
 
         return {
             status: "OK",

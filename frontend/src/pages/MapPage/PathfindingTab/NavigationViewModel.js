@@ -59,7 +59,8 @@ const useNavigationViewModel = () => {
         const stopRoutes = new Map();
 
         busLines.forEach((line) => {
-            line.arr_stop.forEach((stop) => {
+            const allStopsIterator = line.getAllStopsIterator();
+            allStopsIterator.forEach((stop) => {
                 if (!stopRoutes.has(stop.id)) {
                     stopRoutes.set(stop.id, new Set());
                 }
@@ -160,21 +161,22 @@ const useNavigationViewModel = () => {
 
             // Explore each possible route from current stop
             currentRoutes.forEach(line => {
-                const lineStops = line.arr_stop;
-                const currentStopIndex = lineStops.findIndex(
-                    s => s.id === current.currentStop.id
-                );
+                // Try both directions using iterators
+                const iterators = [
+                    line.getAllStopsIterator(),
+                    line.getInboundIterator()
+                ];
 
-                if (currentStopIndex === -1) return;
-
-                // Try both directions
-                [lineStops, [...lineStops].reverse()].forEach(stops => {
-                    const stopIndex = stops.findIndex(
+                iterators.forEach(iterator => {
+                    const stops = iterator.toArray();
+                    const currentStopIndex = stops.findIndex(
                         s => s.id === current.currentStop.id
                     );
 
+                    if (currentStopIndex === -1) return;
+
                     // Explore next stops in this direction
-                    for (let i = stopIndex + 1; i < stops.length; i++) {
+                    for (let i = currentStopIndex + 1; i < stops.length; i++) {
                         const nextStop = stops[i];
                         const key = `${nextStop.id}-${current.transfers}`;
 
@@ -187,7 +189,7 @@ const useNavigationViewModel = () => {
                             current.transfers;
 
                         // Get all intermediate stops between current and next stop
-                        const intermediateStops = stops.slice(stopIndex, i + 1);
+                        const intermediateStops = stops.slice(currentStopIndex, i + 1);
 
                         queue.enqueue({
                             currentStop: nextStop,
