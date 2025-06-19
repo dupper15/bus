@@ -43,6 +43,11 @@ class AccountServiceProxy {
     console.log(`[UPDATE] user ${data.id_card}`);
     return await this.realService.updateAccount(id, data);
   }
+
+  async getAllAccounts(data) {
+    console.log(`[GET ALL ACCOUNTS] type: ${data}`);
+    return await this.realService.getAllAccounts(data);
+  }
 }
 
 module.exports = AccountServiceProxy;

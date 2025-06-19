@@ -94,7 +94,7 @@ class ManagerService extends IAccount {
       if (!comparePassword) {
         return {
           status: "ERROR",
-          message: "Incorrect ID card or password.",
+          message: "Password is incorrect.",
         };
       }
 

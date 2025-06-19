@@ -96,6 +96,7 @@ class EmployeeService extends IAccount {
    */
   async login(loginData) {
     try {
+      console.log("data employee", loginData);
       const { id_card, password } = loginData;
       const checkEmployee = await Employee.findOne({ id_card });
       if (checkEmployee === null) {
@@ -105,14 +106,19 @@ class EmployeeService extends IAccount {
         };
       }
 
+      console.log("check employee", checkEmployee);
+
       const comparePassword = bcrypt.compareSync(
         password,
         checkEmployee.password
       );
+
+      console.log("check password", password, comparePassword);
+
       if (!comparePassword) {
         return {
           status: "ERROR",
-          message: "Incorrect ID card or password.",
+          message: "Password is incorrect.",
         };
       }
 

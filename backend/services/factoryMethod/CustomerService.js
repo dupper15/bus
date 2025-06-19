@@ -254,6 +254,7 @@ class CustomerService extends IAccount {
    */
   async getAllAccounts() {
     try {
+      console.log("hi");
       const allCustomer = await Customer.find();
       return {
         status: "OK",

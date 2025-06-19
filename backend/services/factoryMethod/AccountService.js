@@ -140,9 +140,37 @@ const updateAccount = async (data) => {
   }
 };
 
+const getAllAccounts = async (data) => {
+  try {
+    const type = data;
+    const accountService = await AccountFactory.createAccountService(type);
+    const response = await accountService.getAllAccounts();
+
+    if (response.status === "ERROR") {
+      return {
+        status: "ERROR",
+        message: response.message,
+      };
+    }
+
+    return {
+      status: "OK",
+      message: "Get all accounts successfully.",
+      data: response.data,
+    };
+  } catch (e) {
+    return {
+      status: "ERROR",
+      message: `Accounts not found.`,
+      error: e,
+    };
+  }
+};
+
 module.exports = {
   loginAccount,
   getDetailAccount,
   changePassword,
   updateAccount,
+  getAllAccounts
 };

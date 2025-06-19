@@ -72,3 +72,15 @@ export const changePassword = async (data) => {
     throw error;
   }
 };
+
+export const getAllAccounts = async (data) => {
+  try {
+    const response = await axios.get(`${API_KEY}/account/get-all`, {
+      params: { type: data },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get all accounts", error);
+    throw error;
+  }
+};
