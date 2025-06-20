@@ -1,4 +1,4 @@
-const DayOffService = require("../services/DayOffService");
+const DayOffService = require("../services/states/DayOffService");
 require("../services/OpinionService");
 const createDayOff = async (req, res) => {
   try {

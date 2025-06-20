@@ -16,7 +16,12 @@ import { ClipLoader } from "react-spinners";
 const SolveRequestForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requests, setRequests] = useState([]);
+  const [id, setId] = useState("");
+  const [feedback, setFeedback] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const account = useSelector((state) => state.account);
+  const manager = account?._id;
+
   const mutationResolvedRequest = useMutation({
     mutationFn: (data) => RequestService.resolvedRequest(data),
     onError: (error) => {
@@ -51,19 +56,16 @@ const SolveRequestForm = () => {
     mutationGetRequests.mutate();
   }, []);
 
-  const [id, setId] = useState("");
-  const [feedback, setFeedback] = useState("");
   const handleTextChange = (e) => {
     setFeedback(e.target.value);
   };
-  const account = useSelector((state) => state.account);
-  const manager = account?._id;
-  const handleSubmit = (status) => {
+
+  const handleSubmit = (request, status) => {
     setIsSubmitting(true);
     mutationResolvedRequest.mutate({
-      id: id,
-      manager: manager,
-      status: status,
+      id: request.id,
+      manager,
+      status,
       feedback,
     });
     setIsSubmitting(false);
@@ -71,9 +73,10 @@ const SolveRequestForm = () => {
     setIsLoading(true);
     mutationGetRequests.mutate();
   };
+
   return (
-    <div className='w-full  bg-white shadow-lg rounded-xl p-4 md:p-8 border border-gray-300 custom-width'>
-      <h2 className='text-xl sm:text-2xl font-bold text-green-500 mb-6 sm:mb-8 text-center uppercase tracking-wide'>
+    <div className="w-full  bg-white shadow-lg rounded-xl p-4 md:p-8 border border-gray-300 custom-width">
+      <h2 className="text-xl sm:text-2xl font-bold text-green-500 mb-6 sm:mb-8 text-center uppercase tracking-wide">
         Pending Requests
       </h2>
 
@@ -83,18 +86,19 @@ const SolveRequestForm = () => {
           navigation
           spaceBetween={30}
           slidesPerView={1}
-          className=' w-full lg:w-[300px] block' // Đảm bảo là block và width 100%
-          loop={false}>
+          className=" w-full lg:w-[300px] block" // Đảm bảo là block và width 100%
+          loop={false}
+        >
           {requests.map((request, index) => (
             <SwiperSlide key={index}>
-              <div className='flex flex-col w-full space-y-4 py-6 px-8  border rounded-xl bg-gray-50 shadow-md hover:shadow-lg transition-shadow'>
-                <h3 className='text-lg sm:text-xl font-bold text-gray-800'>
+              <div className="flex flex-col w-full space-y-4 py-6 px-8  border rounded-xl bg-gray-50 shadow-md hover:shadow-lg transition-shadow">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800">
                   {request.title}
                 </h3>
-                <p className='text-sm sm:text-base text-gray-600 leading-relaxed'>
+                <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                   {request.content}
                 </p>
-                <div className='flex flex-col gap-2 sm:gap-3 text-sm sm:text-base text-gray-700'>
+                <div className="flex flex-col gap-2 sm:gap-3 text-sm sm:text-base text-gray-700">
                   <div>
                     <strong>Employee:</strong> {request.employeeName}
                   </div>
@@ -108,47 +112,49 @@ const SolveRequestForm = () => {
                     <strong>Sent At:</strong> {request.sentAt}
                   </div>
                 </div>
-                <div className='flex flex-col space-y-6 mt-6'>
+                <div className="flex flex-col space-y-6 mt-6">
                   <textarea
                     onClick={() => {
                       setId(request.id);
                     }}
                     onChange={handleTextChange}
                     rows={5}
-                    placeholder='Type your answer here...'
-                    className='border rounded-lg p-4 text-sm sm:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
+                    placeholder="Type your answer here..."
+                    className="border rounded-lg p-4 text-sm sm:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full"
                   />
-                  <div className='flex flex-col sm:flex-row justify-between gap-4'>
+                  <div className="flex flex-col sm:flex-row justify-between gap-4">
                     <button
-                      onClick={() => handleSubmit("Rejected")}
+                      onClick={() => handleSubmit(request, "Rejected")}
                       disabled={isSubmitting}
                       className={`flex items-center justify-center w-full sm:w-1/2 py-2 rounded-lg transition-all shadow-md space-x-2 ${
                         isSubmitting
                           ? "bg-gray-400 cursor-not-allowed"
                           : "bg-red-500 hover:bg-red-600 text-white"
-                      }`}>
+                      }`}
+                    >
                       {isSubmitting ? (
-                        <ClipLoader size={20} color='#fff' />
+                        <ClipLoader size={20} color="#fff" />
                       ) : (
                         <>
-                          <RxCross1 className='text-lg' />
+                          <RxCross1 className="text-lg" />
                           <span>Reject</span>
                         </>
                       )}
                     </button>
                     <button
-                      onClick={() => handleSubmit("Approved")}
+                      onClick={() => handleSubmit(request, "Approved")}
                       disabled={isSubmitting}
                       className={`flex items-center justify-center w-full sm:w-1/2 py-2 rounded-lg transition-all shadow-md space-x-2 ${
                         isSubmitting
                           ? "bg-gray-400 cursor-not-allowed"
                           : "bg-green-500 hover:bg-green-600 text-white"
-                      }`}>
+                      }`}
+                    >
                       {isSubmitting ? (
-                        <ClipLoader size={20} color='#fff' />
+                        <ClipLoader size={20} color="#fff" />
                       ) : (
                         <>
-                          <SiTicktick className='text-lg' />
+                          <SiTicktick className="text-lg" />
                           <span>Approve</span>
                         </>
                       )}
@@ -164,19 +170,20 @@ const SolveRequestForm = () => {
           {Array.from({ length: 3 }).map((_, index) => (
             <div
               key={index}
-              className='flex flex-col space-y-4 py-6 px-8 sm:px-10 border rounded-xl bg-gray-50 shadow-md transition-shadow mb-6'>
+              className="flex flex-col space-y-4 py-6 px-8 sm:px-10 border rounded-xl bg-gray-50 shadow-md transition-shadow mb-6"
+            >
               <Skeleton height={30} />
               <Skeleton count={3} />
-              <div className='flex flex-col gap-3'>
-                <Skeleton width='60%' />
-                <Skeleton width='50%' />
-                <Skeleton width='70%' />
+              <div className="flex flex-col gap-3">
+                <Skeleton width="60%" />
+                <Skeleton width="50%" />
+                <Skeleton width="70%" />
               </div>
-              <div className='flex flex-col space-y-6 mt-6'>
+              <div className="flex flex-col space-y-6 mt-6">
                 <Skeleton height={80} />
-                <div className='flex gap-4'>
-                  <Skeleton height={40} width='50%' />
-                  <Skeleton height={40} width='50%' />
+                <div className="flex gap-4">
+                  <Skeleton height={40} width="50%" />
+                  <Skeleton height={40} width="50%" />
                 </div>
               </div>
             </div>
