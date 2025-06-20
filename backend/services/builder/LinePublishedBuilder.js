@@ -1,9 +1,6 @@
 const ILineBuilder = require("./LineBuilderInterface");
 const Line = require("../../models/LineModel");
 
-/**
- * Builder for Published Line (requires full data)
- */
 class LinePublishedBuilder extends ILineBuilder {
   constructor() {
     this.reset();
@@ -53,7 +50,6 @@ class LinePublishedBuilder extends ILineBuilder {
   }
 
   getResult() {
-    // Final validation before returning
     const { name, start, end, time } = this.line;
     if (!name || !start || !end || time <= 0) {
       throw new Error(

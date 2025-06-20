@@ -1,9 +1,6 @@
 const ILineBuilder = require("./LineBuilderInterface");
 const Line = require("../../models/LineModel");
 
-/**
- * Builder for Draft Line (partial data allowed)
- */
 class LineDraftBuilder extends ILineBuilder {
   constructor() {
     this.reset();
