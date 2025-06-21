@@ -3,6 +3,7 @@ const Line = require("../../models/LineModel");
 
 class LineDraftBuilder extends ILineBuilder {
   constructor() {
+    super();
     this.reset();
   }
 
@@ -10,11 +11,11 @@ class LineDraftBuilder extends ILineBuilder {
     console.log("Resetting LineDraftBuilder to initial state");
     this.line = new Line({
       name: "",
-      start: null,
-      end: null,
-      stops: [],
+      start_place: null,
+      end_place: null,
+      arr_stop: [],
       time: 0,
-      status: "draft",
+      // status: "draft", // ❌ Bỏ nếu schema không có
     });
   }
 
@@ -22,20 +23,24 @@ class LineDraftBuilder extends ILineBuilder {
     this.line.name = name || "";
   }
 
-  setStartPlace(point) {
-    this.line.start = point || null;
+  setStartPlace(pointId) {
+    this.line.start_place = pointId || null;
   }
 
-  setEndPlace(point) {
-    this.line.end = point || null;
+  setEndPlace(pointId) {
+    this.line.end_place = pointId || null;
   }
 
-  setArrStop(stops) {
-    this.line.stops = Array.isArray(stops) ? stops : [];
+  setArrStop(stopIds) {
+    this.line.arr_stop = Array.isArray(stopIds) ? stopIds : [];
   }
 
   setTime(time) {
     this.line.time = typeof time === "number" ? time : 0;
+  }
+
+  setStatus(status) {
+    this.line.status = status || "draft";
   }
 
   getResult() {

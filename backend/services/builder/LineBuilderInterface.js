@@ -42,6 +42,12 @@ class LineBuilderInterface {
   }
 
   /**
+   * @param {string} status
+   */
+  setStatus(status) {
+    throw new Error("Method 'setStatus(status)' must be implemented.");
+  }
+  /**
    * @returns {Object} LineRequest
    */
   getResult() {

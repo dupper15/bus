@@ -40,7 +40,7 @@ import LineService from "@/services/LineService.js";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { success, error } from "@/components/ui/alert.jsx";
-import {convertMinutesToHoursAndMinutes} from "@/utils/translateToVND.js";
+import { convertMinutesToHoursAndMinutes } from "@/utils/translateToVND.js";
 
 const LinePage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +54,7 @@ const LinePage = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [dialogType, setDialogType] = useState("");
   const [selectedLine, setSelectedLine] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const currentPage = parseInt(searchParams.get("page")) || 1;
 
@@ -65,24 +66,27 @@ const LinePage = () => {
       const transformedLines = rawLines.map((line) => ({
         ...line,
         start_place: {
-          _id: line.start_place._id,
-          name: line.start_place.name,
-          pointX: line.start_place.pointX,
-          pointY: line.start_place.pointY,
+          _id: line.start_place?._id || "_",
+          name: line.start_place?.name || "_",
+          pointX: line.start_place?.pointX || "_",
+          pointY: line.start_place?.pointY || "_",
         },
         end_place: {
-          _id: line.end_place._id,
-          name: line.end_place.name,
-          pointX: line.end_place.pointX,
-          pointY: line.end_place.pointY,
+          _id: line.end_place?._id || "_",
+          name: line.end_place?.name || "_",
+          pointX: line.end_place?.pointX || "_",
+          pointY: line.end_place?.pointY || "_",
         },
-        arr_stop: line.arr_stop.map((stop) => ({
-          _id: stop._id,
-          name: stop.name,
-          pointX: stop.pointX,
-          pointY: stop.pointY,
-        })),
+        arr_stop: Array.isArray(line.arr_stop)
+          ? line.arr_stop.map((stop) => ({
+              _id: stop?._id || "_",
+              name: stop?.name || "_",
+              pointX: stop?.pointX || "_",
+              pointY: stop?.pointY || "_",
+            }))
+          : [],
       }));
+
       setLines(transformedLines);
       setFilteredLines(transformedLines);
       setIsLoading(false);
@@ -97,15 +101,25 @@ const LinePage = () => {
 
   // Filter lines based on search
   useEffect(() => {
-    const filtered = lines.filter(
-      (line) =>
-        line.start_place.name
-          .toLowerCase()
-          .includes(startPlaceWord.toLowerCase()) &&
-        line.end_place.name.toLowerCase().includes(endPlaceWord.toLowerCase())
-    );
+    const filtered = lines.filter((line) => {
+      const startMatch = line.start_place?.name
+        ?.toLowerCase()
+        .includes(startPlaceWord.toLowerCase());
+
+      const endMatch = line.end_place?.name
+        ?.toLowerCase()
+        .includes(endPlaceWord.toLowerCase());
+
+      // Xác định điều kiện status
+      const lineStatus = line.status || "published"; // nếu không có, mặc định là published
+
+      const statusMatch = statusFilter === "all" || lineStatus === statusFilter;
+
+      return startMatch && endMatch && statusMatch;
+    });
+
     setFilteredLines(filtered);
-  }, [startPlaceWord, endPlaceWord, lines]);
+  }, [startPlaceWord, endPlaceWord, lines, statusFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredLines.length / ITEMS_PER_PAGE);
@@ -147,32 +161,6 @@ const LinePage = () => {
     else if (calculatedIndex < 100) return "L0" + calculatedIndex;
     else return "L" + calculatedIndex;
   };
-  // const handleFormSubmit = async (values) => {
-  //   try {
-  //     console.log("Form values:", values);
-  //     if (dialogType === "add") {
-  //       await LineService.createLine(values);
-  //     } else {
-  //       await LineService.updateLine(selectedLine._id, values);
-  //     }
-  //     await fetchLines();
-  //     setShowForm(false);
-  //   } catch (error) {
-  //     console.error("Error submitting line:", error);
-  //   }
-  // };
-  //
-  // const handleDelete = async () => {
-  //   try {
-  //     await LineService.deleteLine(selectedLine.id);
-  //     await fetchLines();
-  //     setShowDialog(false);
-  //   } catch (error) {
-  //     console.error("Error deleting line:", error);
-  //   }
-  // };
-
-
   const handleFormSubmit = async (values) => {
     try {
       if (dialogType === "add") {
@@ -234,10 +222,21 @@ const LinePage = () => {
               onChange={(e) => setEndPlaceWord(e.target.value)}
               text='Search end place...'
             />
+
+            <select
+              className='border rounded px-2 py-1 text-sm'
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value='all'>All</option>
+              <option value='published'>Published</option>
+              <option value='draft'>Draft</option>
+            </select>
+
             <Button onClick={handleAddClick} className='flex-shrink-0'>
               +
             </Button>
           </div>
+
           <div className='overflow-x-auto rounded-lg bg-white shadow-md'>
             <Table className='w-full border border-gray-300'>
               <TableHeader className='bg-green-500'>

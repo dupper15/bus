@@ -3,6 +3,7 @@ const Line = require("../../models/LineModel");
 
 class LinePublishedBuilder extends ILineBuilder {
   constructor() {
+    super();
     this.reset();
   }
 
@@ -10,11 +11,11 @@ class LinePublishedBuilder extends ILineBuilder {
     console.log("Resetting LinePublishedBuilder to initial state");
     this.line = new Line({
       name: "",
-      start: null,
-      end: null,
-      stops: [],
+      start_place: null,
+      end_place: null,
+      arr_stop: [],
       time: 0,
-      status: "published",
+      status: "published", // Nếu schema không có `status`, bạn nên xóa dòng này
     });
   }
 
@@ -23,23 +24,23 @@ class LinePublishedBuilder extends ILineBuilder {
     this.line.name = name;
   }
 
-  setStartPlace(point) {
-    if (!point || point.x == null || point.y == null) {
-      throw new Error("Start point is required.");
+  setStartPlace(pointId) {
+    if (!pointId) {
+      throw new Error("Start place ID is required.");
     }
-    this.line.start = point;
+    this.line.start_place = pointId;
   }
 
-  setEndPlace(point) {
-    if (!point || point.x == null || point.y == null) {
-      throw new Error("End point is required.");
+  setEndPlace(pointId) {
+    if (!pointId) {
+      throw new Error("End place ID is required.");
     }
-    this.line.end = point;
+    this.line.end_place = pointId;
   }
 
-  setArrStop(stops) {
-    if (!Array.isArray(stops)) throw new Error("Stops must be an array.");
-    this.line.stops = stops;
+  setArrStop(stopIds) {
+    if (!Array.isArray(stopIds)) throw new Error("Stops must be an array.");
+    this.line.arr_stop = stopIds;
   }
 
   setTime(time) {
@@ -48,12 +49,15 @@ class LinePublishedBuilder extends ILineBuilder {
     }
     this.line.time = time;
   }
+  setStatus(status) {
+    this.line.status = "published";
+  }
 
   getResult() {
-    const { name, start, end, time } = this.line;
-    if (!name || !start || !end || time <= 0) {
+    const { name, start_place, end_place, time } = this.line;
+    if (!name || !start_place || !end_place || time <= 0) {
       throw new Error(
-        "Published line must have name, start, end, and valid time."
+        "Published line must have name, start_place, end_place, and valid time."
       );
     }
     return this.line;

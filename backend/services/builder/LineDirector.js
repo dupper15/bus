@@ -25,6 +25,7 @@ class LineDirector {
     this.builder.setEndPlace(data.end_place);
     this.builder.setArrStop(data.arr_stop);
     this.builder.setTime(data.time);
+    this.builder.setStatus(data.status || "draft");
     return this.builder.getResult();
   }
 
@@ -39,6 +40,7 @@ class LineDirector {
     this.builder.setEndPlace(data.end_place);
     this.builder.setArrStop(data.arr_stop);
     this.builder.setTime(data.time);
+    this.builder.setStatus(data.status || "published");
     return this.builder.getResult();
   }
 }
