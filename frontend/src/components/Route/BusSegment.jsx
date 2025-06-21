@@ -2,10 +2,6 @@ import React from 'react';
 import { FaBus, FaCircle } from 'react-icons/fa';
 import RouteComponent from './RouteComponent.jsx';
 
-/**
- * BusSegment - Leaf component representing a bus portion of a route
- * Implements the RouteComponent interface for bus transportation
- */
 class BusSegment extends RouteComponent {
     constructor(options = {}) {
         super();
@@ -16,111 +12,63 @@ class BusSegment extends RouteComponent {
         this.endPoint = options.endPoint || options.to || null;
         this.coordinates = options.coordinates || this.generateCoordinates();
 
-        // Bus-specific properties
         this.busLine = options.busLine || options.line || null;
-        this.fare = options.fare || 6000; // Default fare in VND
+        this.fare = options.fare || 6000;
         this.intermediateStops = options.intermediateStops || options.stops || [];
         this.schedule = options.schedule || null;
-        this.vehicleType = options.vehicleType || 'standard'; // standard, express, articulated
+        this.vehicleType = options.vehicleType || 'standard';
         this.accessibility = options.accessibility || [];
 
-        // Ensure we have all stops including start and end
         this.allStops = this.buildStopSequence();
     }
 
-    /**
-     * Gets the distance of this bus segment
-     * @returns {number} - Distance in km
-     */
     getDistance() {
         return this.distance;
     }
 
-    /**
-     * Gets the duration of this bus segment
-     * @returns {number} - Duration in minutes
-     */
     getDuration() {
         return Math.round(this.duration * 10) / 10;
     }
 
-    /**
-     * Gets the cost of this bus segment
-     * @returns {number} - Fare cost
-     */
     getCost() {
         return this.fare;
     }
 
-    /**
-     * Gets the starting point of this bus segment
-     * @returns {Object} - Starting bus stop
-     */
     getStartPoint() {
         return this.startPoint;
     }
 
-    /**
-     * Gets the ending point of this bus segment
-     * @returns {Object} - Ending bus stop
-     */
     getEndPoint() {
         return this.endPoint;
     }
 
-    /**
-     * Gets the coordinates for this bus segment
-     * @returns {Array} - Array of [lng, lat] coordinates
-     */
     getCoordinates() {
         return this.coordinates;
     }
 
-    /**
-     * Gets the type of this route component
-     * @returns {string} - 'bus'
-     */
     getType() {
         return 'bus';
     }
 
-    /**
-     * Gets the bus line information
-     * @returns {Object} - Bus line object
-     */
     getBusLine() {
         return this.busLine;
     }
 
-    /**
-     * Gets all stops in the sequence
-     * @returns {Array} - Array of all stops from start to end
-     */
     getAllStops() {
         return this.allStops;
     }
 
-    /**
-     * Gets the number of stops between start and end (excluding start and end)
-     * @returns {number} - Count of intermediate stops
-     */
     getIntermediateStopCount() {
         return Math.max(0, this.allStops.length - 2);
     }
 
-    /**
-     * Builds the complete stop sequence from start to end
-     * @returns {Array} - Complete stop sequence
-     */
     buildStopSequence() {
         const stops = [];
 
-        // Add start stop
         if (this.startPoint) {
             stops.push(this.startPoint);
         }
 
-        // Add intermediate stops (if not already included)
         if (this.intermediateStops && this.intermediateStops.length > 0) {
             this.intermediateStops.forEach(stop => {
                 if (!this.stopEquals(stop, this.startPoint) && !this.stopEquals(stop, this.endPoint)) {
@@ -129,7 +77,6 @@ class BusSegment extends RouteComponent {
             });
         }
 
-        // Add end stop
         if (this.endPoint && !this.stopEquals(this.endPoint, this.startPoint)) {
             stops.push(this.endPoint);
         }
@@ -137,31 +84,22 @@ class BusSegment extends RouteComponent {
         return stops;
     }
 
-    /**
-     * Checks if two stops are the same
-     * @param {Object} stop1 - First stop
-     * @param {Object} stop2 - Second stop
-     * @returns {boolean} - Whether stops are equal
-     */
     stopEquals(stop1, stop2) {
         if (!stop1 || !stop2) return false;
 
-        // Compare by ID if available
         if (stop1.id && stop2.id) {
             return stop1.id === stop2.id;
         }
 
-        // Compare by name
         if (stop1.name && stop2.name) {
             return stop1.name === stop2.name;
         }
 
-        // Compare by coordinates
         const coords1 = this.extractCoordinates(stop1);
         const coords2 = this.extractCoordinates(stop2);
 
         if (coords1 && coords2) {
-            const threshold = 0.0001; // ~10 meters
+            const threshold = 0.0001;
             return Math.abs(coords1[0] - coords2[0]) < threshold &&
                 Math.abs(coords1[1] - coords2[1]) < threshold;
         }
@@ -169,10 +107,6 @@ class BusSegment extends RouteComponent {
         return false;
     }
 
-    /**
-     * Calculates duration based on distance and bus speed
-     * @returns {number} - Calculated duration in minutes
-     */
     calculateDuration() {
         if (this.duration && this.duration > 0) {
             return this.duration;
@@ -180,11 +114,9 @@ class BusSegment extends RouteComponent {
 
         let baseTime = RouteComponent.calculateBusTime(this.distance);
 
-        // Add time for stops (1 minute per intermediate stop)
         const stopTime = this.getIntermediateStopCount();
         baseTime += stopTime;
 
-        // Adjust for vehicle type
         const vehicleMultiplier = {
             'express': 0.8,
             'standard': 1.0,
@@ -196,10 +128,6 @@ class BusSegment extends RouteComponent {
         return Math.round(baseTime);
     }
 
-    /**
-     * Generates coordinates from stop sequence
-     * @returns {Array} - Array of [lng, lat] coordinates
-     */
     generateCoordinates() {
         const coords = [];
 
@@ -213,46 +141,30 @@ class BusSegment extends RouteComponent {
         return coords;
     }
 
-    /**
-     * Extracts coordinates from various location object formats
-     * @param {Object|Array} location - Location data
-     * @returns {Array|null} - [lng, lat] coordinates
-     */
     extractCoordinates(location) {
         if (!location) return null;
 
         let coords = null;
 
-        // Array format - could be [lng, lat] or [lat, lng]
         if (Array.isArray(location) && location.length >= 2) {
             coords = [location[0], location[1]];
         }
-        // Object with pointX, pointY (bus stop format) - already in [lng, lat]
         else if (location.pointX !== undefined && location.pointY !== undefined) {
             coords = [location.pointX, location.pointY];
         }
-        // Object with lng, lat - already in [lng, lat]
         else if (location.lng !== undefined && location.lat !== undefined) {
             coords = [location.lng, location.lat];
         }
-        // Object with longitude, latitude - already in [lng, lat]
         else if (location.longitude !== undefined && location.latitude !== undefined) {
             coords = [location.longitude, location.latitude];
         }
-        // Object with coordinates array
         else if (location.coordinates && Array.isArray(location.coordinates) && location.coordinates.length >= 2) {
             coords = [location.coordinates[0], location.coordinates[1]];
         }
 
-        // Ensure coordinates are in [lng, lat] format
         return coords ? RouteComponent.ensureLngLat(coords) : null;
     }
 
-    /**
-     * Gets the name of a location for display
-     * @param {Object} location - Location object
-     * @returns {string} - Location name
-     */
     getLocationName(location) {
         if (!location) return 'Unknown stop';
 
@@ -260,7 +172,6 @@ class BusSegment extends RouteComponent {
         if (location.name) return location.name;
         if (location.formatted) return location.formatted;
 
-        // Format coordinates as fallback
         const coords = this.extractCoordinates(location);
         if (coords) {
             return RouteComponent.formatCoordinates(coords);
@@ -269,19 +180,10 @@ class BusSegment extends RouteComponent {
         return 'Unknown stop';
     }
 
-    /**
-     * Gets the next bus arrival time (mock implementation)
-     * @returns {number} - Minutes until next bus
-     */
     getNextBusTime() {
-        // Mock implementation - in real app this would come from schedule/API
         return Math.floor(Math.random() * 15) + 1;
     }
 
-    /**
-     * Renders this bus segment to JSX
-     * @returns {JSX.Element} - JSX representation of the bus segment
-     */
     render() {
         const fromName = this.getLocationName(this.startPoint);
         const toName = this.getLocationName(this.endPoint);
@@ -339,10 +241,6 @@ class BusSegment extends RouteComponent {
         );
     }
 
-    /**
-     * Renders all stops in this bus segment
-     * @returns {JSX.Element} - JSX representation of all stops
-     */
     renderStops() {
         return (
             <div className="space-y-3 pl-8">
@@ -370,23 +268,15 @@ class BusSegment extends RouteComponent {
         );
     }
 
-    /**
-     * Validates this bus segment
-     * @returns {boolean} - Whether the segment is valid
-     */
     isValid() {
         const baseValid = super.isValid();
         const hasValidBusLine = this.busLine && this.busLine.name;
         const hasValidStops = this.allStops.length >= 2;
-        const reasonableFare = this.fare >= 0 && this.fare <= 50000; // Reasonable fare range
+        const reasonableFare = this.fare >= 0 && this.fare <= 50000;
 
         return baseValid && hasValidBusLine && hasValidStops && reasonableFare;
     }
 
-    /**
-     * Gets summary information specific to bus travel
-     * @returns {Object} - Bus segment summary
-     */
     getSummary() {
         const baseSummary = super.getSummary();
         return {
@@ -401,10 +291,6 @@ class BusSegment extends RouteComponent {
         };
     }
 
-    /**
-     * Creates a deep copy of this bus segment
-     * @returns {BusSegment} - Cloned bus segment
-     */
     clone() {
         return new BusSegment({
             distance: this.distance,
@@ -421,10 +307,6 @@ class BusSegment extends RouteComponent {
         });
     }
 
-    /**
-     * Converts bus segment to plain object
-     * @returns {Object} - Plain object representation
-     */
     toJSON() {
         const baseJSON = super.toJSON();
         return {
@@ -439,11 +321,6 @@ class BusSegment extends RouteComponent {
         };
     }
 
-    /**
-     * Creates a BusSegment from a plain object
-     * @param {Object} data - Plain object data
-     * @returns {BusSegment} - New bus segment instance
-     */
     static fromJSON(data) {
         return new BusSegment({
             distance: data.distance,
@@ -460,11 +337,6 @@ class BusSegment extends RouteComponent {
         });
     }
 
-    /**
-     * Creates a BusSegment from legacy route segment data
-     * @param {Object} legacyData - Legacy segment data
-     * @returns {BusSegment} - New bus segment instance
-     */
     static fromLegacyData(legacyData) {
         return new BusSegment({
             distance: legacyData.distance || 0,
