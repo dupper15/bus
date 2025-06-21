@@ -140,6 +140,76 @@ const updateAccount = async (data) => {
   }
 };
 
+const changeStatus = async (id) => {
+  try {
+    const checkAccount = await Account.findOne({
+      user: id,
+    });
+
+    if (!checkAccount) {
+      return {
+        status: "ERROR",
+        message: `Account with id ${data.id_card} not found.`,
+      };
+    }
+
+    const type = checkAccount.userType;
+    const accountService = AccountFactory.createAccountService(type);
+    const response = await accountService.changeStatus(data._id);
+    if (response.status === "ERROR") {
+      return {
+        status: "ERROR",
+        message: response.message,
+      };
+    }
+    return {
+      status: "OK",
+      message: "Changed status account successfully",
+    };
+  } catch (e) {
+    return {
+      status: "ERROR",
+      message: "An error occurred during changing status of account.",
+      error: e.message,
+    };
+  }
+};
+
+const deleteAccount = async (id) => {
+  try {
+    const checkAccount = await Account.findOne({
+      user: id,
+    });
+
+    if (!checkAccount) {
+      return {
+        status: "ERROR",
+        message: `Account with id ${data.id_card} not found.`,
+      };
+    }
+
+    const type = checkAccount.userType;
+    const accountService = AccountFactory.createAccountService(type);
+    const response = await accountService.deleteAccount(data._id);
+    if (response.status === "ERROR") {
+      return {
+        status: "ERROR",
+        message: response.message,
+      };
+    }
+    return {
+      status: "OK",
+      message: "Deleted account successfully",
+    };
+  } catch (e) {
+    return {
+      status: "ERROR",
+      message: "An error occurred during deleting account.",
+      error: e.message,
+    };
+  }
+};
+
 const getAllAccounts = async (data) => {
   try {
     const type = data;
@@ -172,5 +242,7 @@ module.exports = {
   getDetailAccount,
   changePassword,
   updateAccount,
-  getAllAccounts
+  getAllAccounts,
+  changeStatus,
+  deleteAccount
 };
