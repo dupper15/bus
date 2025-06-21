@@ -74,11 +74,9 @@ const NavigationTab = ({
 
     // Handle map click for location selection
     const handleMapClickForLocation = (coordinates) => {
-        console.log('HandleMapClickForLocation received:', coordinates, typeof coordinates);
 
         // Ensure coordinates is an array
         if (!Array.isArray(coordinates) || coordinates.length < 2) {
-            console.error('Invalid coordinates received:', coordinates);
             return;
         }
 
@@ -93,7 +91,6 @@ const NavigationTab = ({
                 address: 'Selected on map'
             });
             setPickingStart(false);
-            console.log('Start location set from map:', { lat, lng, name: locationName });
         } else if (pickingEnd) {
             // Set end location from map click
             handleEndSuggestionClick({
@@ -102,7 +99,6 @@ const NavigationTab = ({
                 address: 'Selected on map'
             });
             setPickingEnd(false);
-            console.log('End location set from map:', { lat, lng, name: locationName });
         }
 
         // Reset cursor and clear picking states
@@ -127,7 +123,6 @@ const NavigationTab = ({
 
     // Handle picking locations on map
     const handlePickLocation = (type) => {
-        console.log(`Starting to pick ${type} location`);
 
         if (type === 'start') {
             setPickingStart(true);
@@ -148,7 +143,6 @@ const NavigationTab = ({
         setPickingEnd(false);
         resetMapCursor();
         onInputFocus(null); // Clear input focus
-        console.log('Location picking cancelled');
     };
 
     // Setup map click handler
@@ -298,11 +292,6 @@ const NavigationTab = ({
             const [startLat, startLng] = start.coordinates.map(Number);
             const [endLat, endLng] = end.coordinates.map(Number);
 
-            console.log('Finding path with coordinates:', {
-                start: { lat: startLat, lng: startLng },
-                end: { lat: endLat, lng: endLng }
-            });
-
             // Use strategy pattern to find path
             const strategyResult = await findPath(
                 [startLng, startLat], // Note: findPath expects [lng, lat]
@@ -315,8 +304,6 @@ const NavigationTab = ({
                 // Transform to MapView format
                 const mapViewPath = pathTransformerService.transformForMapView(strategyResult);
 
-                console.log('Route found:', strategyResult);
-                console.log('Transformed MapView Path:', mapViewPath);
 
                 // Pass to parent component
                 onFindPath(mapViewPath, null, routeMetadata);

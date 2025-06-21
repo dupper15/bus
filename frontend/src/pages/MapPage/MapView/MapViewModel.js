@@ -61,7 +61,6 @@ const useMapViewModel = ({
 
     // Stable callback for custom map clicks
     const handleCustomMapClick = useCallback((coordinates) => {
-        console.log('Custom map click:', coordinates);
         if (clickHandler && Array.isArray(coordinates) && coordinates.length >= 2) {
             clickHandler(coordinates);
         } else {
@@ -72,8 +71,6 @@ const useMapViewModel = ({
     // Handle click handler setup
     useEffect(() => {
         if (!mapInstanceRef.current) return;
-
-        console.log('Setting up click handler:', clickHandler ? 'custom' : 'default');
 
         // Use custom handler if provided, otherwise use default
         const activeHandler = clickHandler ? handleCustomMapClick : handleDefaultMapClick;
@@ -143,7 +140,6 @@ const useMapViewModel = ({
     useEffect(() => {
         if (mapInstanceRef.current && Array.isArray(path) && path.length > 0) {
             try {
-                console.log('Displaying navigation path:', path);
                 // Display navigation path segments
                 mapDisplayService.displayNavigationPath(mapInstanceRef.current, path);
             } catch (err) {

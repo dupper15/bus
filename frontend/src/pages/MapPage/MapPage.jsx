@@ -40,13 +40,11 @@ const MapPage = () => {
 
     // Handle custom map click from NavigationTab
     const handleCustomMapClick = (clickHandler) => {
-        console.log('Setting custom click handler:', clickHandler);
         setCustomClickHandler(() => clickHandler);
     };
 
     // Handle regular map clicks (for backward compatibility)
     const handleRegularMapClick = (coordinates) => {
-        console.log('Regular map click:', coordinates);
         // Only use regular click handler if no custom handler is set
         if (!customClickHandler) {
             handleMapClick(coordinates);

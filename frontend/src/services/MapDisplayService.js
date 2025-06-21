@@ -101,11 +101,9 @@ class MapDisplayService {
      * @param {Function} callback - Click handler callback
      */
     setLocationClickHandler(map, callback) {
-        console.log('Setting location click handler:', callback ? 'provided' : 'null');
 
         // Remove any existing click handlers first
         if (this.currentClickHandler && this.activeMap) {
-            console.log('Removing existing click handler');
             this.removeLocationClickHandler(this.activeMap, this.currentClickHandler);
         }
 
@@ -114,7 +112,6 @@ class MapDisplayService {
             const wrappedHandler = (e) => {
                 // Extract coordinates from MapBox event
                 const coordinates = [e.lngLat.lng, e.lngLat.lat];
-                console.log('MapBox click event - coordinates extracted:', coordinates);
 
                 // Ensure we have valid coordinates before calling callback
                 if (Array.isArray(coordinates) && coordinates.length === 2 &&
@@ -131,7 +128,6 @@ class MapDisplayService {
 
             // Add the event listener directly to the map
             map.on("click", wrappedHandler);
-            console.log('Click handler set successfully');
         } else {
             this.currentClickHandler = null;
         }
@@ -143,13 +139,11 @@ class MapDisplayService {
      * @param {Function} callback - Handler to remove
      */
     removeLocationClickHandler(map, callback) {
-        console.log('Removing location click handler');
 
         if (callback && map) {
             try {
                 // Remove the event listener directly from the map
                 map.off("click", callback);
-                console.log('Click handler removed successfully');
             } catch (error) {
                 console.warn('Error removing click handler:', error);
             }
@@ -166,7 +160,6 @@ class MapDisplayService {
      * @param {Object} map - Map instance
      */
     clearAllClickHandlers(map) {
-        console.log('Clearing all click handlers');
         if (this.currentClickHandler && map) {
             this.removeLocationClickHandler(map, this.currentClickHandler);
         }
@@ -179,8 +172,6 @@ class MapDisplayService {
      * @param {Object} options - Display options
      */
     displayBusStops(map, stops, options = {}) {
-        console.log('=== DisplayBusStops called ===');
-        console.log(`Total stops provided: ${stops?.length || 0}`);
 
         // Store all stops for filtering
         this.allStops = stops || [];
@@ -188,8 +179,6 @@ class MapDisplayService {
         // Update current map state
         this.currentZoom = this.mapBoxFacade.getZoom(map);
         this.currentBounds = map.getBounds();
-
-        console.log(`Current zoom: ${this.currentZoom}, bounds available: ${!!this.currentBounds}`);
 
         // Force clear any existing markers first
         this.clearStopMarkers();
@@ -209,16 +198,11 @@ class MapDisplayService {
         this.isUpdatingStops = true;
 
         try {
-            console.log('=== Updating visible stops ===');
 
             // Get current zoom configuration
             const zoomLevel = Math.floor(this.currentZoom);
             const config = this.getZoomConfig(zoomLevel);
 
-            console.log(`Zoom: ${this.currentZoom.toFixed(1)}, Config: max=${config.maxStops}, major=${config.showOnlyMajor}`);
-
-            // IMPORTANT: Clear existing markers FIRST
-            console.log(`Clearing ${this.stopMarkers.size} existing markers`);
             this.clearStopMarkers();
 
             // Filter stops based on viewport and zoom
@@ -226,8 +210,6 @@ class MapDisplayService {
 
             // Display filtered stops
             this.displayFilteredStops(map, filteredStops, options, config);
-
-            console.log('=== Stop update complete ===');
 
         } finally {
             this.isUpdatingStops = false;
@@ -282,22 +264,17 @@ class MapDisplayService {
                 lat <= (this.currentBounds.getNorth() + buffer);
         });
 
-        console.log(`Viewport filter: ${viewportStops.length}/${this.allStops.length} stops in bounds`);
-
         // Second filter: apply zoom-based importance filtering
         let importanceFilteredStops = viewportStops;
         if (config.showOnlyMajor) {
             importanceFilteredStops = this.filterMajorStops(viewportStops);
-            console.log(`Major stops filter: ${importanceFilteredStops.length}/${viewportStops.length} major stops`);
         }
 
         // Third filter: apply grid-based density filtering
         const densityFilteredStops = this.applyDensityFilter(importanceFilteredStops, config);
-        console.log(`Density filter: ${densityFilteredStops.length}/${importanceFilteredStops.length} after grid filtering`);
 
         // Fourth filter: limit total count based on zoom
         const finalStops = densityFilteredStops.slice(0, config.maxStops);
-        console.log(`Final filter: ${finalStops.length} stops (max: ${config.maxStops})`);
 
         return finalStops;
     }
@@ -335,7 +312,6 @@ class MapDisplayService {
             return false;
         });
 
-        console.log(`Major stops identified: ${majorStops.length}/${stops.length} (${majorStops.filter(s => s.isStation).length} stations)`);
         return majorStops;
     }
 
@@ -422,7 +398,6 @@ class MapDisplayService {
             `(${config.showOnlyMajor ? 'major stops only' : 'all stops'})` :
             '';
 
-        console.log(`Displaying ${filteredStops.length}/${this.allStops.length} stops at zoom ${this.currentZoom.toFixed(1)} ${configInfo}`);
     }
 
     /**
@@ -511,7 +486,6 @@ class MapDisplayService {
         // Clear existing paths
         this.clearRoute(map);
 
-        console.log('MapDisplayService received path segments:', pathSegments);
 
         const allCoordinates = [];
 
@@ -702,8 +676,6 @@ class MapDisplayService {
         } catch (error) {
             console.warn('Failed to clear markers via facade:', error);
         }
-
-        console.log('All stop markers cleared');
     }
 
     /**
