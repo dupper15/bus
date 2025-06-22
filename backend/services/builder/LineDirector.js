@@ -19,6 +19,7 @@ class LineDirector {
    * @returns {Object} Line
    */
   makeDraftLine(data) {
+    console.log("LineDirector: makeDraftLine", data);
     this.builder.reset();
     this.builder.setName(data.name);
     this.builder.setStartPlace(data.start_place);

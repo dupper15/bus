@@ -307,8 +307,7 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
     setValidationErrors(errors);
     return errors;
   };
-
-  const handleSubmit = async (values) => {
+  const handleSubmit = async (values, submitTypeOverride = submitType) => {
     try {
       const errors = validateRouteConnections();
       if (errors.length > 0) {
@@ -327,8 +326,8 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
         error("Invalid route configuration");
         return;
       }
-
-      await onSubmit({ ...values, type: submitType });
+      console.log("sumit", submitTypeOverride);
+      await onSubmit({ ...values, type: submitTypeOverride });
     } catch (err) {
       error("An error occurred while saving the line");
       console.error("Error submitting form:", err);
@@ -633,7 +632,9 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
                     variant='secondary'
                     onClick={() => {
                       setSubmitType("draft");
-                      form.handleSubmit(handleSubmit)();
+                      form.handleSubmit(
+                        handleSubmit(form.getValues(), "draft")
+                      )();
                     }}
                     className='h-8 text-sm'>
                     Save Draft
@@ -643,7 +644,9 @@ const FormLine = ({ isAdd, handleClose, initialData, onSubmit }) => {
                     type='button'
                     onClick={() => {
                       setSubmitType("published");
-                      form.handleSubmit(handleSubmit)();
+                      form.handleSubmit(
+                        handleSubmit(form.getValues(), "published")
+                      )();
                     }}
                     className='h-8 text-sm bg-green-500 hover:bg-green-600'>
                     Submit
