@@ -5,13 +5,9 @@ import Route from '@/components/Route/Route.jsx';
 import RouteComponent from '@/components/Route/RouteComponent.jsx';
 import pathTransformerService from "../../../services/PathTransformerService";
 
-/**
- * NavigationViewModel - Enhanced to work with Composite pattern Route objects
- * Handles navigation state and manages Route composite objects from strategies
- */
 const useNavigationViewModel = () => {
-    const [path, setPath] = useState([]); // Legacy path array for MapView compatibility
-    const [route, setRoute] = useState(null); // New Route composite object
+    const [path, setPath] = useState([]);
+    const [route, setRoute] = useState(null);
     const [error, setError] = useState(null);
     const [start, setStart] = useState({ name: "", coordinates: [] });
     const [end, setEnd] = useState({ name: "", coordinates: [] });
@@ -22,7 +18,6 @@ const useNavigationViewModel = () => {
     const [isComparing, setIsComparing] = useState(false);
     const [strategyComparison, setStrategyComparison] = useState([]);
 
-    // Debounced search function
     const debouncedFetchSuggestions = useCallback(
         geolocationService.debounceSearch(async (query, setSuggestions) => {
             if (!query) {
@@ -47,16 +42,11 @@ const useNavigationViewModel = () => {
         setSuggestions([]);
     };
 
-    /**
-     * Changes the pathfinding strategy
-     * @param {string} strategyType - The strategy type to use
-     */
     const handleStrategyChange = (strategyType) => {
         try {
             routeFinderContext.setStrategy(strategyType);
             setSelectedStrategy(strategyType);
 
-            // If there's an existing route, inform user they can recalculate
             if (route && route instanceof Route) {
                 console.log('Strategy changed. Click "Find Route" to recalculate with new strategy.');
             }
@@ -66,31 +56,14 @@ const useNavigationViewModel = () => {
         }
     };
 
-    /**
-     * Gets available pathfinding strategies for UI display
-     * @returns {Array} - Array of available strategies
-     */
     const getAvailableStrategies = () => {
         return routeFinderContext.getAvailableStrategies();
     };
 
-    /**
-     * Gets explanation for a specific strategy
-     * @param {string} strategyType - Strategy type to explain
-     * @returns {string} - Strategy explanation
-     */
     const getStrategyExplanation = (strategyType) => {
         return routeFinderContext.getStrategyExplanation(strategyType);
     };
 
-    /**
-     * Finds path using the selected strategy and returns both Route object and legacy path
-     * @param {Array} startCoords - Starting coordinates
-     * @param {Array} endCoords - Ending coordinates
-     * @param {Array} busStops - Available bus stops
-     * @param {Array} busLines - Available bus lines
-     * @returns {Promise<Array>} - Legacy path array for MapView compatibility
-     */
     const findPath = async (startCoords, endCoords, busStops, busLines) => {
         try {
             setError(null);
@@ -105,11 +78,9 @@ const useNavigationViewModel = () => {
             );
 
             if (result && result.path instanceof Route) {
-                // Store the Route composite object
                 setRoute(result.path);
                 setRouteMetadata(result.metadata);
 
-                // Transform Route object to legacy path format for MapView
                 const legacyPath = pathTransformerService.transformForMapView(result.path);
                 setPath(legacyPath);
                 setError(null);
@@ -125,14 +96,6 @@ const useNavigationViewModel = () => {
         }
     };
 
-    /**
-     * Compares all available strategies and shows results
-     * @param {Array} startCoords - Starting coordinates
-     * @param {Array} endCoords - Ending coordinates
-     * @param {Array} busStops - Available bus stops
-     * @param {Array} busLines - Available bus lines
-     * @returns {Promise<Array>} - Array of comparison results
-     */
     const compareAllStrategies = async (startCoords, endCoords, busStops, busLines) => {
         try {
             setIsComparing(true);
@@ -145,7 +108,6 @@ const useNavigationViewModel = () => {
                 busLines
             );
 
-            // Transform Route objects to include legacy path for each result
             const enhancedResults = results.map(result => ({
                 ...result,
                 legacyPath: pathTransformerService.transformForMapView(result.path)
@@ -153,7 +115,6 @@ const useNavigationViewModel = () => {
 
             setStrategyComparison(enhancedResults);
 
-            // Set the best result as the current route
             if (enhancedResults.length > 0) {
                 const bestResult = enhancedResults[0];
                 setRoute(bestResult.path);
@@ -170,10 +131,6 @@ const useNavigationViewModel = () => {
         }
     };
 
-    /**
-     * Selects a specific route from strategy comparison
-     * @param {number} routeIndex - Index of route to select
-     */
     const selectRouteFromComparison = (routeIndex) => {
         if (strategyComparison[routeIndex]) {
             const selectedResult = strategyComparison[routeIndex];
@@ -181,41 +138,24 @@ const useNavigationViewModel = () => {
             setPath(selectedResult.legacyPath || pathTransformerService.transformForMapView(selectedResult.path));
             setRouteMetadata(selectedResult.metadata);
 
-            // Update the current strategy to match the selected route
             if (selectedResult.strategyUsed && selectedResult.strategyUsed.type) {
                 handleStrategyChange(selectedResult.strategyUsed.type);
             }
         }
     };
 
-    /**
-     * Gets strategy recommendations based on current context
-     * @param {Object} context - Additional context for recommendations
-     * @returns {Array} - Array of strategy recommendations
-     */
     const getStrategyRecommendations = (context = {}) => {
         return routeFinderContext.getStrategyRecommendations(context);
     };
 
-    /**
-     * Clears strategy comparison results
-     */
     const clearStrategyComparison = () => {
         setStrategyComparison([]);
     };
 
-    /**
-     * Gets the current Route composite object
-     * @returns {Route|null} - Current Route object
-     */
     const getCurrentRoute = () => {
         return route;
     };
 
-    /**
-     * Gets route statistics from the current Route object
-     * @returns {Object|null} - Route statistics
-     */
     const getRouteStatistics = () => {
         if (!route || !(route instanceof Route)) {
             return null;
@@ -224,11 +164,6 @@ const useNavigationViewModel = () => {
         return route.getSummary();
     };
 
-    /**
-     * Validates the current route
-     * @param {Object} constraints - Validation constraints
-     * @returns {boolean} - Whether route is valid
-     */
     const validateCurrentRoute = (constraints = {}) => {
         if (!route || !(route instanceof Route)) {
             return false;
@@ -240,11 +175,6 @@ const useNavigationViewModel = () => {
             route.getDuration() <= (constraints.maxDuration || 180);
     };
 
-    /**
-     * Optimizes the current route using a different strategy
-     * @param {string} optimizationStrategy - Strategy to use for optimization
-     * @returns {Promise<Route|null>} - Optimized route
-     */
     const optimizeCurrentRoute = async (optimizationStrategy, busStops = [], busLines = []) => {
         if (!route || start.coordinates.length === 0 || end.coordinates.length === 0) {
             return null;
@@ -254,19 +184,18 @@ const useNavigationViewModel = () => {
             const originalStrategy = selectedStrategy;
             handleStrategyChange(optimizationStrategy);
 
-            // Ensure coordinates are in [lng, lat] format
             let startCoords, endCoords;
 
             if (Array.isArray(start.coordinates) && start.coordinates.length >= 2) {
                 startCoords = RouteComponent.ensureLngLat(start.coordinates);
             } else {
-                startCoords = [106.70098, 10.77584]; // Default Ho Chi Minh City center
+                startCoords = [106.70098, 10.77584];
             }
 
             if (Array.isArray(end.coordinates) && end.coordinates.length >= 2) {
                 endCoords = RouteComponent.ensureLngLat(end.coordinates);
             } else {
-                endCoords = [106.70598, 10.78084]; // Default nearby location
+                endCoords = [106.70598, 10.78084];
             }
 
             const optimizedPath = await findPath(
@@ -276,7 +205,6 @@ const useNavigationViewModel = () => {
                 busLines
             );
 
-            // Restore original strategy if optimization failed
             if (!optimizedPath || optimizedPath.length === 0) {
                 handleStrategyChange(originalStrategy);
                 return null;
@@ -289,12 +217,6 @@ const useNavigationViewModel = () => {
         }
     };
 
-    /**
-     * Creates a Route object from legacy path data
-     * @param {Array} legacyPath - Legacy path array
-     * @param {Object} options - Creation options
-     * @returns {Route} - New Route object
-     */
     const createRouteFromPath = (legacyPath, options = {}) => {
         try {
             return pathTransformerService.transformToRoute(legacyPath, {
@@ -311,10 +233,6 @@ const useNavigationViewModel = () => {
         }
     };
 
-    /**
-     * Handles errors consistently
-     * @param {string} message - Error message
-     */
     const handleError = (message) => {
         console.error('NavigationViewModel Error:', message);
         setPath([]);
@@ -323,9 +241,6 @@ const useNavigationViewModel = () => {
         setError(message);
     };
 
-    /**
-     * Swaps start and end locations
-     */
     const handleSwap = () => {
         const temp = start;
         setStart(end);
@@ -336,7 +251,6 @@ const useNavigationViewModel = () => {
         setEndSuggestions(tempSuggestions);
     };
 
-    // Clear error after timeout
     useEffect(() => {
         if (error) {
             const timer = setTimeout(() => {
@@ -347,7 +261,6 @@ const useNavigationViewModel = () => {
         }
     }, [error]);
 
-    // Update selected strategy when context changes
     useEffect(() => {
         const currentStrategyType = routeFinderContext.getCurrentStrategyType();
         if (currentStrategyType !== selectedStrategy) {
@@ -356,15 +269,12 @@ const useNavigationViewModel = () => {
     }, [selectedStrategy]);
 
     return {
-        // Legacy path functionality (for MapView compatibility)
         path,
         setPath,
 
-        // New Route composite functionality
         route,
         setRoute,
 
-        // Common functionality
         error,
         start,
         end,
@@ -378,14 +288,12 @@ const useNavigationViewModel = () => {
         handleSwap,
         setError,
 
-        // Strategy-related functionality
         selectedStrategy,
         handleStrategyChange,
         getAvailableStrategies,
         getStrategyExplanation,
         routeMetadata,
 
-        // Strategy comparison functionality
         isComparing,
         strategyComparison,
         compareAllStrategies,
@@ -393,14 +301,12 @@ const useNavigationViewModel = () => {
         clearStrategyComparison,
         getStrategyRecommendations,
 
-        // New Route composite functionality
         getCurrentRoute,
         getRouteStatistics,
         validateCurrentRoute,
         optimizeCurrentRoute,
         createRouteFromPath,
 
-        // Enhanced utility functions
         getCurrentStrategy: () => routeFinderContext.getCurrentStrategy(),
         resetToDefaultStrategy: () => {
             routeFinderContext.resetToDefault();
@@ -411,7 +317,6 @@ const useNavigationViewModel = () => {
             setSelectedStrategy(routeFinderContext.getCurrentStrategyType());
         },
 
-        // Route transformation utilities
         transformRouteToLegacy: (routeObj) => {
             try {
                 return pathTransformerService.transformFromRoute(routeObj);
@@ -429,7 +334,6 @@ const useNavigationViewModel = () => {
             }
         },
 
-        // Route analysis
         getRouteComplexity: () => {
             return route instanceof Route ? route.getComponents().length : 0;
         },
@@ -440,7 +344,6 @@ const useNavigationViewModel = () => {
             return route instanceof Route ? route.calculateOptimizationScore() : Infinity;
         },
 
-        // Route operations
         cloneCurrentRoute: () => {
             return route instanceof Route ? route.clone() : null;
         },
@@ -449,7 +352,6 @@ const useNavigationViewModel = () => {
             return routeObj.isValid();
         },
 
-        // Export/Import functionality for route sharing
         exportRoute: () => {
             try {
                 return route instanceof Route ? route.toJSON() : null;
@@ -473,7 +375,6 @@ const useNavigationViewModel = () => {
             }
         },
 
-        // Debug utilities
         getDebugInfo: () => ({
             hasRoute: route instanceof Route,
             routeName: route?.name,
@@ -483,7 +384,6 @@ const useNavigationViewModel = () => {
             comparisonResults: strategyComparison.length
         }),
 
-        // Reset all state
         resetAll: () => {
             setPath([]);
             setRoute(null);

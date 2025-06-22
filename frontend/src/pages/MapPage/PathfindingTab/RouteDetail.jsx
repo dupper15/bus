@@ -1,21 +1,29 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { FaExclamationTriangle, FaCheckCircle, FaInfoCircle, FaWalking, FaBus, FaClock } from 'react-icons/fa';
+import { MdTransferWithinAStation } from 'react-icons/md';
 import Route from '@/components/Route/Route.jsx';
 import WalkingSegment from '@/components/Route/WalkingSegment.jsx';
 import BusSegment from '@/components/Route/BusSegment.jsx';
 
 /**
- * RouteDetails component - Displays detailed route information
- * Enhanced to work with Composite pattern
+ * Enhanced RouteDetails component with quality warnings
+ * Shows visual indicators for suboptimal routes when no better options are available
  *
  * @param {Object} props - Component properties
- * @returns {JSX.Element} - Route details component
+ * @returns {JSX.Element} - Enhanced route details component
  */
-const RouteDetails = ({ path, route, fare = "6k VND" }) => {
+const EnhancedRouteDetails = ({ path, route, routeMetadata, fare = "6k VND" }) => {
     const [activeTab, setActiveTab] = useState('details');
 
     // Handle both legacy and composite pattern data
     const routeObject = getRouteObject(path, route);
+
+    // Get route quality information from metadata
+    const quality = routeMetadata?.routeQuality || 'good';
+    const isSuboptimal = routeMetadata?.isSuboptimal || false;
+    const suboptimalReasons = routeMetadata?.suboptimalReasons || [];
+    const qualityIndicators = routeMetadata?.qualityIndicators || {};
 
     // Safety check for route data
     if (!routeObject || !routeObject.isValid()) {
@@ -27,14 +35,158 @@ const RouteDetails = ({ path, route, fare = "6k VND" }) => {
     }
 
     /**
+     * Gets quality-based styling classes
+     * @param {string} quality - Route quality level
+     * @returns {Object} - Styling classes
+     */
+    const getQualityStyles = (quality) => {
+        switch (quality) {
+            case 'excellent':
+                return {
+                    containerClass: 'bg-green-50 border-green-200',
+                    headerClass: 'bg-green-100 text-green-800',
+                    iconColor: 'text-green-600',
+                    icon: FaCheckCircle
+                };
+            case 'good':
+                return {
+                    containerClass: 'bg-white border-gray-200',
+                    headerClass: 'bg-gray-50 text-gray-800',
+                    iconColor: 'text-green-500',
+                    icon: FaCheckCircle
+                };
+            case 'acceptable':
+                return {
+                    containerClass: 'bg-yellow-50 border-yellow-200',
+                    headerClass: 'bg-yellow-100 text-yellow-800',
+                    iconColor: 'text-yellow-600',
+                    icon: FaInfoCircle
+                };
+            case 'poor':
+            default:
+                return {
+                    containerClass: 'bg-red-50 border-red-200',
+                    headerClass: 'bg-red-100 text-red-800',
+                    iconColor: 'text-red-600',
+                    icon: FaExclamationTriangle
+                };
+        }
+    };
+
+    const qualityStyles = getQualityStyles(quality);
+    const QualityIcon = qualityStyles.icon;
+
+    /**
+     * Renders route quality header with warnings
+     * @returns {JSX.Element} - Quality header component
+     */
+    const renderQualityHeader = () => {
+        if (!isSuboptimal && quality === 'good') return null;
+
+        return (
+            <div className={`p-3 mb-4 rounded-lg border ${qualityStyles.headerClass}`}>
+                <div className="flex items-center gap-2">
+                    <QualityIcon className={`w-5 h-5 ${qualityStyles.iconColor}`} />
+                    <div className="flex-1">
+                        <h4 className="font-medium">
+                            {isSuboptimal ? 'Suboptimal Route' : 'Route Quality: ' + quality.charAt(0).toUpperCase() + quality.slice(1)}
+                        </h4>
+                        {isSuboptimal && suboptimalReasons.length > 0 && (
+                            <div className="mt-1 text-sm">
+                                <p className="font-medium mb-1">Issues with this route:</p>
+                                <ul className="list-disc list-inside space-y-0.5">
+                                    {suboptimalReasons.map((reason, index) => (
+                                        <li key={index}>{reason}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        {isSuboptimal && (
+                            <p className="mt-2 text-sm italic">
+                                This route is shown because no better options were found for your journey.
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    /**
+     * Renders quality indicators with warnings
+     * @returns {JSX.Element} - Quality indicators component
+     */
+    const renderQualityIndicators = () => {
+        if (!qualityIndicators || Object.keys(qualityIndicators).length === 0) return null;
+
+        return (
+            <div className="grid grid-cols-3 gap-4 mb-4">
+                {/* Walking Distance Indicator */}
+                {qualityIndicators.walkingDistance && (
+                    <div className={`p-3 rounded-lg text-center ${
+                        qualityIndicators.walkingDistance.warning ? 'bg-red-50 border border-red-200' : 'bg-gray-50'
+                    }`}>
+                        <FaWalking className={`w-5 h-5 mx-auto mb-1 ${
+                            qualityIndicators.walkingDistance.warning ? 'text-red-600' : 'text-gray-600'
+                        }`} />
+                        <div className="text-sm">
+                            <div className="font-medium">{qualityIndicators.walkingDistance.value.toFixed(1)}km</div>
+                            <div className={`text-xs ${
+                                qualityIndicators.walkingDistance.warning ? 'text-red-600' : 'text-gray-500'
+                            }`}>Walking</div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Duration Indicator */}
+                {qualityIndicators.duration && (
+                    <div className={`p-3 rounded-lg text-center ${
+                        qualityIndicators.duration.warning ? 'bg-red-50 border border-red-200' : 'bg-gray-50'
+                    }`}>
+                        <FaClock className={`w-5 h-5 mx-auto mb-1 ${
+                            qualityIndicators.duration.warning ? 'text-red-600' : 'text-gray-600'
+                        }`} />
+                        <div className="text-sm">
+                            <div className="font-medium">{qualityIndicators.duration.value}min</div>
+                            <div className={`text-xs ${
+                                qualityIndicators.duration.warning ? 'text-red-600' : 'text-gray-500'
+                            }`}>Total Time</div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Transfers Indicator */}
+                {qualityIndicators.transfers && (
+                    <div className={`p-3 rounded-lg text-center ${
+                        qualityIndicators.transfers.warning ? 'bg-red-50 border border-red-200' : 'bg-gray-50'
+                    }`}>
+                        <MdTransferWithinAStation className={`w-5 h-5 mx-auto mb-1 ${
+                            qualityIndicators.transfers.warning ? 'text-red-600' : 'text-gray-600'
+                        }`} />
+                        <div className="text-sm">
+                            <div className="font-medium">{qualityIndicators.transfers.value}</div>
+                            <div className={`text-xs ${
+                                qualityIndicators.transfers.warning ? 'text-red-600' : 'text-gray-500'
+                            }`}>Transfers</div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    /**
      * Renders route details using Composite pattern
      * @returns {JSX.Element} - Route details content
      */
     const renderRouteDetails = () => {
-        // Use the composite pattern's render method
         return (
             <div className="p-6">
-                {routeObject.render()}
+                {renderQualityHeader()}
+                {renderQualityIndicators()}
+                <div className="mt-4">
+                    {routeObject.render()}
+                </div>
             </div>
         );
     };
@@ -44,148 +196,102 @@ const RouteDetails = ({ path, route, fare = "6k VND" }) => {
      * @returns {JSX.Element} - Stops list content
      */
     const renderPassingStops = () => {
-        // Use the composite pattern's renderAllStops method
         return (
             <div className="p-6">
-                {routeObject.renderAllStops()}
+                {renderQualityHeader()}
+                <div className="mt-4">
+                    {routeObject.renderAllStops()}
+                </div>
             </div>
         );
     };
 
     /**
-     * Renders route summary information
+     * Renders route summary with quality information
      * @returns {JSX.Element} - Route summary content
      */
     const renderRouteSummary = () => {
         const summary = routeObject.getSummary();
 
         return (
-            <div className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-6">
-                    {/* Basic Info */}
-                    <div className="space-y-3">
-                        <h3 className="font-medium text-gray-900">Route Information</h3>
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Strategy:</span>
-                                <span className="font-medium">{summary.strategy}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Segments:</span>
-                                <span className="font-medium">{summary.segments}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Confidence:</span>
-                                <span className="font-medium">{(summary.confidence * 100).toFixed(0)}%</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Score:</span>
-                                <span className="font-medium">{summary.optimizationScore?.toFixed(1)}</span>
-                            </div>
+            <div className="p-6">
+                {renderQualityHeader()}
+                {renderQualityIndicators()}
+
+                <div className="mt-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                            <div className="text-sm text-gray-600">Total Distance</div>
+                            <div className="text-lg font-medium">{summary.totalDistance?.toFixed(1) || 0}km</div>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                            <div className="text-sm text-gray-600">Estimated Cost</div>
+                            <div className="text-lg font-medium">{fare}</div>
                         </div>
                     </div>
 
-                    {/* Transportation Breakdown */}
-                    <div className="space-y-3">
-                        <h3 className="font-medium text-gray-900">Transportation</h3>
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Walking segments:</span>
-                                <span className="font-medium">{summary.walkingSegments}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Bus segments:</span>
-                                <span className="font-medium">{summary.busSegments}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Walking distance:</span>
-                                <span className="font-medium">{summary.walkingDistance?.toFixed(1)}km</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Bus distance:</span>
-                                <span className="font-medium">{summary.busDistance?.toFixed(1)}km</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Bus Lines Used */}
-                {summary.busLines && summary.busLines.length > 0 && (
-                    <div className="pt-4 border-t">
-                        <h3 className="font-medium text-gray-900 mb-3">Bus Lines Used</h3>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                        <div className="text-sm text-gray-600 mb-2">Route Composition</div>
                         <div className="flex flex-wrap gap-2">
-                            {summary.busLines.map((line, index) => (
+                            {routeObject.getComponents().map((component, index) => (
                                 <span
                                     key={index}
-                                    className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium"
+                                    className={`px-2 py-1 rounded text-xs ${
+                                        component instanceof WalkingSegment
+                                            ? 'bg-blue-100 text-blue-800'
+                                            : 'bg-green-100 text-green-800'
+                                    }`}
                                 >
-                                    {line}
+                                    {component instanceof WalkingSegment ? (
+                                        <>🚶 Walk {component.getDistance().toFixed(1)}km</>
+                                    ) : (
+                                        <>🚌 {component.busLine?.name || 'Bus'}</>
+                                    )}
                                 </span>
                             ))}
                         </div>
                     </div>
-                )}
 
-                {/* Environmental Impact */}
-                <div className="pt-4 border-t">
-                    <h3 className="font-medium text-gray-900 mb-3">Environmental Impact</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="bg-green-50 p-3 rounded-lg">
-                            <div className="font-medium text-green-800">CO₂ Saved</div>
-                            <div className="text-green-600 mt-1">
-                                ~{(summary.busDistance * 0.12).toFixed(1)} kg
-                            </div>
-                            <div className="text-green-500 text-xs mt-1">vs. driving alone</div>
+                    {/* Strategy Information */}
+                    {routeMetadata?.strategyName && (
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                            <div className="text-sm text-gray-600">Optimization Strategy</div>
+                            <div className="font-medium">{routeMetadata.strategyName}</div>
+                            {routeMetadata.selectionCriteria && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                    {routeMetadata.selectionCriteria.replace(/-/g, ' ')}
+                                </div>
+                            )}
                         </div>
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                            <div className="font-medium text-blue-800">Steps Taken</div>
-                            <div className="text-blue-600 mt-1">
-                                ~{Math.round(summary.walkingDistance * 1300)}
+                    )}
+
+                    {/* Quality Score */}
+                    {routeMetadata?.normalizedScore && (
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                            <div className="text-sm text-gray-600">Route Score</div>
+                            <div className="flex items-center gap-2">
+                                <div className="font-medium">{routeMetadata.normalizedScore.toFixed(1)}/100</div>
+                                <div className={`px-2 py-1 rounded text-xs ${
+                                    quality === 'excellent' ? 'bg-green-100 text-green-800' :
+                                        quality === 'good' ? 'bg-blue-100 text-blue-800' :
+                                            quality === 'acceptable' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800'
+                                }`}>
+                                    {quality}
+                                </div>
                             </div>
-                            <div className="text-blue-500 text-xs mt-1">walking distance</div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         );
     };
 
+    // Main component render
     return (
-        <div className="bg-white rounded-lg shadow">
-            {/* Route header with composite pattern summary */}
-            <div className="p-4 border-b bg-gray-50">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                        {routeObject.name || 'Your Route'}
-                    </h2>
-                    <div className="text-sm text-gray-600">
-                        Strategy: {routeObject.strategy}
-                    </div>
-                </div>
-
-                {/* Quick summary */}
-                <div className="mt-3 grid grid-cols-4 gap-4 text-sm">
-                    <div className="text-center">
-                        <div className="font-medium text-gray-900">{routeObject.getDistance().toFixed(1)}km</div>
-                        <div className="text-gray-500">Distance</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="font-medium text-gray-900">{routeObject.getDuration()} min</div>
-                        <div className="text-gray-500">Duration</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="font-medium text-gray-900">{routeObject.getTransferCount()}</div>
-                        <div className="text-gray-500">Transfers</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="font-medium text-gray-900">{(routeObject.getCost() / 1000).toFixed(0)}k</div>
-                        <div className="text-gray-500">VND</div>
-                    </div>
-                </div>
-            </div>
-
+        <div className={`rounded-lg shadow border-2 ${qualityStyles.containerClass}`}>
             {/* Tab navigation */}
-            <div className="flex border-b">
+            <div className="flex border-b border-gray-200">
                 <button
                     onClick={() => setActiveTab('details')}
                     className={`flex-1 py-4 text-center font-medium transition-colors
@@ -252,21 +358,22 @@ function getRouteObject(path, route) {
     return null;
 }
 
-RouteDetails.propTypes = {
+EnhancedRouteDetails.propTypes = {
     path: PropTypes.array,
     route: PropTypes.oneOfType([
         PropTypes.instanceOf(Route),
         PropTypes.object
     ]),
+    routeMetadata: PropTypes.object,
     fare: PropTypes.string
 };
 
 /**
  * Legacy compatibility wrapper - maintains backward compatibility
  */
-const LegacyRouteDetails = ({ path, fare }) => {
-    return <RouteDetails path={path} fare={fare} />;
+const LegacyEnhancedRouteDetails = ({ path, routeMetadata, fare }) => {
+    return <EnhancedRouteDetails path={path} routeMetadata={routeMetadata} fare={fare} />;
 };
 
-export default RouteDetails;
-export { LegacyRouteDetails };
+export default EnhancedRouteDetails;
+export { LegacyEnhancedRouteDetails };

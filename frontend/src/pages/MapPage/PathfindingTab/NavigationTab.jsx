@@ -12,10 +12,8 @@ import {
     StrategyComparisonSkeleton,
     RouteDetailsSkeleton
 } from "@/components/ui/loadingSkeletons.jsx";
+import EnhancedRouteDetails from "@/pages/MapPage/PathfindingTab/RouteDetail";
 
-/**
- * NavigationTab component - Enhanced with map click coordinate selection
- */
 const NavigationTab = ({
                            onFindPath,
                            busStops,
@@ -23,10 +21,9 @@ const NavigationTab = ({
                            startCoordinates,
                            endCoordinates,
                            lines,
-                           onMapClick, // New prop to handle map clicks
-                           mapRef // Reference to the map instance
+                           onMapClick,
+                           mapRef
                        }) => {
-    // Use enhanced NavigationViewModel
     const {
         path,
         route,
@@ -54,12 +51,10 @@ const NavigationTab = ({
         clearStrategyComparison,
     } = useNavigationViewModel();
 
-    // Map interaction states
     const [pickingStart, setPickingStart] = useState(false);
     const [pickingEnd, setPickingEnd] = useState(false);
     const [mapClickHandler, setMapClickHandler] = useState(null);
 
-    // Loading states
     const [startLoading, setStartLoading] = useState(false);
     const [endLoading, setEndLoading] = useState(false);
     const [showStartSuggestions, setShowStartSuggestions] = useState(false);
@@ -68,14 +63,11 @@ const NavigationTab = ({
     const [showStrategyInfo, setShowStrategyInfo] = useState(false);
     const [showComparison, setShowComparison] = useState(false);
 
-    // Refs for suggestion containers
     const startSuggestionsRef = useRef(null);
     const endSuggestionsRef = useRef(null);
 
-    // Handle map click for location selection
     const handleMapClickForLocation = (coordinates) => {
 
-        // Ensure coordinates is an array
         if (!Array.isArray(coordinates) || coordinates.length < 2) {
             return;
         }
@@ -84,28 +76,24 @@ const NavigationTab = ({
         const locationName = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
         if (pickingStart) {
-            // Set start location from map click
             handleStartSuggestionClick({
                 name: locationName,
-                coordinates: [lat, lng], // Note: handleStartSuggestionClick expects [lat, lng]
+                coordinates: [lat, lng],
                 address: 'Selected on map'
             });
             setPickingStart(false);
         } else if (pickingEnd) {
-            // Set end location from map click
             handleEndSuggestionClick({
                 name: locationName,
-                coordinates: [lat, lng], // Note: handleEndSuggestionClick expects [lat, lng]
+                coordinates: [lat, lng],
                 address: 'Selected on map'
             });
             setPickingEnd(false);
         }
 
-        // Reset cursor and clear picking states
         resetMapCursor();
     };
 
-    // Reset map cursor to default
     const resetMapCursor = () => {
         if (mapRef && mapRef.current) {
             mapRef.current.getCanvas().style.cursor = '';
@@ -113,7 +101,6 @@ const NavigationTab = ({
         document.body.style.cursor = 'default';
     };
 
-    // Set map cursor to crosshair
     const setMapCursorToCrosshair = () => {
         if (mapRef && mapRef.current) {
             mapRef.current.getCanvas().style.cursor = 'crosshair';
@@ -121,48 +108,42 @@ const NavigationTab = ({
         document.body.style.cursor = 'crosshair';
     };
 
-    // Handle picking locations on map
     const handlePickLocation = (type) => {
 
         if (type === 'start') {
             setPickingStart(true);
             setPickingEnd(false);
-            onInputFocus('start'); // Notify parent about input focus
+            onInputFocus('start');
         } else {
             setPickingStart(false);
             setPickingEnd(true);
-            onInputFocus('end'); // Notify parent about input focus
+            onInputFocus('end');
         }
 
         setMapCursorToCrosshair();
     };
 
-    // Cancel picking location
     const cancelPickingLocation = () => {
         setPickingStart(false);
         setPickingEnd(false);
         resetMapCursor();
-        onInputFocus(null); // Clear input focus
+        onInputFocus(null);
     };
 
-    // Setup map click handler
     useEffect(() => {
         if (pickingStart || pickingEnd) {
-            // Create a new map click handler
             const clickHandler = (coordinates) => {
                 handleMapClickForLocation(coordinates);
             };
 
             setMapClickHandler(() => clickHandler);
 
-            // Set up the click handler with parent component
             if (onMapClick) {
                 onMapClick(clickHandler);
             }
 
             setMapCursorToCrosshair();
         } else {
-            // Clear the click handler
             setMapClickHandler(null);
             if (onMapClick) {
                 onMapClick(null);
@@ -170,15 +151,13 @@ const NavigationTab = ({
             resetMapCursor();
         }
 
-        // Cleanup function
         return () => {
             if (!pickingStart && !pickingEnd) {
                 resetMapCursor();
             }
         };
-    }, [pickingStart, pickingEnd]); // Remove onMapClick from dependencies to prevent infinite loop
+    }, [pickingStart, pickingEnd]);
 
-    // Handle escape key to cancel location picking
     useEffect(() => {
         const handleKeyDown = (event) => {
             if (event.key === 'Escape' && (pickingStart || pickingEnd)) {
@@ -194,7 +173,6 @@ const NavigationTab = ({
         }
     }, [pickingStart, pickingEnd]);
 
-    // Update local state when props change
     useEffect(() => {
         if (startCoordinates && !pickingStart) {
             const coords = startCoordinates.split(', ').map(Number);
@@ -221,7 +199,6 @@ const NavigationTab = ({
         }
     }, [endCoordinates, pickingEnd]);
 
-    // Handle clicks outside suggestion boxes
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (startSuggestionsRef.current && !startSuggestionsRef.current.contains(event.target)) {
@@ -238,9 +215,7 @@ const NavigationTab = ({
         };
     }, []);
 
-    // Handle input changes
     const handleStartInputChange = (value) => {
-        // Don't handle input changes when picking from map
         if (pickingStart) return;
 
         handleStartChange(value);
@@ -254,7 +229,6 @@ const NavigationTab = ({
     };
 
     const handleEndInputChange = (value) => {
-        // Don't handle input changes when picking from map
         if (pickingEnd) return;
 
         handleEndChange(value);
@@ -267,7 +241,6 @@ const NavigationTab = ({
         }
     };
 
-    // Update loading states when suggestions change
     useEffect(() => {
         if (startSuggestions.length > 0 || start.name === '') {
             setStartLoading(false);
@@ -280,7 +253,6 @@ const NavigationTab = ({
         }
     }, [endSuggestions, end.name]);
 
-    // Find path using selected strategy
     const handleFindPath = async () => {
         if (!start || !end || !start.coordinates || !end.coordinates) {
             setError('Please select both start and end locations');
@@ -292,20 +264,17 @@ const NavigationTab = ({
             const [startLat, startLng] = start.coordinates.map(Number);
             const [endLat, endLng] = end.coordinates.map(Number);
 
-            // Use strategy pattern to find path
             const strategyResult = await findPath(
-                [startLng, startLat], // Note: findPath expects [lng, lat]
+                [startLng, startLat],
                 [endLng, endLat],
                 busStops,
                 lines
             );
 
             if (strategyResult && strategyResult.length > 0) {
-                // Transform to MapView format
                 const mapViewPath = pathTransformerService.transformForMapView(strategyResult);
 
 
-                // Pass to parent component
                 onFindPath(mapViewPath, null, routeMetadata);
             } else {
                 setError('No route found between the selected locations');
@@ -321,7 +290,6 @@ const NavigationTab = ({
         }
     };
 
-    // Compare all available strategies
     const handleCompareStrategies = async () => {
         if (!start || !end || !start.coordinates || !end.coordinates) {
             setError('Please select both start and end locations');
@@ -347,7 +315,6 @@ const NavigationTab = ({
         }
     };
 
-    // Select a route from comparison results
     const handleSelectComparisonRoute = (index) => {
         selectRouteFromComparison(index);
 
@@ -361,7 +328,6 @@ const NavigationTab = ({
 
     return (
         <div className="p-4">
-            {/* Location picking notification */}
             {(pickingStart || pickingEnd) && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                     <div className="flex items-center justify-between">
@@ -381,7 +347,6 @@ const NavigationTab = ({
                 </div>
             )}
 
-            {/* Location Input Section */}
             <div className="flex items-start gap-3 mb-4">
                 <div className="flex flex-col items-center pt-3">
                     <FiMapPin className="text-green-500 text-lg" />
@@ -390,7 +355,6 @@ const NavigationTab = ({
                 </div>
 
                 <div className="flex-1 flex flex-col gap-4">
-                    {/* Start location input */}
                     <div className="relative flex gap-2" ref={startSuggestionsRef}>
                         <input
                             type="text"
@@ -422,7 +386,6 @@ const NavigationTab = ({
                             <FiCrosshair className={pickingStart ? "text-white" : "text-green-500"} />
                         </button>
 
-                        {/* Start location suggestions */}
                         {showStartSuggestions && !pickingStart && (
                             startLoading ? (
                                 <SearchSuggestionsListSkeleton count={3} />
@@ -454,7 +417,6 @@ const NavigationTab = ({
                         )}
                     </div>
 
-                    {/* End location input */}
                     <div className="relative flex gap-2" ref={endSuggestionsRef}>
                         <input
                             type="text"
@@ -486,7 +448,6 @@ const NavigationTab = ({
                             <FiCrosshair className={pickingEnd ? "text-white" : "text-green-500"} />
                         </button>
 
-                        {/* End location suggestions */}
                         {showEndSuggestions && !pickingEnd && (
                             endLoading ? (
                                 <SearchSuggestionsListSkeleton count={3} />
@@ -529,7 +490,6 @@ const NavigationTab = ({
                 </button>
             </div>
 
-            {/* Strategy Selection Section */}
             <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-medium text-gray-700">
@@ -558,7 +518,6 @@ const NavigationTab = ({
                     ))}
                 </select>
 
-                {/* Strategy information */}
                 {showStrategyInfo && (
                     <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
                         <p className="text-sm text-blue-800">
@@ -568,14 +527,12 @@ const NavigationTab = ({
                 )}
             </div>
 
-            {/* Error display */}
             {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
                     <p className="text-sm text-red-600">{error}</p>
                 </div>
             )}
 
-            {/* Action Buttons */}
             <div className="flex gap-2 mb-4">
                 <button
                     onClick={handleFindPath}
@@ -606,7 +563,6 @@ const NavigationTab = ({
                 </button>
             </div>
 
-            {/* Strategy Comparison Results */}
             {showComparison && (
                 <div className="mb-4">
                     <div className="flex items-center justify-between mb-2">
@@ -663,12 +619,11 @@ const NavigationTab = ({
                 </div>
             )}
 
-            {/* Route Details */}
             {isLoadingRoute ? (
                 <RouteDetailsSkeleton />
             ) : path && path.length > 0 ? (
                 <div className="mt-4">
-                    <RouteDetails
+                    <EnhancedRouteDetails
                         path={path}
                         route={route}
                     />
@@ -685,8 +640,8 @@ NavigationTab.propTypes = {
     onInputFocus: PropTypes.func.isRequired,
     startCoordinates: PropTypes.string,
     endCoordinates: PropTypes.string,
-    onMapClick: PropTypes.func, // New prop for handling map clicks
-    mapRef: PropTypes.object, // Reference to map instance
+    onMapClick: PropTypes.func,
+    mapRef: PropTypes.object,
 };
 
 export default NavigationTab;
