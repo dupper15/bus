@@ -6,7 +6,7 @@ const LinePublishedBuilder = require("./builder/LinePublishedBuilder");
 const createLine = (newLine) => {
   return new Promise(async (resolve, reject) => {
     const {
-      status = "draft",
+      type = "draft",
       name,
       start_place,
       end_place,
@@ -15,7 +15,7 @@ const createLine = (newLine) => {
     } = newLine;
 
     // Validate type
-    if (!["draft", "published"].includes(status)) {
+    if (!["draft", "published"].includes(type)) {
       return reject({
         status: "ERROR",
         message: "Invalid line type. Must be 'draft' or 'published'.",
@@ -23,9 +23,8 @@ const createLine = (newLine) => {
     }
 
     try {
-      // Khởi tạo builder tương ứng
       const builder =
-        status === "published"
+        type === "published"
           ? new LinePublishedBuilder()
           : new LineDraftBuilder();
 
@@ -33,7 +32,7 @@ const createLine = (newLine) => {
 
       // Dùng director để build
       const builtLine =
-        status === "published"
+        type === "published"
           ? director.makePublishedLine({
               name,
               start_place,
