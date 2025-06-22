@@ -237,6 +237,46 @@ const getAllAccounts = async (data) => {
   }
 };
 
+const createAccount = async (data) => {
+  try {
+    // Kiểm tra tài khoản đã tồn tại chưa
+    const existingAccount = await Account.findOne({
+      user: data.id_card,
+    });
+
+    if (existingAccount) {
+      return {
+        status: "ERROR",
+        message: `Account with id ${data.id_card} already exists.`,
+      };
+    }
+
+    // Xác định loại tài khoản và gọi service tương ứng
+    const type = data.userType;
+    const accountService = AccountFactory.createAccountService(type);
+
+    const response = await accountService.createAccount(data);
+
+    if (response.status === "ERROR") {
+      return {
+        status: "ERROR",
+        message: response.message,
+      };
+    }
+
+    return {
+      status: "OK",
+      message: "Created account successfully",
+    };
+  } catch (e) {
+    return {
+      status: "ERROR",
+      message: "An error occurred during the account creation process.",
+      error: e.message,
+    };
+  }
+};
+
 module.exports = {
   loginAccount,
   getDetailAccount,
@@ -244,5 +284,6 @@ module.exports = {
   updateAccount,
   getAllAccounts,
   changeStatus,
-  deleteAccount
+  deleteAccount,
+  createAccount
 };

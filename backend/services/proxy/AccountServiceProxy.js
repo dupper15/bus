@@ -58,6 +58,28 @@ class AccountServiceProxy {
     console.log(`[GET ALL ACCOUNTS] type: ${data}`);
     return await this.realService.getAllAccounts(data);
   }
+
+  async createAccount(data) {
+    console.log(`[CREATE ACCOUNT] id_card: ${data.id_card}`);
+    if (!data.id_card || !data.password || !data.name) {
+      return {
+        status: "ERROR",
+        message: "Missing required fields: id_card, password, or name.",
+      };
+    }
+
+    const result = await this.realService.createAccount(data);
+
+    if (result.status === "OK") {
+      console.log(`[CREATE SUCCESS] id_card: ${data.id_card}`);
+    } else {
+      console.warn(
+        `[CREATE FAIL] id_card: ${data.id_card} – Reason: ${result.message}`
+      );
+    }
+
+    return result;
+  }
 }
 
 module.exports = AccountServiceProxy;
