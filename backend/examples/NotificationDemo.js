@@ -12,6 +12,7 @@ function demoCustomer() {
     const customerData = {
         id: 'CUS001',
         name: 'Nguyễn Văn A',
+        email: 'customer@example.com',
         userType: 'Customer'
     };
     
@@ -26,14 +27,16 @@ function demoCustomer() {
     
     // Mua vé - gửi thông báo xác nhận
     customer.performAction('buyTicket', {
+            ticketId: 'T001',
             ticketType: '7days',
-        price: 150000
+            price: 150000,
+            effectiveDate: '2024-01-15'
     });
     
     // Xem lịch sử thông báo
     console.log('\nLịch sử thông báo:');
     customer.getNotifications().forEach((notif, i) => {
-        console.log(`${i + 1}. ${notif.payload.message}`);
+        console.log(`${i + 1}. ${notif.message}`);
         });
 }
 
@@ -46,6 +49,7 @@ function demoEmployee() {
     const employeeData = {
         id: 'EMP001',
         name: 'Trần Thị B',
+        email: 'employee@example.com',
         userType: 'Employee'
     };
     
@@ -63,7 +67,7 @@ function demoEmployee() {
     
     console.log('\nThông báo đã gửi:');
     employee.getNotifications().forEach(notif => {
-        console.log(`- ${notif.payload.message}`);
+        console.log(`- ${notif.message}`);
     });
 }
 
@@ -73,7 +77,7 @@ function demoEmployee() {
 function demoComparison() {
     console.log('\n⚖️  === SO SÁNH VỚI VÀ KHÔNG CÓ DECORATOR ===');
     
-    const userData = { id: 'USR001', name: 'Test User', userType: 'Customer' };
+    const userData = { id: 'USR001', name: 'Test User', email: 'testuser@example.com', userType: 'Customer' };
     
     // Không có decorator
     console.log('\n1. Không có Notification:');
