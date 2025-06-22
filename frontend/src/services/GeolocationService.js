@@ -1,29 +1,17 @@
 import mapBoxFacade from "@/services/MapBoxFacade.js";
 
-/**
- * GeolocationService handles location-based operations including
- * geocoding, reverse geocoding, and location search functionality.
- */
 class GeolocationService {
     constructor() {
         this.mapBoxFacade = mapBoxFacade;
         this.geoapifyApiKey = import.meta.env.VITE_GEOAPIFY_API_KEY;
     }
 
-    /**
-     * Searches for locations based on a query string
-     * @param {string} query - Search query
-     * @param {Array} bbox - Bounding box [minLng, minLat, maxLng, maxLat]
-     * @returns {Promise<Array>} - Array of location suggestions
-     */
     async searchLocations(query, bbox = null) {
         if (!query || query.trim().length === 0) {
             return [];
         }
 
         try {
-            // For now, using Geoapify as in the original code
-            // This could be replaced with MapBox Geocoding API
             const bboxParam = bbox
                 ? `&bbox=${bbox.join(',')}`
                 : '';
@@ -42,8 +30,8 @@ class GeolocationService {
             return data.features.map(feature => ({
                 name: feature.properties.formatted,
                 coordinates: [
-                    feature.geometry.coordinates[1], // lat
-                    feature.geometry.coordinates[0]  // lng
+                    feature.geometry.coordinates[1],
+                    feature.geometry.coordinates[0]
                 ],
                 address: feature.properties.address_line2 || '',
                 placeId: feature.properties.place_id
@@ -54,10 +42,6 @@ class GeolocationService {
         }
     }
 
-    /**
-     * Gets the user's current location
-     * @returns {Promise<Object>} - Current location with coordinates
-     */
     async getCurrentLocation() {
         return new Promise((resolve, reject) => {
             if (!navigator.geolocation) {
@@ -102,11 +86,6 @@ class GeolocationService {
         });
     }
 
-    /**
-     * Performs reverse geocoding to get address from coordinates
-     * @param {Array} coordinates - [lat, lng] coordinates
-     * @returns {Promise<Object>} - Location details
-     */
     async reverseGeocode(coordinates) {
         try {
             const [lat, lng] = coordinates;
@@ -145,14 +124,8 @@ class GeolocationService {
         }
     }
 
-    /**
-     * Gets walking distance and time between two points
-     * @param {Array} start - Starting coordinates [lat, lng]
-     * @param {Array} end - Ending coordinates [lat, lng]
-     * @returns {Promise<Object>} - Distance and duration info
-     */
     async getWalkingInfo(start, end) {
-        const startLngLat = [start[1], start[0]]; // Convert to [lng, lat]
+        const startLngLat = [start[1], start[0]];
         const endLngLat = [end[1], end[0]];
 
         const directionsData = await this.mapBoxFacade.getDirections(
@@ -163,32 +136,25 @@ class GeolocationService {
         if (directionsData.routes && directionsData.routes.length > 0) {
             const route = directionsData.routes[0];
             return {
-                distance: route.distance / 1000, // km
-                duration: Math.round(route.duration / 60), // minutes
+                distance: route.distance / 1000,
+                duration: Math.round(route.duration / 60),
                 coordinates: route.geometry.coordinates
             };
         }
 
-        // Fallback to straight-line calculation
         const distance = this.calculateStraightDistance(start, end);
         return {
             distance: distance,
-            duration: Math.round(distance * 12), // Assume 5km/h walking speed
+            duration: Math.round(distance * 12),
             coordinates: [startLngLat, endLngLat]
         };
     }
 
-    /**
-     * Calculates straight-line distance between two points
-     * @param {Array} coord1 - First coordinate [lat, lng]
-     * @param {Array} coord2 - Second coordinate [lat, lng]
-     * @returns {number} - Distance in kilometers
-     */
     calculateStraightDistance(coord1, coord2) {
         const [lat1, lng1] = coord1;
         const [lat2, lng2] = coord2;
 
-        const R = 6371; // Earth's radius in km
+        const R = 6371;
         const dLat = this.toRadians(lat2 - lat1);
         const dLng = this.toRadians(lng2 - lng1);
 
@@ -201,20 +167,10 @@ class GeolocationService {
         return R * c;
     }
 
-    /**
-     * Converts degrees to radians
-     * @param {number} degrees - Degrees value
-     * @returns {number} - Radians value
-     */
     toRadians(degrees) {
         return degrees * (Math.PI / 180);
     }
 
-    /**
-     * Validates coordinates
-     * @param {Array} coordinates - [lat, lng] coordinates
-     * @returns {boolean} - Whether coordinates are valid
-     */
     validateCoordinates(coordinates) {
         if (!Array.isArray(coordinates) || coordinates.length !== 2) {
             return false;
@@ -229,31 +185,15 @@ class GeolocationService {
         );
     }
 
-    /**
-     * Formats coordinates for display
-     * @param {Array} coordinates - [lat, lng] coordinates
-     * @param {number} precision - Decimal precision
-     * @returns {string} - Formatted coordinates string
-     */
     formatCoordinates(coordinates, precision = 6) {
         const [lat, lng] = coordinates;
         return `${lat.toFixed(precision)}, ${lng.toFixed(precision)}`;
     }
 
-    /**
-     * Gets bounding box for Ho Chi Minh City
-     * @returns {Array} - Bounding box [minLng, minLat, maxLng, maxLat]
-     */
     getHCMCBoundingBox() {
         return [106.491, 10.348, 107.020, 11.160];
     }
 
-    /**
-     * Checks if coordinates are within a bounding box
-     * @param {Array} coordinates - [lat, lng] coordinates
-     * @param {Array} bbox - Bounding box
-     * @returns {boolean} - Whether coordinates are within bounds
-     */
     isWithinBounds(coordinates, bbox) {
         const [lat, lng] = coordinates;
         const [minLng, minLat, maxLng, maxLat] = bbox;
@@ -264,12 +204,6 @@ class GeolocationService {
         );
     }
 
-    /**
-     * Debounces location search requests
-     * @param {Function} func - Function to debounce
-     * @param {number} wait - Wait time in milliseconds
-     * @returns {Function} - Debounced function
-     */
     debounceSearch(func, wait = 300) {
         let timeout;
         return function executedFunction(...args) {
@@ -283,6 +217,5 @@ class GeolocationService {
     }
 }
 
-// Export singleton instance
 const geolocationService = new GeolocationService();
 export default geolocationService;

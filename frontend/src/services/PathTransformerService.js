@@ -2,24 +2,12 @@ import Route from '@/components/Route/Route.jsx';
 import WalkingSegment from '@/components/Route/WalkingSegment.jsx';
 import BusSegment from '@/components/Route/BusSegment.jsx';
 
-/**
- * PathTransformerService - Enhanced to work with Composite pattern
- * Transforms between different route representations and maintains backward compatibility
- */
 class PathTransformerService {
-    /**
-     * Transforms Strategy pattern path to MapView-compatible format
-     * Enhanced to handle both legacy arrays and Route composite objects
-     * @param {Array|Route} strategyPath - Path from Strategy pattern or Route object
-     * @returns {Array} - Path in format expected by MapView
-     */
     transformForMapView(strategyPath) {
-        // Handle Route composite objects
         if (strategyPath instanceof Route) {
             return this.transformRouteForMapView(strategyPath);
         }
 
-        // Handle legacy array format
         if (Array.isArray(strategyPath) && strategyPath.length > 0) {
             return this.transformLegacyPathForMapView(strategyPath);
         }
@@ -27,11 +15,6 @@ class PathTransformerService {
         return [];
     }
 
-    /**
-     * Transforms Route composite object for MapView
-     * @param {Route} route - Route composite object
-     * @returns {Array} - MapView-compatible path array
-     */
     transformRouteForMapView(route) {
         if (!route || !route.isValid()) {
             return [];
@@ -48,7 +31,6 @@ class PathTransformerService {
                 to: component.getEndPoint()
             };
 
-            // Add component-specific properties
             if (component instanceof BusSegment) {
                 baseSegment.line = component.getBusLine();
                 baseSegment.fare = component.getCost();
@@ -64,11 +46,6 @@ class PathTransformerService {
         }).filter(segment => segment.coords && segment.coords.length > 0);
     }
 
-    /**
-     * Transforms legacy path array for MapView (backward compatibility)
-     * @param {Array} legacyPath - Legacy path array
-     * @returns {Array} - MapView-compatible path array
-     */
     transformLegacyPathForMapView(legacyPath) {
         return legacyPath.map((segment, index) => {
             const transformedSegment = {
@@ -78,13 +55,11 @@ class PathTransformerService {
                 duration: segment.duration || 0
             };
 
-            // Add segment-specific properties
             if (segment.type === 'bus') {
                 transformedSegment.line = segment.line;
                 transformedSegment.from = segment.from;
                 transformedSegment.fare = segment.fare || 6000;
 
-                // Handle different 'to' structures
                 if (segment.intermediateStops && Array.isArray(segment.intermediateStops)) {
                     transformedSegment.to = segment.intermediateStops;
                     transformedSegment.stops = segment.intermediateStops;
@@ -96,12 +71,10 @@ class PathTransformerService {
                     transformedSegment.stops = transformedSegment.to;
                 }
             } else {
-                // Walking segment
                 transformedSegment.from = segment.from;
                 transformedSegment.to = segment.to;
             }
 
-            // Ensure coords array exists and has valid data
             if (!transformedSegment.coords || transformedSegment.coords.length === 0) {
                 transformedSegment.coords = this.generateFallbackCoords(segment);
             }
@@ -110,12 +83,6 @@ class PathTransformerService {
         }).filter(segment => segment.coords && segment.coords.length > 0);
     }
 
-    /**
-     * Transforms legacy path data to Route composite object
-     * @param {Array} legacyPath - Legacy path array
-     * @param {Object} options - Transformation options
-     * @returns {Route} - New Route composite object
-     */
     transformToRoute(legacyPath, options = {}) {
         if (!Array.isArray(legacyPath) || legacyPath.length === 0) {
             return new Route({ name: 'Empty Route' });
@@ -171,11 +138,6 @@ class PathTransformerService {
         });
     }
 
-    /**
-     * Transforms Route composite object back to legacy format
-     * @param {Route} route - Route composite object
-     * @returns {Array} - Legacy path array format
-     */
     transformFromRoute(route) {
         if (!(route instanceof Route)) {
             return [];
@@ -190,10 +152,9 @@ class PathTransformerService {
                 from: component.getStartPoint(),
                 to: component.getEndPoint(),
                 coordinates: component.getCoordinates(),
-                coords: component.getCoordinates() // For backward compatibility
+                coords: component.getCoordinates()
             };
 
-            // Add component-specific properties
             if (component instanceof BusSegment) {
                 legacySegment.line = component.getBusLine();
                 legacySegment.fare = component.getCost();
@@ -214,18 +175,11 @@ class PathTransformerService {
         });
     }
 
-    /**
-     * Creates a Route from MapView path data
-     * @param {Array} mapViewPath - Path data from MapView
-     * @param {Object} options - Creation options
-     * @returns {Route} - New Route composite object
-     */
     createRouteFromMapView(mapViewPath, options = {}) {
         if (!Array.isArray(mapViewPath)) {
             return new Route({ name: 'Empty Route' });
         }
 
-        // Convert MapView format back to legacy format, then to Route
         const legacyPath = mapViewPath.map(segment => ({
             type: segment.type,
             distance: segment.distance,
@@ -241,12 +195,6 @@ class PathTransformerService {
         return this.transformToRoute(legacyPath, options);
     }
 
-    /**
-     * Optimizes a Route object using various strategies
-     * @param {Route} route - Route to optimize
-     * @param {string} strategy - Optimization strategy
-     * @returns {Route} - Optimized route
-     */
     optimizeRoute(route, strategy = 'balanced') {
         if (!(route instanceof Route)) {
             return route;
@@ -255,7 +203,6 @@ class PathTransformerService {
         const optimizedRoute = route.clone();
         optimizedRoute.strategy = strategy;
 
-        // Apply strategy-specific optimizations
         switch (strategy) {
             case 'fastest':
                 this.optimizeForSpeed(optimizedRoute);
@@ -269,70 +216,35 @@ class PathTransformerService {
             case 'minimal-walking':
                 this.optimizeForWalking(optimizedRoute);
                 break;
-            default: // balanced
+            default:
                 this.optimizeBalanced(optimizedRoute);
         }
 
         return optimizedRoute;
     }
 
-    /**
-     * Applies speed-focused optimizations
-     * @param {Route} route - Route to optimize
-     */
     optimizeForSpeed(route) {
-        // Reduce walking segments where possible
         const components = route.getComponents();
 
         components.forEach(component => {
             if (component instanceof BusSegment) {
-                // Prefer express buses
                 component.vehicleType = 'express';
             }
         });
     }
 
-    /**
-     * Applies distance-focused optimizations
-     * @param {Route} route - Route to optimize
-     */
     optimizeForDistance(route) {
-        // Implementation would optimize for shortest total distance
-        // This is a placeholder for more complex optimization logic
     }
 
-    /**
-     * Applies transfer-minimization optimizations
-     * @param {Route} route - Route to optimize
-     */
     optimizeForTransfers(route) {
-        // Implementation would minimize bus transfers
-        // This is a placeholder for more complex optimization logic
     }
 
-    /**
-     * Applies walking-minimization optimizations
-     * @param {Route} route - Route to optimize
-     */
     optimizeForWalking(route) {
-        // Implementation would minimize walking distance
-        // This is a placeholder for more complex optimization logic
     }
 
-    /**
-     * Applies balanced optimizations
-     * @param {Route} route - Route to optimize
-     */
     optimizeBalanced(route) {
-        // Implementation would balance all factors
-        // This is a placeholder for more complex optimization logic
     }
 
-    /**
-     * Generates fallback coordinates when segment coordinates are missing
-     * @param {Object} segment - Original segment data
-     * @returns {Array} - Fallback coordinate array
-     */
     generateFallbackCoords(segment) {
         const fromCoords = this.extractCoordinates(segment.from);
         const toCoords = this.extractCoordinates(segment.to);
@@ -344,35 +256,25 @@ class PathTransformerService {
         return [];
     }
 
-    /**
-     * Extracts coordinates from various location object formats
-     * @param {Object|Array} location - Location data
-     * @returns {Array|null} - [lng, lat] coordinates
-     */
     extractCoordinates(location) {
         if (!location) return null;
 
-        // Array format [lng, lat]
         if (Array.isArray(location) && location.length >= 2) {
             return [location[0], location[1]];
         }
 
-        // Object with pointX, pointY (bus stop format)
         if (location.pointX !== undefined && location.pointY !== undefined) {
             return [location.pointX, location.pointY];
         }
 
-        // Object with lng, lat
         if (location.lng !== undefined && location.lat !== undefined) {
             return [location.lng, location.lat];
         }
 
-        // Object with longitude, latitude
         if (location.longitude !== undefined && location.latitude !== undefined) {
             return [location.longitude, location.latitude];
         }
 
-        // Object with coordinates array
         if (location.coordinates && Array.isArray(location.coordinates) && location.coordinates.length >= 2) {
             return [location.coordinates[0], location.coordinates[1]];
         }
@@ -380,18 +282,12 @@ class PathTransformerService {
         return null;
     }
 
-    /**
-     * Validates the transformed path structure
-     * @param {Array} path - Transformed path array
-     * @returns {boolean} - Whether the path is valid for MapView
-     */
     validateMapViewPath(path) {
         if (!Array.isArray(path) || path.length === 0) {
             return false;
         }
 
         return path.every(segment => {
-            // Check required properties
             const hasType = segment.type && (segment.type === 'walking' || segment.type === 'bus');
             const hasCoords = segment.coords && Array.isArray(segment.coords) && segment.coords.length > 0;
 
@@ -399,21 +295,10 @@ class PathTransformerService {
         });
     }
 
-    /**
-     * Validates Route composite object
-     * @param {Route} route - Route to validate
-     * @returns {boolean} - Whether the route is valid
-     */
     validateRoute(route) {
         return route instanceof Route && route.isValid();
     }
 
-    /**
-     * Gets summary statistics of the transformation
-     * @param {Array|Route} originalPath - Original path
-     * @param {Array|Route} transformedPath - Transformed path
-     * @returns {Object} - Transformation statistics
-     */
     getTransformationStats(originalPath, transformedPath) {
         const getLength = (item) => {
             if (item instanceof Route) return item.getComponents().length;
@@ -437,12 +322,6 @@ class PathTransformerService {
         };
     }
 
-    /**
-     * Validates that a transformation was successful
-     * @param {Array|Route} original - Original data
-     * @param {Array|Route} transformed - Transformed data
-     * @returns {boolean} - Whether transformation is valid
-     */
     validateTransformation(original, transformed) {
         if (transformed instanceof Route) {
             return this.validateRoute(transformed);
@@ -455,11 +334,6 @@ class PathTransformerService {
         return false;
     }
 
-    /**
-     * Logs transformation details for debugging
-     * @param {Array|Route} originalPath - Original path
-     * @param {Array|Route} transformedPath - Transformed path
-     */
     debugLogTransformation(originalPath, transformedPath) {
         console.group('PathTransformer Debug');
         console.log('Original:', originalPath);
@@ -469,6 +343,5 @@ class PathTransformerService {
     }
 }
 
-// Export singleton instance
 const pathTransformerService = new PathTransformerService();
 export default pathTransformerService;

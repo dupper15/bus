@@ -1,11 +1,6 @@
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-/**
- * MapBoxFacade provides a simplified interface to MapBox API functionality.
- * This facade encapsulates all direct MapBox API interactions and provides
- * a cleaner, more maintainable interface for the rest of the application.
- */
 class MapBoxFacade {
     constructor(accessToken) {
         this.accessToken = accessToken;
@@ -15,15 +10,10 @@ class MapBoxFacade {
         this.activeSources = new Map();
     }
 
-    /**
-     * Creates and initializes a new MapBox map instance
-     * @param {Object} options - Map configuration options
-     * @returns {mapboxgl.Map} - The created map instance
-     */
     createMap(container, options = {}) {
         const defaultOptions = {
             style: "mapbox://styles/mapbox/streets-v11",
-            center: [106.70098, 10.77584], // Ho Chi Minh City
+            center: [106.70098, 10.77584],
             zoom: 13,
             maxZoom: 17,
             minZoom: 9
@@ -38,21 +28,10 @@ class MapBoxFacade {
         return map;
     }
 
-    /**
-     * Adds navigation controls to the map
-     * @param {mapboxgl.Map} map - The map instance
-     * @param {string} position - Control position
-     */
     addNavigationControls(map, position = "top-right") {
         map.addControl(new mapboxgl.NavigationControl(), position);
     }
 
-    /**
-     * Calculates directions between waypoints
-     * @param {Array} coordinates - Array of [lng, lat] coordinates
-     * @param {string} profile - Routing profile (driving, walking, etc.)
-     * @returns {Promise<Object>} - Route data from MapBox Directions API
-     */
     async getDirections(coordinates, profile = "driving") {
         const waypoints = coordinates
             .map(coord => `${coord[0]},${coord[1]}`)
@@ -69,12 +48,6 @@ class MapBoxFacade {
         return await response.json();
     }
 
-    /**
-     * Places a marker on the map
-     * @param {mapboxgl.Map} map - The map instance
-     * @param {Object} options - Marker configuration
-     * @returns {mapboxgl.Marker} - The created marker
-     */
     placeMarker(map, options) {
         const { coordinates, element, popup, id } = options;
 
@@ -101,11 +74,6 @@ class MapBoxFacade {
         return marker;
     }
 
-    /**
-     * Creates a custom marker element
-     * @param {Object} config - Marker visual configuration
-     * @returns {HTMLElement} - The marker DOM element
-     */
     createMarkerElement(config) {
         const el = document.createElement('div');
         el.className = config.className || 'custom-marker';
@@ -118,18 +86,11 @@ class MapBoxFacade {
         return el;
     }
 
-    /**
-     * Adds a route layer to the map
-     * @param {mapboxgl.Map} map - The map instance
-     * @param {Object} routeData - Route configuration
-     */
     addRouteLayer(map, routeData) {
         const { id, coordinates, color = "#22C55E", width = 4 } = routeData;
 
-        // Remove existing layer if present
         this.removeLayer(map, id);
 
-        // Add source
         map.addSource(id, {
             type: "geojson",
             data: {
@@ -141,7 +102,6 @@ class MapBoxFacade {
             }
         });
 
-        // Add layer
         map.addLayer({
             id: id,
             type: "line",
@@ -160,11 +120,6 @@ class MapBoxFacade {
         this.activeSources.set(id, true);
     }
 
-    /**
-     * Removes a layer from the map
-     * @param {mapboxgl.Map} map - The map instance
-     * @param {string} layerId - The layer ID to remove
-     */
     removeLayer(map, layerId) {
         if (map.getLayer(layerId)) {
             map.removeLayer(layerId);
@@ -176,11 +131,6 @@ class MapBoxFacade {
         }
     }
 
-    /**
-     * Clears all route-related layers from the map
-     * @param {mapboxgl.Map} map - The map instance
-     * @param {string} prefix - Layer ID prefix to match
-     */
     clearRouteLayers(map, prefix = "path-") {
         if (!map || !map.isStyleLoaded()) return;
 
@@ -196,11 +146,6 @@ class MapBoxFacade {
         }
     }
 
-    /**
-     * Creates bounds that encompass all provided coordinates
-     * @param {Array} coordinates - Array of [lng, lat] coordinates
-     * @returns {mapboxgl.LngLatBounds} - The calculated bounds
-     */
     createBounds(coordinates) {
         if (!coordinates || coordinates.length === 0) return null;
 
@@ -210,23 +155,11 @@ class MapBoxFacade {
         );
     }
 
-    /**
-     * Fits the map view to specified bounds
-     * @param {mapboxgl.Map} map - The map instance
-     * @param {mapboxgl.LngLatBounds} bounds - The bounds to fit
-     * @param {Object} options - Fit options
-     */
     fitBounds(map, bounds, options = {}) {
         const defaultOptions = { padding: 50 };
         map.fitBounds(bounds, { ...defaultOptions, ...options });
     }
 
-    /**
-     * Flies to a specific location on the map
-     * @param {mapboxgl.Map} map - The map instance
-     * @param {Array} center - [lng, lat] coordinates
-     * @param {Object} options - Animation options
-     */
     flyTo(map, center, options = {}) {
         const defaultOptions = {
             zoom: 15,
@@ -240,10 +173,6 @@ class MapBoxFacade {
         });
     }
 
-    /**
-     * Removes a specific marker from the map
-     * @param {string} markerId - The marker ID to remove
-     */
     removeMarker(markerId) {
         const marker = this.activeMarkers.get(markerId);
         if (marker) {
@@ -252,48 +181,23 @@ class MapBoxFacade {
         }
     }
 
-    /**
-     * Removes all markers from the map
-     */
     clearAllMarkers() {
         this.activeMarkers.forEach(marker => marker.remove());
         this.activeMarkers.clear();
     }
 
-    /**
-     * Sets map event handlers
-     * @param {mapboxgl.Map} map - The map instance
-     * @param {string} event - Event name
-     * @param {Function} handler - Event handler function
-     */
     setMapEventHandler(map, event, handler) {
         map.on(event, handler);
     }
 
-    /**
-     * Removes map event handlers
-     * @param {mapboxgl.Map} map - The map instance
-     * @param {string} event - Event name
-     * @param {Function} handler - Event handler function
-     */
     removeMapEventHandler(map, event, handler) {
         map.off(event, handler);
     }
 
-    /**
-     * Checks if the map style is loaded
-     * @param {mapboxgl.Map} map - The map instance
-     * @returns {boolean} - Whether the style is loaded
-     */
     isStyleLoaded(map) {
         return map.isStyleLoaded();
     }
 
-    /**
-     * Waits for the map style to load
-     * @param {mapboxgl.Map} map - The map instance
-     * @returns {Promise} - Resolves when style is loaded
-     */
     waitForStyleLoad(map) {
         return new Promise((resolve) => {
             if (map.isStyleLoaded()) {
@@ -304,25 +208,14 @@ class MapBoxFacade {
         });
     }
 
-    /**
-     * Gets the current map zoom level
-     * @param {mapboxgl.Map} map - The map instance
-     * @returns {number} - Current zoom level
-     */
     getZoom(map) {
         return map.getZoom();
     }
 
-    /**
-     * Creates a LngLat object from coordinates
-     * @param {Array} coordinates - [lng, lat] array
-     * @returns {mapboxgl.LngLat} - LngLat object
-     */
     createLngLat(coordinates) {
         return new mapboxgl.LngLat(coordinates[0], coordinates[1]);
     }
 }
 
-// Export singleton instance
 const mapBoxFacade = new MapBoxFacade(import.meta.env.VITE_MAPBOX_ACCESS_TOKEN);
 export default mapBoxFacade;
