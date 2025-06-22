@@ -1,147 +1,112 @@
 import PathfindingStrategy from './PathfindingStrategy.js';
 import Route from '@/components/Route/Route.jsx';
+import routingService from '@/services/RoutingService.js';
 
-/**
- * BalancedStrategy - Updated to work with Composite pattern
- * Provides a balanced optimization considering time, distance, transfers, and walking
- */
 class BalancedStrategy extends PathfindingStrategy {
     constructor() {
         super(
             'Balanced Route',
             '⚖️',
-            'Optimizes for a good balance of time, distance, transfers, and walking distance'
+            'Balances time, transfers, and walking distance for a practical route'
         );
     }
 
-    /**
-     * Finds the best balanced route between start and end points
-     * @param {Array} startCoords - Starting coordinates [lng, lat]
-     * @param {Array} endCoords - Ending coordinates [lng, lat]
-     * @param {Array} busStops - Available bus stops
-     * @param {Array} busLines - Available bus lines
-     * @returns {Promise<Object>} - Result with Route object and metadata
-     */
     async findPath(startCoords, endCoords, busStops, busLines) {
         try {
-            // Find multiple route options
-            const routeOptions = await this.generateRouteOptions(startCoords, endCoords, busStops, busLines);
+            const nearbyStartStops = this.findNearbyStops(startCoords, busStops, 1.5);
+            const nearbyEndStops = this.findNearbyStops(endCoords, busStops, 1.5);
 
-            if (routeOptions.length === 0) {
-                // Fallback to walking-only route
-                const walkingRoute = await this.createWalkingOnlyRoute(startCoords, endCoords);
-                return {
-                    path: walkingRoute,
-                    metadata: this.createMetadata(walkingRoute, { fallback: 'walking-only' })
-                };
+            if (nearbyStartStops.length === 0 || nearbyEndStops.length === 0) {
+                return this.createWalkingResult(startCoords, endCoords);
             }
 
-            // Score and select best balanced route
-            const bestRoute = this.selectBestBalancedRoute(routeOptions);
+            let bestRoute = null;
+            let bestScore = Infinity;
+
+            // Try direct routes
+            for (let startStopData of nearbyStartStops) {
+                for (let endStopData of nearbyEndStops) {
+                    const directRoute = await this.createDirectRoute(
+                        startCoords, endCoords,
+                        startStopData, endStopData, busLines
+                    );
+
+                    if (directRoute) {
+                        const score = this.calculateBalancedScore(directRoute, startStopData.distance, endStopData.distance);
+                        if (score < bestScore) {
+                            bestScore = score;
+                            bestRoute = directRoute;
+                        }
+                    }
+                }
+            }
+
+            // Try transfer routes
+            for (let startStopData of nearbyStartStops.slice(0, 3)) {
+                for (let endStopData of nearbyEndStops.slice(0, 3)) {
+                    const transferRoute = await this.createTransferRoute(
+                        startCoords, endCoords,
+                        startStopData, endStopData, busStops, busLines
+                    );
+
+                    if (transferRoute) {
+                        const score = this.calculateBalancedScore(transferRoute, startStopData.distance, endStopData.distance);
+                        if (score < bestScore) {
+                            bestScore = score;
+                            bestRoute = transferRoute;
+                        }
+                    }
+                }
+            }
+
+            if (!bestRoute) {
+                return this.createWalkingResult(startCoords, endCoords);
+            }
 
             return {
                 path: bestRoute,
                 metadata: this.createMetadata(bestRoute, {
-                    optionsConsidered: routeOptions.length,
-                    selectionCriteria: 'balanced-optimization'
+                    strategy: 'balanced',
+                    score: bestScore
                 })
             };
+
         } catch (error) {
-            console.error('Error in BalancedStrategy.findPath:', error);
-            throw error;
+            console.error('Error in BalancedStrategy:', error);
+            return this.createWalkingResult(startCoords, endCoords);
         }
     }
 
-    /**
-     * Generates multiple route options to evaluate
-     * @param {Array} startCoords - Starting coordinates
-     * @param {Array} endCoords - Ending coordinates
-     * @param {Array} busStops - Available bus stops
-     * @param {Array} busLines - Available bus lines
-     * @returns {Promise<Array>} - Array of route options
-     */
-    async generateRouteOptions(startCoords, endCoords, busStops, busLines) {
-        const options = [];
-
-        // Find nearby stops
-        const nearbyStartStops = this.findNearbyStops(startCoords, busStops, 1.5);
-        const nearbyEndStops = this.findNearbyStops(endCoords, busStops, 1.5);
-
-        if (nearbyStartStops.length === 0 || nearbyEndStops.length === 0) {
-            return options;
-        }
-
-        // Generate single-transfer routes
-        for (let startStopData of nearbyStartStops.slice(0, 3)) { // Limit to top 3 starts
-            for (let endStopData of nearbyEndStops.slice(0, 3)) { // Limit to top 3 ends
-                const directRoute = await this.createDirectRoute(
-                    startCoords, endCoords,
-                    startStopData, endStopData,
-                    busLines
-                );
-
-                if (directRoute) {
-                    options.push(directRoute);
-                }
-            }
-        }
-
-        // Generate routes with one transfer
-        const transferRoutes = await this.generateTransferRoutes(
-            startCoords, endCoords,
-            nearbyStartStops.slice(0, 2),
-            nearbyEndStops.slice(0, 2),
-            busStops, busLines
-        );
-
-        options.push(...transferRoutes);
-
-        return options;
-    }
-
-    /**
-     * Creates a direct route (one bus line) between start and end
-     * @param {Array} startCoords - Starting coordinates
-     * @param {Array} endCoords - Ending coordinates
-     * @param {Object} startStopData - Start stop with distance
-     * @param {Object} endStopData - End stop with distance
-     * @param {Array} busLines - Available bus lines
-     * @returns {Promise<Route|null>} - Direct route or null
-     */
     async createDirectRoute(startCoords, endCoords, startStopData, endStopData, busLines) {
-        const { stop: startStop } = startStopData;
-        const { stop: endStop } = endStopData;
+        const connections = this.findDirectConnections(startStopData.stop, endStopData.stop, busLines);
 
-        // Find direct connections
-        const connections = this.findDirectConnections(startStop, endStop, busLines);
+        if (connections.length === 0) return null;
 
-        if (connections.length === 0) {
-            return null;
-        }
+        // Sort by line.time (prefer faster lines)
+        connections.sort((a, b) => (a.line.time || 60) - (b.line.time || 60));
 
-        // Use the best direct connection
         const bestConnection = connections[0];
         const segments = [];
 
-        // Walking to start stop
+        // Walking to start
         const walkToStart = await this.createWalkingSegment(
             { name: 'Start', coordinates: startCoords },
-            startStop
+            startStopData.stop
         );
         if (walkToStart) segments.push(walkToStart);
 
         // Bus segment
-        const busSegment = await this.createBusSegment(
-            startStop,
-            endStop,
+        const busSegment = await this.createBusSegmentWithLineTime(
+            startStopData.stop,
+            endStopData.stop,
             bestConnection.line,
             bestConnection.intermediateStops
         );
         if (busSegment) segments.push(busSegment);
 
-        // Walking from end stop
+        // Walking from end
         const walkFromEnd = await this.createWalkingSegment(
-            endStop,
+            endStopData.stop,
             { name: 'Destination', coordinates: endCoords }
         );
         if (walkFromEnd) segments.push(walkFromEnd);
@@ -152,63 +117,45 @@ class BalancedStrategy extends PathfindingStrategy {
         });
     }
 
-    /**
-     * Generates routes with one transfer
-     * @param {Array} startCoords - Starting coordinates
-     * @param {Array} endCoords - Ending coordinates
-     * @param {Array} nearbyStartStops - Nearby start stops
-     * @param {Array} nearbyEndStops - Nearby end stops
-     * @param {Array} busStops - All bus stops
-     * @param {Array} busLines - All bus lines
-     * @returns {Promise<Array>} - Array of transfer routes
-     */
-    async generateTransferRoutes(startCoords, endCoords, nearbyStartStops, nearbyEndStops, busStops, busLines) {
-        const transferRoutes = [];
+    async createTransferRoute(startCoords, endCoords, startStopData, endStopData, busStops, busLines) {
+        const transferPoints = this.findTransferHubs(busStops, busLines).slice(0, 3);
 
-        // Find good transfer points (busy intersections)
-        const transferCandidates = this.findTransferCandidates(busStops, busLines);
+        let bestTransferRoute = null;
+        let bestTransferScore = Infinity;
 
-        for (let startStopData of nearbyStartStops) {
-            for (let transferPoint of transferCandidates.slice(0, 5)) { // Top 5 transfer points
-                for (let endStopData of nearbyEndStops) {
-                    const transferRoute = await this.createTransferRoute(
-                        startCoords, endCoords,
-                        startStopData.stop, transferPoint, endStopData.stop,
-                        busLines
-                    );
+        for (let transferPoint of transferPoints) {
+            const firstLegConnections = this.findDirectConnections(startStopData.stop, transferPoint, busLines);
+            if (firstLegConnections.length === 0) continue;
 
-                    if (transferRoute) {
-                        transferRoutes.push(transferRoute);
-                    }
+            const secondLegConnections = this.findDirectConnections(transferPoint, endStopData.stop, busLines);
+            if (secondLegConnections.length === 0) continue;
+
+            // Try combinations - take best from each leg
+            const bestFirstLeg = firstLegConnections.sort((a, b) => (a.line.time || 60) - (b.line.time || 60))[0];
+            const bestSecondLeg = secondLegConnections.sort((a, b) => (a.line.time || 60) - (b.line.time || 60))[0];
+
+            const route = await this.buildTransferRoute(
+                startCoords, endCoords,
+                startStopData.stop, transferPoint, endStopData.stop,
+                bestFirstLeg, bestSecondLeg
+            );
+
+            if (route) {
+                const score = this.calculateBalancedScore(route, startStopData.distance, endStopData.distance);
+                if (score < bestTransferScore) {
+                    bestTransferScore = score;
+                    bestTransferRoute = route;
                 }
             }
         }
 
-        return transferRoutes;
+        return bestTransferRoute;
     }
 
-    /**
-     * Creates a route with one transfer
-     * @param {Array} startCoords - Starting coordinates
-     * @param {Array} endCoords - Ending coordinates
-     * @param {Object} startStop - Starting bus stop
-     * @param {Object} transferStop - Transfer bus stop
-     * @param {Object} endStop - Ending bus stop
-     * @param {Array} busLines - Available bus lines
-     * @returns {Promise<Route|null>} - Transfer route or null
-     */
-    async createTransferRoute(startCoords, endCoords, startStop, transferStop, endStop, busLines) {
-        // Find first leg connection
-        const firstLegConnections = this.findDirectConnections(startStop, transferStop, busLines);
-        if (firstLegConnections.length === 0) return null;
-
-        // Find second leg connection
-        const secondLegConnections = this.findDirectConnections(transferStop, endStop, busLines);
-        if (secondLegConnections.length === 0) return null;
-
+    async buildTransferRoute(startCoords, endCoords, startStop, transferStop, endStop, firstLeg, secondLeg) {
         const segments = [];
 
-        // Walking to start stop
+        // Walking to start
         const walkToStart = await this.createWalkingSegment(
             { name: 'Start', coordinates: startCoords },
             startStop
@@ -216,32 +163,24 @@ class BalancedStrategy extends PathfindingStrategy {
         if (walkToStart) segments.push(walkToStart);
 
         // First bus segment
-        const firstBusSegment = await this.createBusSegment(
+        const firstBusSegment = await this.createBusSegmentWithLineTime(
             startStop,
             transferStop,
-            firstLegConnections[0].line,
-            firstLegConnections[0].intermediateStops
+            firstLeg.line,
+            firstLeg.intermediateStops
         );
         if (firstBusSegment) segments.push(firstBusSegment);
 
-        // Transfer walking (if different stops)
-        if (transferStop.id !== transferStop.id) { // This should be a different check in practice
-            const transferWalk = await this.createWalkingSegment(transferStop, transferStop);
-            if (transferWalk && transferWalk.distance > 0.05) { // Only if significant distance
-                segments.push(transferWalk);
-            }
-        }
-
         // Second bus segment
-        const secondBusSegment = await this.createBusSegment(
+        const secondBusSegment = await this.createBusSegmentWithLineTime(
             transferStop,
             endStop,
-            secondLegConnections[0].line,
-            secondLegConnections[0].intermediateStops
+            secondLeg.line,
+            secondLeg.intermediateStops
         );
         if (secondBusSegment) segments.push(secondBusSegment);
 
-        // Walking from end stop
+        // Walking from end
         const walkFromEnd = await this.createWalkingSegment(
             endStop,
             { name: 'Destination', coordinates: endCoords }
@@ -250,155 +189,156 @@ class BalancedStrategy extends PathfindingStrategy {
 
         return this.createRoute(segments, {
             routeType: 'transfer',
-            transfers: 1,
-            transferPoint: transferStop
+            transfers: 1
         });
     }
 
-    /**
-     * Finds good transfer points based on line intersections
-     * @param {Array} busStops - All bus stops
-     * @param {Array} busLines - All bus lines
-     * @returns {Array} - Transfer candidate stops
-     */
-    findTransferCandidates(busStops, busLines) {
-        const stopLineCount = {};
+    async createBusSegmentWithLineTime(from, to, line, intermediateStops = []) {
+        const fromCoords = this.extractCoordinates(from);
+        const toCoords = this.extractCoordinates(to);
 
-        // Count how many lines serve each stop
-        busLines.forEach(line => {
-            if (line.arr_stop && Array.isArray(line.arr_stop)) {
-                line.arr_stop.forEach(stop => {
-                    const key = stop.id || stop.name;
-                    stopLineCount[key] = (stopLineCount[key] || 0) + 1;
-                });
+        if (!fromCoords || !toCoords) return null;
+
+        const distance = this.calculateDistance(fromCoords, toCoords);
+        let duration = line.time || this.estimateTravelTime(distance, 'bus');
+
+        if (line.arr_stop && line.arr_stop.length > 2) {
+            const proportionOfLine = (intermediateStops.length + 1) / (line.arr_stop.length - 1);
+            duration = duration * proportionOfLine;
+        }
+
+        // Get enhanced bus route if possible
+        let coordinates = [fromCoords, toCoords];
+        try {
+            const allStops = [from, ...intermediateStops, to];
+            const busRoute = await routingService.getBusRoute(allStops);
+            if (busRoute && busRoute.coordinates) {
+                coordinates = busRoute.coordinates;
             }
-        });
+        } catch (error) {
+            console.warn('Could not get enhanced bus route:', error);
+        }
 
-        // Find stops served by multiple lines (good transfer points)
-        const transferCandidates = busStops
-            .filter(stop => (stopLineCount[stop.id] || stopLineCount[stop.name] || 0) >= 2)
-            .sort((a, b) => {
-                const aCount = stopLineCount[a.id] || stopLineCount[a.name] || 0;
-                const bCount = stopLineCount[b.id] || stopLineCount[b.name] || 0;
-                return bCount - aCount; // Sort by descending line count
+        return {
+            type: 'bus',
+            from: from,
+            to: to,
+            line: line,
+            distance: distance,
+            duration: Math.round(duration),
+            coordinates: coordinates,
+            intermediateStops: intermediateStops,
+            fare: 6000
+        };
+    }
+
+    findTransferHubs(busStops, busLines) {
+        const stopConnections = new Map();
+
+        for (let line of busLines) {
+            if (line.arr_stop) {
+                for (let stop of line.arr_stop) {
+                    const stopId = stop.id || stop.name || JSON.stringify(stop);
+                    if (!stopConnections.has(stopId)) {
+                        stopConnections.set(stopId, { stop: stop, lineCount: 0 });
+                    }
+                    stopConnections.get(stopId).lineCount++;
+                }
+            }
+        }
+
+        return Array.from(stopConnections.values())
+            .sort((a, b) => b.lineCount - a.lineCount)
+            .slice(0, 10)
+            .map(item => item.stop);
+    }
+
+    calculateBalancedScore(route, walkToStartDistance, walkFromEndDistance) {
+        const weights = {
+            time: 1.0,           // Total route time
+            transfers: 15.0,     // Transfers penalty (moderate)
+            walking: 8.0,        // Walking distance penalty
+            stops: 0.5,          // Bus stops penalty (more stops = slower)
+            stations: -3.0       // Station bonus (isStation = true)
+        };
+
+        const time = this.getTotalDuration(route);
+        const transfers = route.getTransferCount();
+        const walking = walkToStartDistance + walkFromEndDistance;
+        const stops = this.countBusStops(route);
+        const stations = this.countStations(route);
+
+        return (time * weights.time) +
+            (transfers * weights.transfers) +
+            (walking * weights.walking) +
+            (stops * weights.stops) +
+            (stations * weights.stations);
+    }
+
+    getTotalDuration(route) {
+        if (!route || !route.getComponents) return 0;
+
+        return route.getComponents()
+            .reduce((total, segment) => total + (segment.duration || 0), 0);
+    }
+
+    countBusStops(route) {
+        if (!route || !route.getComponents) return 0;
+
+        return route.getComponents()
+            .filter(segment => segment.type === 'bus')
+            .reduce((total, segment) => total + (segment.intermediateStops?.length || 0), 0);
+    }
+
+    countStations(route) {
+        if (!route || !route.getComponents) return 0;
+
+        let stationCount = 0;
+        route.getComponents()
+            .filter(segment => segment.type === 'bus')
+            .forEach(segment => {
+                if (segment.from?.isStation) stationCount++;
+                if (segment.to?.isStation) stationCount++;
+                if (segment.intermediateStops) {
+                    stationCount += segment.intermediateStops.filter(stop => stop.isStation).length;
+                }
             });
 
-        return transferCandidates;
+        return stationCount;
     }
 
-    /**
-     * Creates a walking-only route as fallback
-     * @param {Array} startCoords - Starting coordinates
-     * @param {Array} endCoords - Ending coordinates
-     * @returns {Promise<Route>} - Walking-only route
-     */
-    async createWalkingOnlyRoute(startCoords, endCoords) {
+    async createWalkingResult(startCoords, endCoords) {
         const walkingSegment = await this.createWalkingSegment(
             { name: 'Start', coordinates: startCoords },
             { name: 'Destination', coordinates: endCoords }
         );
 
-        return this.createRoute([walkingSegment], {
+        const walkingRoute = this.createRoute([walkingSegment], {
             routeType: 'walking-only',
             transfers: 0
         });
-    }
 
-    /**
-     * Selects the best route from options using balanced scoring
-     * @param {Array} routeOptions - Array of route options
-     * @returns {Route} - Best route
-     */
-    selectBestBalancedRoute(routeOptions) {
-        if (routeOptions.length === 1) {
-            return routeOptions[0];
-        }
-
-        // Score each route using balanced criteria
-        const scoredRoutes = routeOptions.map(route => ({
-            route: route,
-            score: this.calculateBalancedScore(route)
-        }));
-
-        // Sort by score (lower is better)
-        scoredRoutes.sort((a, b) => a.score - b.score);
-
-        return scoredRoutes[0].route;
-    }
-
-    /**
-     * Calculates balanced score for route comparison
-     * @param {Route} route - Route to score
-     * @returns {number} - Balanced score (lower is better)
-     */
-    calculateBalancedScore(route) {
-        // Balanced weights for different factors
-        const weights = {
-            distance: 1.0,      // Total distance
-            duration: 2.0,      // Total time (most important)
-            transfers: 15.0,    // Number of transfers (high penalty)
-            walking: 3.0,       // Walking distance
-            cost: 0.05,         // Cost (less important)
-            complexity: 5.0     // Route complexity
+        return {
+            path: walkingRoute,
+            metadata: this.createMetadata(walkingRoute, {
+                strategy: 'balanced',
+                fallback: 'walking-only'
+            })
         };
-
-        const distance = route.getDistance();
-        const duration = route.getDuration();
-        const transfers = route.getTransferCount();
-        const walking = route.getWalkingDistance();
-        const cost = route.getCost();
-        const complexity = route.getComponents().length;
-
-        return (
-            (distance * weights.distance) +
-            (duration * weights.duration) +
-            (transfers * weights.transfers) +
-            (walking * weights.walking) +
-            (cost * weights.cost) +
-            (complexity * weights.complexity)
-        );
     }
 
-    /**
-     * Creates metadata for the route result
-     * @param {Route} route - Created route
-     * @param {Object} additionalData - Additional metadata
-     * @returns {Object} - Route metadata
-     */
     createMetadata(route, additionalData = {}) {
+        const balancedScore = additionalData.score || this.calculateBalancedScore(route, 0, 0);
+
         return {
             strategy: this.type,
             strategyName: this.name,
-            score: this.calculateBalancedScore(route),
+            score: balancedScore,
             transfers: route.getTransferCount(),
-            totalDistance: route.getDistance(),
-            totalWalking: route.getWalkingDistance(),
-            totalDuration: route.getDuration(),
-            totalCost: route.getCost(),
-            segments: route.getComponents().length,
-            confidence: route.confidence || 0.8,
+            totalDuration: this.getTotalDuration(route),
+            optimizationFactor: 'balanced',
             ...additionalData
         };
-    }
-
-    /**
-     * Determines if balanced strategy is suitable for given conditions
-     * @param {Object} conditions - Route conditions
-     * @returns {boolean} - Whether strategy is suitable
-     */
-    isSuitableFor(conditions = {}) {
-        // Balanced strategy is suitable for most conditions
-        return true;
-    }
-
-    /**
-     * Gets priority for balanced strategy
-     * @param {Object} context - Route context
-     * @returns {number} - Priority (lower = higher priority)
-     */
-    getPriority(context = {}) {
-        // Balanced strategy has medium priority - good default choice
-        return 50;
     }
 }
 
