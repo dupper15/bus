@@ -52,8 +52,8 @@ import dayjs from "dayjs";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 const SchedulePage = () => {
-    const [isLoading, setIsLoading] = useState(true);
-  
+  const [isLoading, setIsLoading] = useState(true);
+
   const ITEMS_PER_PAGE = 10;
   const [items, setItems] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -139,7 +139,6 @@ const SchedulePage = () => {
     onError: (error) => {
       console.error("Error fetching schedules:", error);
       setIsLoading(false);
-
     },
   });
 
@@ -173,17 +172,27 @@ const SchedulePage = () => {
   }, [refresh]);
 
   useEffect(() => {
-    // Lọc dữ liệu dựa trên ngày và từ khóa tìm kiếm
+    if (!Array.isArray(rawItems)) {
+      setItems([]);
+      return;
+    }
+
     const today = dayjs(date).startOf("day");
+
     const filteredSchedules = rawItems.filter((item) => {
       const matchesDate = dayjs(item.date).isSame(today, "day");
-      const matchesSearch = item.line.name
-        .toLowerCase()
+      const matchesSearch = item.line?.name
+        ?.toLowerCase()
         .includes(searchWord.toLowerCase());
       return matchesDate && matchesSearch;
     });
+
     setItems(filteredSchedules);
   }, [date, searchWord, rawItems]);
+
+  useEffect(() => {
+    console.log("Items updated:", items);
+  }, [items]);
 
   const allNotPending = items.every(
     (schedule) => schedule.status !== "Pending"
@@ -252,126 +261,127 @@ const SchedulePage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-             {isLoading
-                             ? Array(5)
-                                 .fill()
-                                 .map((_, idx) => (
-                                   <TableRow key={idx}>
-                                     <TableCell>
-                                       <Skeleton height={20} width='50%' />
-                                     </TableCell>
-                                     <TableCell>
-                                       <Skeleton height={20} width='50%' />
-                                     </TableCell>
-                                     <TableCell>
-                                       <Skeleton height={20} width='50%' />
-                                     </TableCell>
-                                     <TableCell>
-                                     <Skeleton height={20} width='80%' />
-                                     </TableCell>
-                                     <TableCell>
-                                       <Skeleton height={20} width='80%' />
-                                     </TableCell>
-                                     <TableCell>
-                                       <Skeleton height={20} width='50%' />
-                                     </TableCell>
-                                     <TableCell>
-                                       <Skeleton height={20} width='60%' />
-                                     </TableCell>
-                                     <TableCell>
-                                       <Skeleton height={20} width='30%' />
-                                     </TableCell>
-                                     <TableCell>
-                                       <Skeleton height={20} width='30%' />
-                                     </TableCell>
-                                     <TableCell>
-                                       <Skeleton height={20} width='30%' />
-                                     </TableCell>
-                                     <TableCell>
-                                       <Skeleton height={20} width='30%' />
-                                     </TableCell>
-                                   </TableRow>
-                                 ))
-                             :currentItems.map((item, index) => (
-                <TableRow
-                  key={index}
-                  onClick={() => setSelected(item)}
-                  className={`${
-                    item?.bus?.status !== "Active" ||
-                    item?.driver?.status !== "Enable" ||
-                    item?.busboy?.status !== "Enable"
-                      ? "bg-red-100 hover:bg-red-300" // Màu nền cảnh báo và màu khi hover
-                      : "hover:bg-gray-100" // Màu nền khi hover nếu không có cảnh báo
-                  }`}>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.id}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item?.bus?.license_plate}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item?.line?.name}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item?.driver?.name}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item?.busboy?.name}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.time_start}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {convertMinutesToHoursAndMinutes(item.line.time)}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.ticket3}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    {item.ticket7}
-                  </TableCell>
-                  <TableCell className='text-center py-3 px-4'>
-                    <span
-                      className={`px-1 py-1 mx-2 w-full rounded-full text-xs font-medium ${
-                        item.status === "Pending"
-                          ? "bg-red-100 text-red-600"
-                          : item.status === "Not start yet"
-                          ? "bg-yellow-100 text-orange-600"
-                          : item.status === "In Progress"
-                          ? "bg-blue-100 text-blue-600"
-                          : "bg-green-100 text-green-600"
+              {isLoading
+                ? Array(5)
+                    .fill()
+                    .map((_, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='80%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='80%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='50%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='60%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='30%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='30%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='30%' />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton height={20} width='30%' />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                : currentItems.map((item, index) => (
+                    <TableRow
+                      key={index}
+                      onClick={() => setSelected(item)}
+                      className={`${
+                        item?.bus?.status !== "Active" ||
+                        item?.driver?.status !== "Enable" ||
+                        item?.busboy?.status !== "Enable"
+                          ? "bg-red-100 hover:bg-red-300" // Màu nền cảnh báo và màu khi hover
+                          : "hover:bg-gray-100" // Màu nền khi hover nếu không có cảnh báo
                       }`}>
-                      {item.status}
-                    </span>
-                  </TableCell>
-                  {item.status === "Pending" ? (
-                    <TableCell className='text-center flex justify-center items-center py-3 px-4'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <EllipsisVertical className='mb-2 ' />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => handleEditClick()}>
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDialogOpen("delete")}>
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  ) : (
-                    <TableCell className='text-center flex justify-center items-center py-3 px-4'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <EllipsisVertical className='mb-2 ' />
-                        </DropdownMenuTrigger>
-                      </DropdownMenu>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.id}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item?.bus?.license_plate}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item?.line?.name}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item?.driver?.name}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item?.busboy?.name}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.time_start}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {convertMinutesToHoursAndMinutes(item.line.time)}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.ticket3}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        {item.ticket7}
+                      </TableCell>
+                      <TableCell className='text-center py-3 px-4'>
+                        <span
+                          className={`px-1 py-1 mx-2 w-full rounded-full text-xs font-medium ${
+                            item.status === "Pending"
+                              ? "bg-red-100 text-red-600"
+                              : item.status === "Not start yet"
+                              ? "bg-yellow-100 text-orange-600"
+                              : item.status === "In Progress"
+                              ? "bg-blue-100 text-blue-600"
+                              : "bg-green-100 text-green-600"
+                          }`}>
+                          {item.status}
+                        </span>
+                      </TableCell>
+                      {item.status === "Pending" ? (
+                        <TableCell className='text-center flex justify-center items-center py-3 px-4'>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger>
+                              <EllipsisVertical className='mb-2 ' />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem
+                                onClick={() => handleEditClick()}>
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDialogOpen("delete")}>
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      ) : (
+                        <TableCell className='text-center flex justify-center items-center py-3 px-4'>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger>
+                              <EllipsisVertical className='mb-2 ' />
+                            </DropdownMenuTrigger>
+                          </DropdownMenu>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
             </TableBody>
           </Table>
         </div>

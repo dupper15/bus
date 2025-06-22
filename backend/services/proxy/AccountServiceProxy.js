@@ -44,6 +44,16 @@ class AccountServiceProxy {
     return await this.realService.updateAccount(id, data);
   }
 
+  async changeStatus(id) {
+    console.log(`[CHANGE STATUS] user ${id}`);
+    return await this.realService.changeStatus(id);
+  }
+
+  async deleteAccount(id) {
+    console.log(`[DELETE] user ${id}`);
+    return await this.realService.deleteAccount(id);
+  }
+
   async getAllAccounts(data) {
     console.log(`[GET ALL ACCOUNTS] type: ${data}`);
     return await this.realService.getAllAccounts(data);

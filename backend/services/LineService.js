@@ -8,7 +8,7 @@ const flyweightFactory = require("./flyweight/FlyweightFactory");
 const createLine = (newLine) => {
   return new Promise(async (resolve, reject) => {
     const {
-      type = "draft",
+      status = "draft",
       name,
       start_place,
       end_place,
@@ -17,7 +17,7 @@ const createLine = (newLine) => {
     } = newLine;
 
     // Validate type
-    if (!["draft", "published"].includes(type)) {
+    if (!["draft", "published"].includes(status)) {
       return reject({
         status: "ERROR",
         message: "Invalid line type. Must be 'draft' or 'published'.",
@@ -27,7 +27,7 @@ const createLine = (newLine) => {
     try {
       // Khởi tạo builder tương ứng
       const builder =
-        type === "published"
+        status === "published"
           ? new LinePublishedBuilder()
           : new LineDraftBuilder();
 
@@ -35,7 +35,7 @@ const createLine = (newLine) => {
 
       // Dùng director để build
       const builtLine =
-        type === "published"
+        status === "published"
           ? director.makePublishedLine({
               name,
               start_place,
