@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaExclamationTriangle, FaCheckCircle, FaInfoCircle, FaWalking, FaBus, FaClock } from 'react-icons/fa';
 import { MdTransferWithinAStation } from 'react-icons/md';
-import Route from '@/components/Route/Route.jsx';
+import RouteSegment from '@/components/Route/RouteSegment.jsx';
 import WalkingSegment from '@/components/Route/WalkingSegment.jsx';
 import BusSegment from '@/components/Route/BusSegment.jsx';
 
@@ -332,27 +332,27 @@ const EnhancedRouteDetails = ({ path, route, routeMetadata, fare = "6k VND" }) =
 /**
  * Helper function to convert legacy path data to Route composite object
  * @param {Array} path - Legacy path array
- * @param {Route} route - Route composite object
- * @returns {Route} - Route composite object
+ * @param {RouteSegment} route - Route composite object
+ * @returns {RouteSegment} - Route composite object
  */
 function getRouteObject(path, route) {
     // If already a Route composite object, return it
-    if (route instanceof Route) {
+    if (route instanceof RouteSegment) {
         return route;
     }
 
     // If we have a legacy path array, convert it to Route object
     if (Array.isArray(path) && path.length > 0) {
-        return Route.fromLegacyData({ segments: path });
+        return RouteSegment.fromLegacyData({ segments: path });
     }
 
     // If route is a plain object, try to construct from it
     if (route && typeof route === 'object') {
         if (route.components || route.segments) {
-            return Route.fromJSON(route);
+            return RouteSegment.fromJSON(route);
         }
         // Try to treat as legacy data
-        return Route.fromLegacyData(route);
+        return RouteSegment.fromLegacyData(route);
     }
 
     return null;
@@ -361,7 +361,7 @@ function getRouteObject(path, route) {
 EnhancedRouteDetails.propTypes = {
     path: PropTypes.array,
     route: PropTypes.oneOfType([
-        PropTypes.instanceOf(Route),
+        PropTypes.instanceOf(RouteSegment),
         PropTypes.object
     ]),
     routeMetadata: PropTypes.object,

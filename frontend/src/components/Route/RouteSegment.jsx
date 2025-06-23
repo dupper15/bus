@@ -3,7 +3,7 @@ import RouteComponent from './RouteComponent.jsx';
 import WalkingSegment from './WalkingSegment.jsx';
 import BusSegment from './BusSegment.jsx';
 
-class Route extends RouteComponent {
+class RouteSegment extends RouteComponent {
     constructor(options = {}) {
         super();
 
@@ -334,7 +334,7 @@ class Route extends RouteComponent {
     clone() {
         const clonedComponents = this.components.map(component => component.clone());
 
-        return new Route({
+        return new RouteSegment({
             name: this.name,
             components: clonedComponents,
             metadata: JSON.parse(JSON.stringify(this.metadata)),
@@ -376,7 +376,7 @@ class Route extends RouteComponent {
             }
         }) || [];
 
-        return new Route({
+        return new RouteSegment({
             name: data.name || 'Route',
             components: components,
             metadata: data.metadata || {},
@@ -407,7 +407,7 @@ class Route extends RouteComponent {
             });
         }
 
-        return new Route({
+        return new RouteSegment({
             name: legacyData.name || 'Route',
             components: components,
             metadata: legacyData.metadata || {},
@@ -416,4 +416,4 @@ class Route extends RouteComponent {
     }
 }
 
-export default Route;
+export default RouteSegment;

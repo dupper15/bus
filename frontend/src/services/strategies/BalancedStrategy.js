@@ -1,5 +1,5 @@
 import PathfindingStrategy from './PathfindingStrategy.js';
-import Route from '@/components/Route/Route.jsx';
+import RouteSegment from '@/components/Route/RouteSegment.jsx';
 import routingService from '@/services/RoutingService.js';
 
 class BalancedStrategy extends PathfindingStrategy {

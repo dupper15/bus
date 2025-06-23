@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import geolocationService from "../../../services/GeolocationService";
 import routeFinderContext from "../../../services/strategies/RouteFinderContext";
-import Route from '@/components/Route/Route.jsx';
+import RouteSegment from '@/components/Route/RouteSegment.jsx';
 import RouteComponent from '@/components/Route/RouteComponent.jsx';
 import pathTransformerService from "../../../services/PathTransformerService";
 
@@ -47,7 +47,7 @@ const useNavigationViewModel = () => {
             routeFinderContext.setStrategy(strategyType);
             setSelectedStrategy(strategyType);
 
-            if (route && route instanceof Route) {
+            if (route && route instanceof RouteSegment) {
                 console.log('Strategy changed. Click "Find Route" to recalculate with new strategy.');
             }
         } catch (error) {
@@ -77,7 +77,7 @@ const useNavigationViewModel = () => {
                 busLines
             );
 
-            if (result && result.path instanceof Route) {
+            if (result && result.path instanceof RouteSegment) {
                 setRoute(result.path);
                 setRouteMetadata(result.metadata);
 
@@ -157,7 +157,7 @@ const useNavigationViewModel = () => {
     };
 
     const getRouteStatistics = () => {
-        if (!route || !(route instanceof Route)) {
+        if (!route || !(route instanceof RouteSegment)) {
             return null;
         }
 
@@ -165,7 +165,7 @@ const useNavigationViewModel = () => {
     };
 
     const validateCurrentRoute = (constraints = {}) => {
-        if (!route || !(route instanceof Route)) {
+        if (!route || !(route instanceof RouteSegment)) {
             return false;
         }
 
@@ -226,7 +226,7 @@ const useNavigationViewModel = () => {
             });
         } catch (error) {
             console.error('Error creating route from path:', error);
-            return new Route({
+            return new RouteSegment({
                 name: 'Error Route',
                 metadata: { error: error.message }
             });
@@ -330,31 +330,31 @@ const useNavigationViewModel = () => {
                 return pathTransformerService.transformToRoute(legacyPath, options);
             } catch (error) {
                 console.error('Error transforming legacy path to route:', error);
-                return new Route({ name: 'Error Route' });
+                return new RouteSegment({ name: 'Error Route' });
             }
         },
 
         getRouteComplexity: () => {
-            return route instanceof Route ? route.getComponents().length : 0;
+            return route instanceof RouteSegment ? route.getComponents().length : 0;
         },
         getRouteConfidence: () => {
-            return route instanceof Route ? (route.confidence || 0.8) : 0;
+            return route instanceof RouteSegment ? (route.confidence || 0.8) : 0;
         },
         getRouteScore: () => {
-            return route instanceof Route ? route.calculateOptimizationScore() : Infinity;
+            return route instanceof RouteSegment ? route.calculateOptimizationScore() : Infinity;
         },
 
         cloneCurrentRoute: () => {
-            return route instanceof Route ? route.clone() : null;
+            return route instanceof RouteSegment ? route.clone() : null;
         },
         validateRoute: (routeObj, constraints) => {
-            if (!(routeObj instanceof Route)) return false;
+            if (!(routeObj instanceof RouteSegment)) return false;
             return routeObj.isValid();
         },
 
         exportRoute: () => {
             try {
-                return route instanceof Route ? route.toJSON() : null;
+                return route instanceof RouteSegment ? route.toJSON() : null;
             } catch (error) {
                 console.error('Error exporting route:', error);
                 return null;
@@ -362,7 +362,7 @@ const useNavigationViewModel = () => {
         },
         importRoute: (routeData) => {
             try {
-                const importedRoute = Route.fromJSON(routeData);
+                const importedRoute = RouteSegment.fromJSON(routeData);
                 setRoute(importedRoute);
                 setPath(pathTransformerService.transformForMapView(importedRoute));
                 setRouteMetadata(importedRoute.metadata);
@@ -376,7 +376,7 @@ const useNavigationViewModel = () => {
         },
 
         getDebugInfo: () => ({
-            hasRoute: route instanceof Route,
+            hasRoute: route instanceof RouteSegment,
             routeName: route?.name,
             pathLength: path.length,
             selectedStrategy,

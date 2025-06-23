@@ -1,4 +1,4 @@
-import Route from '@/components/Route/Route.jsx';
+import RouteSegment from '@/components/Route/RouteSegment.jsx';
 import WalkingSegment from '@/components/Route/WalkingSegment.jsx';
 import BusSegment from '@/components/Route/BusSegment.jsx';
 import RouteComponent from '@/components/Route/RouteComponent.jsx';
@@ -26,7 +26,7 @@ class PathfindingStrategy {
                 return this.createRouteComponent(segment, index);
             }).filter(component => component !== null);
 
-            const route = new Route({
+            const route = new RouteSegment({
                 name: `${this.name} Route`,
                 components: components,
                 strategy: this.type,
@@ -45,7 +45,7 @@ class PathfindingStrategy {
             return route;
         } catch (error) {
             console.error('Error creating route from segments:', error);
-            return new Route({
+            return new RouteSegment({
                 name: 'Error Route',
                 strategy: this.type,
                 metadata: { error: error.message }
@@ -88,29 +88,6 @@ class PathfindingStrategy {
             return null;
         }
     }
-
-    calculateScore(route, preferences = {}) {
-        if (!(route instanceof Route)) {
-            return Infinity;
-        }
-
-        const weights = {
-            distance: preferences.distanceWeight || 1.0,
-            duration: preferences.durationWeight || 1.5,
-            transfers: preferences.transferWeight || 2.0,
-            walking: preferences.walkingWeight || 1.5,
-            cost: preferences.costWeight || 0.1
-        };
-
-        return (
-            (route.getDistance() * weights.distance) +
-            (route.getDuration() * weights.duration) +
-            (route.getTransferCount() * weights.transfers) +
-            (route.getWalkingDistance() * weights.walking) +
-            (route.getCost() * weights.cost)
-        );
-    }
-
     findNearbyStops(coordinates, busStops, maxDistance = 1) {
         return routingService.findNearestStops(coordinates, busStops, maxDistance);
     }
@@ -194,67 +171,10 @@ class PathfindingStrategy {
             ...options
         };
     }
-
-    async createBusSegment(from, to, line, intermediateStops = [], options = {}) {
-        const fromCoords = this.extractCoordinates(from);
-        const toCoords = this.extractCoordinates(to);
-
-        if (!fromCoords || !toCoords) {
-            return null;
-        }
-
-        const distance = this.calculateDistance(fromCoords, toCoords);
-        let duration = this.estimateTravelTime(distance, 'bus');
-
-        duration += intermediateStops.length * 1;
-
-        let coordinates = [fromCoords, toCoords];
-        try {
-            const allStops = [from, ...intermediateStops, to];
-            const busRoute = await routingService.getBusRoute(allStops);
-            if (busRoute && busRoute.coordinates) {
-                coordinates = busRoute.coordinates;
-            }
-        } catch (error) {
-            console.warn('Could not get enhanced bus route:', error);
-        }
-
-        return {
-            type: 'bus',
-            from: from,
-            to: to,
-            line: line,
-            distance: distance,
-            duration: duration,
-            coordinates: coordinates,
-            intermediateStops: intermediateStops,
-            fare: options.fare || 6000,
-            ...options
-        };
-    }
-
     extractCoordinates(location) {
         const coords = routingService.extractCoordinates(location);
         return coords ? RouteComponent.ensureLngLat(coords) : null;
     }
-
-    validateRoute(route, constraints = {}) {
-        if (!(route instanceof Route)) {
-            return false;
-        }
-
-        const maxWalkingDistance = constraints.maxWalkingDistance || 5;
-        const maxTransfers = constraints.maxTransfers || 3;
-        const maxTotalDuration = constraints.maxTotalDuration || 180;
-
-        return (
-            route.isValid() &&
-            route.getWalkingDistance() <= maxWalkingDistance &&
-            route.getTransferCount() <= maxTransfers &&
-            route.getDuration() <= maxTotalDuration
-        );
-    }
-
     getInfo() {
         return {
             name: this.name,

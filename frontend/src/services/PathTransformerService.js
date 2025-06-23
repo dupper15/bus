@@ -1,10 +1,10 @@
-import Route from '@/components/Route/Route.jsx';
+import RouteSegment from '@/components/Route/RouteSegment.jsx';
 import WalkingSegment from '@/components/Route/WalkingSegment.jsx';
 import BusSegment from '@/components/Route/BusSegment.jsx';
 
 class PathTransformerService {
     transformForMapView(strategyPath) {
-        if (strategyPath instanceof Route) {
+        if (strategyPath instanceof RouteSegment) {
             return this.transformRouteForMapView(strategyPath);
         }
 
@@ -85,7 +85,7 @@ class PathTransformerService {
 
     transformToRoute(legacyPath, options = {}) {
         if (!Array.isArray(legacyPath) || legacyPath.length === 0) {
-            return new Route({ name: 'Empty Route' });
+            return new RouteSegment({ name: 'Empty Route' });
         }
 
         const components = [];
@@ -130,7 +130,7 @@ class PathTransformerService {
             }
         });
 
-        return new Route({
+        return new RouteSegment({
             name: options.name || 'Transformed Route',
             components: components,
             strategy: options.strategy || 'balanced',
@@ -139,7 +139,7 @@ class PathTransformerService {
     }
 
     transformFromRoute(route) {
-        if (!(route instanceof Route)) {
+        if (!(route instanceof RouteSegment)) {
             return [];
         }
 
@@ -177,7 +177,7 @@ class PathTransformerService {
 
     createRouteFromMapView(mapViewPath, options = {}) {
         if (!Array.isArray(mapViewPath)) {
-            return new Route({ name: 'Empty Route' });
+            return new RouteSegment({ name: 'Empty Route' });
         }
 
         const legacyPath = mapViewPath.map(segment => ({
@@ -196,7 +196,7 @@ class PathTransformerService {
     }
 
     optimizeRoute(route, strategy = 'balanced') {
-        if (!(route instanceof Route)) {
+        if (!(route instanceof RouteSegment)) {
             return route;
         }
 
@@ -296,18 +296,18 @@ class PathTransformerService {
     }
 
     validateRoute(route) {
-        return route instanceof Route && route.isValid();
+        return route instanceof RouteSegment && route.isValid();
     }
 
     getTransformationStats(originalPath, transformedPath) {
         const getLength = (item) => {
-            if (item instanceof Route) return item.getComponents().length;
+            if (item instanceof RouteSegment) return item.getComponents().length;
             if (Array.isArray(item)) return item.length;
             return 0;
         };
 
         const getType = (item) => {
-            if (item instanceof Route) return 'Route';
+            if (item instanceof RouteSegment) return 'Route';
             if (Array.isArray(item)) return 'Array';
             return typeof item;
         };
@@ -323,7 +323,7 @@ class PathTransformerService {
     }
 
     validateTransformation(original, transformed) {
-        if (transformed instanceof Route) {
+        if (transformed instanceof RouteSegment) {
             return this.validateRoute(transformed);
         }
 

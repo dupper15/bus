@@ -9,9 +9,6 @@ const pathPropType = PropTypes.arrayOf(PropTypes.shape({
     coords: nestedCoordsPropType.isRequired
 }).isRequired);
 
-/**
- * MapView component - Enhanced with click handler support for coordinate selection
- */
 const MapView = ({
                      mapData,
                      busLines,

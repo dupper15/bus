@@ -1,5 +1,5 @@
 import mapBoxFacade from "./MapBoxFacade.js";
-import Route from '@/components/Route/Route.jsx';
+import RouteSegment from '@/components/Route/RouteSegment.jsx';
 import WalkingSegment from '@/components/Route/WalkingSegment.jsx';
 import BusSegment from '@/components/Route/BusSegment.jsx';
 import RouteComponent from '@/components/Route/RouteComponent.jsx';
@@ -26,7 +26,7 @@ class RoutingService {
                 }
             }
 
-            const route = new Route({
+            const route = new RouteSegment({
                 name: routeName,
                 components: components,
                 strategy: strategy,
@@ -48,7 +48,7 @@ class RoutingService {
             return route;
         } catch (error) {
             console.error('Error creating route:', error);
-            return new Route({
+            return new RouteSegment({
                 name: 'Error Route',
                 metadata: { error: error.message }
             });
@@ -154,7 +154,7 @@ class RoutingService {
             return await this.createRoute(startCoords, endCoords, basicPath, options);
         } catch (error) {
             console.error('Error finding best route:', error);
-            return new Route({
+            return new RouteSegment({
                 name: 'Error Route',
                 metadata: { error: error.message }
             });
@@ -451,7 +451,7 @@ class RoutingService {
     }
 
     getRouteSummary(route) {
-        if (!(route instanceof Route)) {
+        if (!(route instanceof RouteSegment)) {
             return null;
         }
 
@@ -459,7 +459,7 @@ class RoutingService {
     }
 
     validateRoute(route, constraints = {}) {
-        if (!(route instanceof Route)) {
+        if (!(route instanceof RouteSegment)) {
             return false;
         }
 

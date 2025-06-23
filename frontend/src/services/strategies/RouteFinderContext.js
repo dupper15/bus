@@ -1,7 +1,7 @@
 import BalancedStrategy from './BalancedStrategy.js';
 import FastestRouteStrategy from './FastestRouteStrategy.js';
 import FewestTransfersStrategy from './FewestTransfersStrategy.js';
-import Route from '@/components/Route/Route.jsx';
+import RouteSegment from '@/components/Route/RouteSegment.jsx';
 
 class RouteFinderContext {
     constructor() {
@@ -76,7 +76,7 @@ class RouteFinderContext {
 
                     const result = await this.findPath(startCoords, endCoords, busStops, busLines);
 
-                    if (result && result.path instanceof Route) {
+                    if (result && result.path instanceof RouteSegment) {
                         results.push({
                             strategyUsed: strategy.getInfo(),
                             path: result.path,
@@ -176,7 +176,7 @@ class RouteFinderContext {
             throw new Error('Strategy returned invalid result');
         }
 
-        if (!(result.path instanceof Route)) {
+        if (!(result.path instanceof RouteSegment)) {
             throw new Error('Strategy must return a Route composite object');
         }
 
@@ -215,7 +215,7 @@ class RouteFinderContext {
     }
 
     createFallbackResult(startCoords, endCoords, error) {
-        const fallbackRoute = new Route({
+        const fallbackRoute = new RouteSegment({
             name: 'Walking Route (Fallback)',
             components: [],
             strategy: 'fallback',
@@ -253,7 +253,7 @@ class RouteFinderContext {
     }
 
     calculateComparisonScore(route, strategyType) {
-        if (!(route instanceof Route)) {
+        if (!(route instanceof RouteSegment)) {
             return Infinity;
         }
 
